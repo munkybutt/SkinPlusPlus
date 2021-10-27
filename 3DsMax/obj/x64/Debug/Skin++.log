@@ -1,9 +1,0 @@
-﻿  Skin++.cpp
-  DllEntry.cpp
-  d:\code\git\skin++\skin++\dllentry.cpp(78): TODO: Perform initialization here.
-  d:\code\git\skin++\skin++\dllentry.cpp(87): TODO: Perform un-initialization here.
-  d:\code\git\skin++\skin++\skin++.cpp(81): TODO: Do plugin initialization here
-  d:\code\git\skin++\skin++\skin++.cpp(82): TODO: Return if you want remain loaded or not
-  d:\code\git\skin++\skin++\skin++.cpp(88): TODO: Do plugin un-initialization here
-Skin++.rc(10): fatal error RC1015: cannot open include file 'afxres.h'.
-  
