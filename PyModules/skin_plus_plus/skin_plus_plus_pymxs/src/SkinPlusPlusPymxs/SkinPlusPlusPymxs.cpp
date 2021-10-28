@@ -88,18 +88,18 @@ std::vector<std::vector<std::vector <float>>> SkinData::getSkinWeights()
 	//SkinArray skinDataArray(2, VertexArray(vertexCount));
 	for (unsigned int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
 	{
-		int16_t influenceCount = this->iSkinContextData->GetNumAssignedBones(vertexIndex);
+		auto influenceCount = this->iSkinContextData->GetNumAssignedBones(vertexIndex);
 		std::vector<float> influenceWeights(influenceCount);
 		std::vector<float> influenceBoneIDs(influenceCount);
 		//influenceWeights[0] = 1.0f;
 		//influenceWeights->data()[0] = 1.0f;
 		skinDataArray[0][vertexIndex] = influenceWeights;  //influenceWeights
 		skinDataArray[1][vertexIndex] = influenceBoneIDs;  //influenceBoneIDs
-		for (int influenceIndex = 0; influenceIndex < influenceCount; influenceIndex++)
+		for (auto influenceIndex = 0; influenceIndex < influenceCount; influenceIndex++)
 		{
-			float infuenceWeight = this->iSkinContextData->GetBoneWeight(vertexIndex, influenceIndex);
+			auto infuenceWeight = this->iSkinContextData->GetBoneWeight(vertexIndex, influenceIndex);
 			if (infuenceWeight <= 0.0f) continue;
-			int influenceBoneID = this->iSkinContextData->GetAssignedBone(vertexIndex, influenceIndex);
+			auto influenceBoneID = this->iSkinContextData->GetAssignedBone(vertexIndex, influenceIndex);
 			influenceWeights[influenceIndex] = infuenceWeight;
 			influenceBoneIDs[influenceIndex] = float(influenceBoneID);
 		}
@@ -174,41 +174,33 @@ PYBIND11_MODULE(SkinPlusPlusPymxs, m) {
 		.def("initialise", &SkinData::initialise)
 		.def("get_skin_weights", &SkinData::getSkinWeightsPy)
 	;
-
-	m.def("get_skin_weights", [&](wchar_t* name) {
+	//def("__init__", [](...) { ... }, py::arg().noconvert(), py::arg("arg2") = false);
+	m.def("get_skin_weights", [](wchar_t* name, int return_type) {
 			std::vector<std::vector<std::vector <float>>> weights = getSkinWeights(name);
-			return py::cast(weights);
+			switch (return_type) {
+				case 0:
+					return py::cast(weights);
+				case 1:
+					return py::cast(weights, py::return_value_policy::take_ownership);
+				case 2:
+					return py::cast(weights, py::return_value_policy::copy);
+				case 3:
+					return py::cast(weights, py::return_value_policy::move);
+				case 4:
+					return py::cast(weights, py::return_value_policy::reference);
+				case 5:
+					return py::cast(weights, py::return_value_policy::reference_internal);
+				case 6:
+					return py::cast(weights, py::return_value_policy::automatic);
+				case 7:
+					return py::cast(weights, py::return_value_policy::automatic_reference);
+				default:
+					return py::cast(weights);
+			}
+			
 		}, "Get Skin Weights",
-		py::arg("name")
-	);
-	m.def(
-		"get_skin_weights_np", [&](wchar_t* name) {
-			std::vector<std::vector<std::vector <float>>> weights = getSkinWeights(name);
-			py::array npArray = py::cast(weights);
-			return npArray;
-		}, "Get Skin Weights as a numpy array",
-		py::arg("name")
-	);
-	m.def("get_skin_weights_np_move", [&](wchar_t* name) {
-			std::vector<std::vector<std::vector <float>>> weights = getSkinWeights(name);
-			py::array npArray = py::cast(weights, py::return_value_policy::move);
-			return npArray;
-		}, "Get Skin Weights as a numpy array",
-		py::arg("name")
-	);
-	m.def("get_skin_weights_np_take_ownership", [&](wchar_t* name) {
-			std::vector<std::vector<std::vector <float>>> weights = getSkinWeights(name);
-			py::array npArray = py::cast(weights, py::return_value_policy::take_ownership);
-			return npArray;
-		}, "Get Skin Weights as a numpy array",
-		py::arg("name")
-	);
-	m.def("get_skin_weights_np_take_ownership", [&](wchar_t* name) {
-			std::vector<std::vector<std::vector <float>>> weights = getSkinWeights(name);
-			py::array npArray = py::cast(weights, py::return_value_policy::take_ownership);
-			return npArray;
-		}, "Get Skin Weights as a numpy array",
-		py::arg("name")
+		py::arg("name"),
+		py::arg("return_type")
 	);
 	//m.def("f", []() {
 	//		// Allocate and initialize some data; make this big so
