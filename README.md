@@ -10,18 +10,17 @@
 
 <p align="center">
   <a href="https://github.com/munkybutt/SkinPlusPlus/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/munkybutt/SkinPlusPlus?style=flat-square"
-         alt="Gitter">
+    <img src="https://img.shields.io/github/license/munkybutt/SkinPlusPlus?style=for-the-badge"
   </a>
   <a href="https://badge.fury.io/gh/munkybutt%2FSkinPlusPlus">
-    <img src="https://badge.fury.io/gh/munkybutt%2FSkinPlusPlus.svg"
-         alt="Gitter">
+    <!-- <img src="https://badge.fury.io/gh/munkybutt%2FSkinPlusPlus.svg?style=for-the-badge"> -->
+    <img src="https://img.shields.io/github/release/munkybutt/SkinPlusPlus?style=for-the-badge">
   </a>
   <a href="https://saythanks.io/to/munkybutt">
-      <img src="https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg">
+      <img src="https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg?style=for-the-badge">
   </a>
   <a href="https://www.paypal.me/munkybuttballs">
-    <img src="https://img.shields.io/badge/$-donate-ff69b4.svg?maxAge=2592000&amp;style=flat">
+    <img src="https://img.shields.io/badge/$-donate-ff69b4.svg?maxAge=2592000&amp;style=for-the-badge">
   </a>
 </p>
 
@@ -32,15 +31,15 @@
 
 
 ## Key Features
-
 * Save and load skin data with speed
-  - Logic is written in c++ but exposed with python bindings.
+  - Logic is written in c++ but exposed with python bindings
 
 * Work directly with numpy ndarrays
-  - The python bindings accept and return numpy ndarrays, providing the optimal performance.
+  - The python bindings accept and return numpy ndarrays for optimal performance
 
 * Currently supported DCCs:
-  - 3DsMax: Python bindings are for 2022, but the backend should be compatible with any version of 3DsMax that has python with a version specific recompile of said bindings.
+  - 3DsMax:
+  	- Provided bindings are for 2022, but the backend should be compatible with any version of 3DsMax that has python
 
 ## Performance
 3DsMax 2022
@@ -74,5 +73,6 @@ Support
 
 -->
 
+## Personal Info
 > Webbie [techanimdad.com](https://techanimdad.com) &nbsp;&middot;&nbsp;
 > GitHub [@munkybutt](https://github.com/munkybutt)
