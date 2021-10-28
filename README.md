@@ -12,9 +12,9 @@
   <a href="https://github.com/munkybutt/SkinPlusPlus/blob/main/LICENSE">
     <img src="https://img.shields.io/github/license/munkybutt/SkinPlusPlus?style=for-the-badge"
   </a>
-  <a href="https://badge.fury.io/gh/munkybutt%2FSkinPlusPlus">
+  <a href="https://github.com/munkybutt/SkinPlusPlus/releases/tag/v0.1.0">
     <!-- <img src="https://badge.fury.io/gh/munkybutt%2FSkinPlusPlus.svg?style=for-the-badge"> -->
-    <img src="https://img.shields.io/github/release/munkybutt/SkinPlusPlus?style=for-the-badge">
+    <img src="https://img.shields.io/github/release/munkybutt/SkinPlusPlus?style=for-the-badge&include_prereleases">
   </a>
   <a href="https://saythanks.io/to/munkybutt">
       <img src="https://img.shields.io/badge/Say%20Thanks-!-1EAEDB.svg?style=for-the-badge">
