@@ -42,6 +42,8 @@
   	- Provided bindings are for 2022, but the backend should be compatible with any version of 3DsMax that has python
 
 ## Performance
+Performance tests are done on a mesh with 507,906 vertices, each with 6 influences.
+
 3DsMax 2022
 | Method                                      | Time in seconds     | x Faster             | % Faster             |
 |---------------------------------------------|---------------------|----------------------|----------------------|
