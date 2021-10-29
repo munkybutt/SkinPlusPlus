@@ -44,7 +44,9 @@
 ## Performance
 Performance tests are done on a mesh with 507,906 vertices, each with 6 influences.
 
-3DsMax 2022
+### 3DsMax 2022
+#### Get Skin Data
+
 | Method                                      | Time in seconds     | x Faster             | % Faster             |
 |---------------------------------------------|---------------------|----------------------|----------------------|
 | pymxs -> list                               | 20.34769090000009   | base line            | base line            |
@@ -61,6 +63,10 @@ Performance tests are done on a mesh with 507,906 vertices, each with 6 influenc
 | pybind11 automatic_reference -> numpy array | 0.4236172999999326  | 48.03319151508526 x  | 4803.3191515085255 % |
 | pybind11 take_ownership -> numpy array      | 0.41753419999986363 | 48.73299217167536 x  | 4873.299217167536 %  |
 | pybind11 reference -> numpy array           | 0.41740709999999126 | 48.747831313843285 x | 4874.783131384329 %  |
+
+#### Set Skin Data
+Coming Soon :)
+
 <!--## 
 ## How To Use
 
