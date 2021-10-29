@@ -239,21 +239,3 @@ def process_results(time_data: "dict[str, tuple[float, Any, str]]"):
 
 run_functions(get_function_list, obj)
 process_results(get_timer_dict)
-
-
-| Function                                    | Time-secs           | x Faster             | % Faster             |
-|---------------------------------------------|---------------------|----------------------|----------------------|
-| pymxs_GetSkinWeights                        | 20.34769090000009   | base line            | base line            |
-| mxs_GetSkinWeights_NP                       | 15.51825759999997   | 1.3112097649416599 x | 131.12097649416597 % |
-| mxs_GetSkinWeights                          | 14.42323169999986   | 1.4107580966060669 x | 141.0758096606067 %  |
-| cpppf_GetSkinWeights                        | 7.435437399999955   | 2.7365829076847867 x | 273.65829076847865 % |
-| cppfp_GetSkinWeights                        | 6.338866400000143   | 3.2099889185232917 x | 320.99889185232917 % |
-| cpppm_GetSkinWeights                        | 5.98266609999996    | 3.4011075597216136 x | 340.11075597216137 % |
-| pybind11_GetSkinWeights_automatic           | 1.2681291999999758  | 16.045439928360988 x | 1604.5439928360988 % |
-| pybind11_GetSkinWeights_move                | 1.09791139999993    | 18.533090101807293 x | 1853.3090101807293 % |
-| pybind11_GetSkinWeights_copy                | 0.9864563000000999  | 20.627057579740764 x | 2062.7057579740763 % |
-| pybind11_GetSkinWeights                     | 0.9028401000000486  | 22.537424844110262 x | 2253.7424844110265 % |
-| pybind11_GetSkinWeights_reference_internal  | 0.4243109000001368  | 47.954674037347445 x | 4795.467403734745 %  |
-| pybind11_GetSkinWeights_automatic_reference | 0.4236172999999326  | 48.03319151508526 x  | 4803.3191515085255 % |
-| pybind11_GetSkinWeights_take_ownership      | 0.41753419999986363 | 48.73299217167536 x  | 4873.299217167536 %  |
-| pybind11_GetSkinWeights_reference           | 0.41740709999999126 | 48.747831313843285 x | 4874.783131384329 %  |
