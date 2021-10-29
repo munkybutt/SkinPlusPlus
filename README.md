@@ -6,7 +6,7 @@
   <br>
 </h1>
 
-<h4 align="center">Agnostic python bindings written in c++, for working with skin data in DCC's</a>.</h4>
+<h4 align="center">Python bindings written in c++, for working with skin data in DCC's</a>.</h4>
 
 <p align="center">
   <a href="https://github.com/munkybutt/SkinPlusPlus/blob/main/LICENSE">
