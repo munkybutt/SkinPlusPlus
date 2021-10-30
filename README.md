@@ -26,7 +26,8 @@
 
 <p align="center">
   <a href="#key-features">Key Features</a> •
-  <a href="#performance">Performance</a>
+  <a href="#performance">Performance</a> •
+  <a href="#roadmap">Roadmap</a>
 </p>
 
 
@@ -66,6 +67,22 @@ Performance tests are done on a mesh with 507,906 vertices, each with 6 influenc
 
 #### Set Skin Data
 Coming Soon :)
+
+## Roadmap
+* Include Vertex Positions
+  - This will enable features for applying skin data to different topologies
+
+* Support multiple DCCs
+  - Maya
+  - Blender
+  - MotionBuilder
+  - Houdini
+
+* Send data between DCCs
+  - Serialise skin data and pass between DCC using local servers
+  - This will provide a foundation for a DCC agnostic skinning pipeline
+
+* Expand toolkit to include functions other than get and set.
 
 <!--## 
 ## How To Use
