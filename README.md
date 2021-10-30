@@ -36,7 +36,7 @@
   - Logic is written in c++ but exposed with python bindings
 
 * Work directly with numpy ndarrays
-  - The python bindings accept and return numpy ndarrays for optimal performance
+  - Pybind11 is used to generate the python bindings, so the API uses numpy ndarrays for optimal performance
 
 * Currently supported DCCs:
   - 3DsMax:
