@@ -439,5 +439,6 @@ MigrationBackup/
 # End of https://www.toptal.com/developers/gitignore/api/c++,visualstudio,visualstudiocode,sublimetext
 
 
+PyModules/3rdParty/
 PyModules/venv37/
 temp.cpp
