@@ -66,7 +66,15 @@ Performance tests are done on a mesh with 507,906 vertices, each with 6 influenc
 | pybind11 reference -> numpy array           | 0.41740709999999126 | 48.747831313843285 x | 4874.783131384329 %  |
 
 #### Set Skin Data
-Coming Soon :)
+
+| Function                                    | Time-secs           | x Faster            | % Faster            |
+|---------------------------------------------|---------------------|---------------------|---------------------|
+| pymxs <- mxs.Array                          | 10.008182200006559  | base line           | base line           |
+| maxscript <- mxs.Array                      | 8.258346500006155   | 1.2118869316029668x | 121.18869316029668% |
+| SDK function publish <- mxs.Array           | 7.368701700004749   | 1.3582015675841659x | 135.8201567584166%  |
+| SDK struct primative <- mxs.Array           | 5.838030200000503   | 1.7143080554817438x | 171.4308055481744%  |
+| SDK primative <- mxs.Array                  | 5.694018099995446   | 1.757666032009024x  | 175.7666032009024%  |
+| pybind11 <- np.ndarray                      | 0.18415770000137854 | 54.34571674131269x  | 5434.571674131269%  |
 
 ## Roadmap
 * Include Vertex Positions
