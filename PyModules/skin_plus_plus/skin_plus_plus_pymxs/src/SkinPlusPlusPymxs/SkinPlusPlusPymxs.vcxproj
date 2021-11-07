@@ -136,7 +136,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Program Files\Autodesk\3ds Max 2022 SDK\maxsdk\include;C:\Program Files\Python37\include;$(ProjectDir)..\..\..\..\venv37\Lib\site-packages\pybind11\include;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\Autodesk\3ds Max 2022 SDK\maxsdk\include;C:\Program Files\Python37\include;$(ProjectDir)..\..\..\..\venv37\Lib\site-packages\pybind11\include;$(ProjectDir)..\..\..\..\3rdParty\eigen-3.4.0;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalUsingDirectories>$(MSBuildProgramFiles32)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0;%(AdditionalUsingDirectories)</AdditionalUsingDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>

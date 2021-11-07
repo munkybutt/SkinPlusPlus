@@ -2,6 +2,8 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
+#include <pybind11/eigen.h>
+#include <Eigen/Geometry>
 
 #include <cwchar>
 #include <locale>
@@ -23,6 +25,21 @@ namespace py = pybind11;
 //using VertexArray = std::vector <ValueArray>;
 //using SkinArray = std::vector <VertexArray>;
 
+struct VertexData
+{
+private:
+	Tab<INode*> bones;
+	Tab<float> weights;
+
+public:
+	VertexData() {};
+	VertexData(int vertexID, py::array_t<float> boneIDs, py::array_t<float> weights, Tab<INode*> skinBones);
+	void initialiseVariables(int size);
+	void appendVariables(INode* bone, float weight);
+	Tab<INode*> getBones() { return this->bones; };
+	Tab<float> getWeights() { return this->weights; };
+};
+
 
 class SkinData
 {
@@ -42,9 +59,10 @@ public:
 	~SkinData(){}
 	bool initialise(const wchar_t* name);
 	std::vector<std::vector<std::vector <float>>> getSkinWeights();
-	auto getSkinWeightsPy(const int flag);
-	auto getSkinWeights2();
-	bool setSkinWeights(Array* boneIDs, Array* vertexWeights, Array* vertices = NULL);
+	//bool setSkinWeights(Array* boneIDs, Array* vertexWeights, Array* vertices = NULL);
+	//bool setSkinWeights(py::array_t<py::array_t<float>> boneIDs, py::array_t<py::array_t<float>> vertexWeights);
+	//bool setSkinWeights(py::array_t<float> boneIDs, py::array_t<float> vertexWeights);
+	bool setSkinWeights(Eigen::MatrixXf& boneIDs, Eigen::MatrixXf& vertexWeights);
 	bool setVertexWeights(int vertexIndex, Array* vertexBones, Array* vertexWeights);
 	bool setVertexWeights(const int vertexIndex, Array* inBoneIDs, Array* inVertexWeights, Tab<INode*> inSkinBones);
 };

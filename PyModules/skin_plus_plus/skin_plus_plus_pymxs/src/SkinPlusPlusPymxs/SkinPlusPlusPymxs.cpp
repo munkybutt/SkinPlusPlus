@@ -35,17 +35,56 @@ INode* getChildByName(const wchar_t* name, INode* parent)
 }
 
 
+VertexData::VertexData(int vertexID, py::array_t<float> boneIDs, py::array_t<float> weights, Tab<INode*> skinBones)
+{
+	auto boneIDsSize = boneIDs.size();
+	if (boneIDs.size() != weights.size())
+	{
+		throw std::length_error(
+			"ids count does not match weights count" + static_cast<char>(vertexID)
+		);
+	}
+
+	this->initialiseVariables(boneIDsSize);
+	float weightCap = 1.0f;
+	for (int vertexBoneIndex = 0; vertexBoneIndex < boneIDsSize; vertexBoneIndex++)
+	{
+		float weight = weights.at(vertexBoneIndex);
+		int vertexBoneID = boneIDs.at(vertexBoneIndex);
+		if (weight < 0.0f) continue;
+		this->bones.Append(1, &skinBones[vertexBoneID - 1]);
+		if (weight > 1.0f) this->weights.Append(1, &weightCap); else this->weights.Append(1, &weight);
+	}
+};
+
+void VertexData::initialiseVariables(int size)
+{
+	this->bones = Tab<INode*>();
+	this->weights = Tab<float>();
+	this->bones.Resize(size);
+	this->weights.Resize(size);
+
+}
+
+void VertexData::appendVariables(INode* bone, float weight)
+{
+	this->bones.Append(1, &bone);
+	this->weights.Append(1, &weight);
+}
+
+
+
 bool SkinData::initialise(const wchar_t* name)
 {
 	this->node = getChildByName(name, NULL);
 	if (!this->node)
 	{
-		throw pybind11::type_error("SkinData init failed. No node with name: " + convertWCharToChar(name));
+		throw py::type_error("SkinData init failed. No node with name: " + convertWCharToChar(name));
 	}
 	Object* object = this->node->GetObjectRef();
 	if (!object || (object->SuperClassID() != GEN_DERIVOB_CLASS_ID))
 	{
-		throw pybind11::type_error("SkinData init failed. Node is incorrect type " + convertWCharToChar(this->node->GetName()));
+		throw py::type_error("SkinData init failed. Node is incorrect type " + convertWCharToChar(this->node->GetName()));
 	}
 	this->iDerivedObject = (IDerivedObject*)(object);
 	if (!this->iDerivedObject)
@@ -85,14 +124,11 @@ std::vector<std::vector<std::vector <float>>> SkinData::getSkinWeights()
 	std::vector<std::vector<std::vector <float>>> skinDataArray(
 		2, std::vector<std::vector<float>>(vertexCount)
 	);
-	//SkinArray skinDataArray(2, VertexArray(vertexCount));
 	for (unsigned int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
 	{
 		auto influenceCount = this->iSkinContextData->GetNumAssignedBones(vertexIndex);
 		std::vector<float> influenceWeights(influenceCount);
 		std::vector<float> influenceBoneIDs(influenceCount);
-		//influenceWeights[0] = 1.0f;
-		//influenceWeights->data()[0] = 1.0f;
 		skinDataArray[0][vertexIndex] = influenceWeights;  //influenceWeights
 		skinDataArray[1][vertexIndex] = influenceBoneIDs;  //influenceBoneIDs
 		for (auto influenceIndex = 0; influenceIndex < influenceCount; influenceIndex++)
@@ -107,27 +143,67 @@ std::vector<std::vector<std::vector <float>>> SkinData::getSkinWeights()
 	return skinDataArray;
 }
 
-auto SkinData::getSkinWeightsPy(const int flag)
+//bool SkinData::setVertexWeights(const int vertexIndex, Array* boneIDs, Array* vertexWeights, Tab<INode*> skinBones)
+//{
+//	Array* vertexBoneIDs = (Array*)boneIDs->data[vertexIndex];
+//	Array* vertexBoneWeights = (Array*)vertexWeights->data[vertexIndex];
+//	VertexData* vertexData = new VertexData(vertexIndex, vertexBoneIDs, vertexBoneWeights, skinBones);
+//	return this->iSkinImportData->AddWeights(this->node, vertexIndex, vertexData->getBones(), vertexData->getWeights());
+//}
+
+
+bool SkinData::setSkinWeights(Eigen::MatrixXf& boneIDs, Eigen::MatrixXf& vertexWeights)
 {
-	auto weights = this->getSkinWeights();
-	switch (flag) {
-		case 0:
+	auto boneIDsRows = boneIDs.rows();
+	auto vertexWeightsRows = vertexWeights.rows();
+	auto boneIDsCols = boneIDs.cols();
+	auto vertexWeightsCols = vertexWeights.cols();
+	if (boneIDsRows != vertexWeightsRows) throw std::length_error(
+		"skin bone ids count does not match skin weights count" + convertWCharToChar(this->node->GetName())
+	);
+	if (boneIDsCols != vertexWeightsCols) throw std::length_error(
+		"skin bone ids count does not match skin weights count" + convertWCharToChar(this->node->GetName())
+	);
+	auto vertexCount = this->iSkinContextData->GetNumPoints();
+	if (boneIDsRows != vertexCount) throw std::length_error(
+		"skin vertex count does not match provided data count" + convertWCharToChar(this->node->GetName())
+	);
+	Tab<INode*> skinBones;
+	auto skinBonesCount = this->iSkin->GetNumBones();
+	for (auto boneIndex = 0; boneIndex < skinBonesCount; boneIndex++)
+	{
+		INode* bone = this->iSkin->GetBone(boneIndex);
+		if (boneIndex == 0)
 		{
-			py::array npArray = py::cast(weights);
-			return npArray;
+			skinBones.Append(1, &bone, skinBonesCount);
+			continue;
 		}
-		case 1:
+		skinBones.Append(1, &bone);
+	}
+	for (auto vertexIndex = 0; vertexIndex < boneIDsRows; vertexIndex++)
+	{
+		Tab<INode*> bones = Tab<INode*>();
+		Tab<float> weights = Tab<float>();
+		bones.Resize(boneIDsCols);
+		weights.Resize(boneIDsCols);
+		for (auto influenceIndex = 0; influenceIndex < boneIDsCols; influenceIndex++)
 		{
-			py::array npArray = py::cast(weights);
-			return npArray;
+			auto boneID = boneIDs(vertexIndex, influenceIndex);
+			auto influenceWeight = vertexWeights(vertexIndex, influenceIndex);
+			bones.Append(1, &skinBones[boneID]);
+			weights.Append(1, &influenceWeight);
 		}
-		default:
+		if (!this->iSkinImportData->AddWeights(this->node, vertexIndex, bones, weights))
 		{
-			py::array npArray = py::cast(weights);
-			return npArray;
+			return false;
 		}
 	}
+
+	this->skinModifier->NotifyDependents(FOREVER, PART_GEOM, REFMSG_CHANGE);
+	GetCOREInterface()->RedrawViews(GetCOREInterface()->GetTime());
+	return true;
 }
+
 
 
 inline std::vector<std::vector<std::vector <float>>> getSkinWeights(wchar_t* name)
@@ -137,26 +213,41 @@ inline std::vector<std::vector<std::vector <float>>> getSkinWeights(wchar_t* nam
 }
 
 
-template <typename Sequence>
-inline py::array_t<typename Sequence::value_type> as_pyarray(Sequence&& seq) {
-	auto size = seq.size();
-	auto data = seq.data();
-	std::unique_ptr<Sequence> seq_ptr = std::make_unique<Sequence>(std::move(seq));
-	auto capsule = py::capsule(seq_ptr.get(), [](void* p) { std::unique_ptr<Sequence>(reinterpret_cast<Sequence*>(p)); });
-	seq_ptr.release();
-	return py::array(size, data, capsule);
+bool setSkinWeights(wchar_t* name, Eigen::MatrixXf& boneIDs, Eigen::MatrixXf& weights)
+{
+	SkinData* skinData = new SkinData(name);
+	return skinData->setSkinWeights(boneIDs, weights);
 }
 
 
-template <typename Sequence>
-inline py::array_t<py::array_t<py::array_t<float>>> as_pyfloatarray(Sequence&& seq) {
-	auto size = seq.size();
-	auto data = seq.data();
-	std::unique_ptr<Sequence> seq_ptr = std::make_unique<Sequence>(std::move(seq));
-	auto capsule = py::capsule(seq_ptr.get(), [](void* p) { std::unique_ptr<Sequence>(reinterpret_cast<Sequence*>(p)); });
-	seq_ptr.release();
-	return py::array(size, data, capsule);
-}
+
+//inline bool setSkinWeights(wchar_t* name, py::array boneIDs, py::array weights)
+//{
+//	SkinData* skinData = new SkinData(name);
+//	return skinData->setSkinWeights(boneIDs, weights);
+//}
+
+
+//template <typename Sequence>
+//inline py::array_t<typename Sequence::value_type> as_pyarray(Sequence&& seq) {
+//	auto size = seq.size();
+//	auto data = seq.data();
+//	std::unique_ptr<Sequence> seq_ptr = std::make_unique<Sequence>(std::move(seq));
+//	auto capsule = py::capsule(seq_ptr.get(), [](void* p) { std::unique_ptr<Sequence>(reinterpret_cast<Sequence*>(p)); });
+//	seq_ptr.release();
+//	return py::array(size, data, capsule);
+//}
+//
+//
+//template <typename Sequence>
+//inline py::array_t<py::array_t<py::array_t<float>>> as_pyfloatarray(Sequence&& seq) {
+//	auto size = seq.size();
+//	auto data = seq.data();
+//	std::unique_ptr<Sequence> seq_ptr = std::make_unique<Sequence>(std::move(seq));
+//	auto capsule = py::capsule(seq_ptr.get(), [](void* p) { std::unique_ptr<Sequence>(reinterpret_cast<Sequence*>(p)); });
+//	seq_ptr.release();
+//	return py::array(size, data, capsule);
+//}
 
 //template <typename Sequence>
 //inline py::array_t<typename Sequence::value_type> asNestedPyArray(Sequence&& seq) {
@@ -172,11 +263,12 @@ PYBIND11_MODULE(SkinPlusPlusPymxs, m) {
 		.def(py::init<>())
 		.def(py::init<const wchar_t*>())
 		.def("initialise", &SkinData::initialise)
-		.def("get_skin_weights", &SkinData::getSkinWeightsPy)
+		.def("get_skin_weights", &SkinData::getSkinWeights)
 	;
 	//def("__init__", [](...) { ... }, py::arg().noconvert(), py::arg("arg2") = false);
-	m.def("get_skin_weights", [](wchar_t* name, int return_type) {
-			std::vector<std::vector<std::vector <float>>> weights = getSkinWeights(name);
+	m.def("get_skin_weights", [&](wchar_t* name, int return_type)
+		{
+			std::vector<std::vector<std::vector<float>>> weights = getSkinWeights(name);
 			switch (return_type) {
 				case 0:
 					return py::cast(weights);
@@ -198,10 +290,29 @@ PYBIND11_MODULE(SkinPlusPlusPymxs, m) {
 					return py::cast(weights);
 			}
 			
-		}, "Get Skin Weights",
+		},
+		"Get Skin Weights",
 		py::arg("name"),
 		py::arg("return_type")
 	);
+
+	m.def("test_nested_np_array", [&](py::array_t<float> array)
+		{
+			return array;
+		},
+		"Test nested np arrays",
+		py::arg("array")
+	);
+	m.def("set_skin_weights", [&](wchar_t* name, Eigen::MatrixXf& boneIDs, Eigen::MatrixXf& weights)
+		{
+			return setSkinWeights(name, boneIDs, weights);
+		},
+		"Set Skin Weights",
+		py::arg("name"),
+		py::arg("boneIDs"),
+		py::arg("weights")
+	);
+
 	//m.def("f", []() {
 	//		// Allocate and initialize some data; make this big so
 	//		// we can see the impact on the process memory use:

@@ -87,10 +87,12 @@ def GetSkinWeights(node) -> tuple[list[list[float]], list[list[int]]]:
 
 def SetSkinWeights(node, boneIDs, weights) -> None:
     skinModifier = node.Modifiers[mxRt.Skin]
-    vertexCount = _SKOPS.GetNumberVertices(skinModifier)
-    for vertexIndex in range(vertexCount, 1):
-        ReplaceVertexWeights(skinModifier, vertexIndex, boneIDs[vertexIndex], weights[vertexIndex])
+    vertexCount = _SKOPS.GetNumberVertices(skinModifier) + 1
+    for vertexIndex in range(1, vertexCount):
+        vertexIndexZero = vertexIndex - 1
+        ReplaceVertexWeights(skinModifier, vertexIndex, boneIDs[vertexIndexZero], weights[vertexIndexZero])
 
+obj = mxRt.GetNodeByName("Sphere001")
 
 get_timer_dict: dict[str, tuple[float, Any, str]] = {}
 @timer(get_timer_dict)
@@ -172,25 +174,66 @@ def pybind11_GetSkinWeights_automatic(_obj):
 def pybind11_GetSkinWeights_automatic_reference(_obj):
     return SkinPlusPlusPymxs.get_skin_weights(_obj.Name, 7)
 
+vertex_count = obj.Verts.Count
+boneIDs = np.array([np.array([1.0, 2.0], dtype=np.float32) for _ in range(vertex_count)], dtype=np.float32)
+weights = np.array([np.array([0.5, 0.5], dtype=np.float32) for _ in range(vertex_count)], dtype=np.float32)
+
+# mxsBoneIDs = [[1.0, 2.0] for _ in range(vertex_count)]
+# mxsWeights = [[0.5, 0.5] for _ in range(vertex_count)]
+
 set_timer_dict: dict[str, tuple[float, Any, str]] = {}
-@timer(set_timer_dict)
-def mxs_SetSkinWeights( _obj, _boneIDs, _weights):
-    return SetSkinWeights(_obj, _boneIDs, _weights)
 
 @timer(set_timer_dict)
-def cppfp_SetSkinWeights( _obj, _boneIDs, _weights):
-    return SKINPP_SetSkinWeights(_obj, _boneIDs, _weights)
+def set_skin_weights(_obj, _boneIDs, _weights):
+    SkinPlusPlusPymxs.set_skin_weights(
+        _obj.Name,
+        _boneIDs,
+        _weights
+    )
+
+def as_mxs_array(value, dtype=float):
+    mxsArray = mxRt.Array()
+    array_length = len(value)
+    mxsArray[array_length - 1] = None
+    for index in range(array_length):
+        sub_value = value[index]
+        if isinstance(sub_value, np.ndarray):
+            mxsArray[index] = as_mxs_array(sub_value, dtype=dtype)
+        else:
+            mxsArray[index] = dtype(sub_value)
+
+    return mxsArray
 
 @timer(set_timer_dict)
-def cpppm_SetSkinWeights( _obj, _boneIDs, _weights):
-    return SKINPPOPS_SetSkinWeights(_obj, _boneIDs, _weights, [])
+def mxs_SetSkinWeights(_obj, _boneIDs, _weights):
+    mxsBoneIDs = as_mxs_array(_boneIDs, dtype=int)
+    mxsWeights = as_mxs_array(_weights)
+    return mxsSetSkinWeights(_obj, mxsBoneIDs, mxsWeights)
 
 @timer(set_timer_dict)
-def cpppf_SetSkinWeights( _obj, _boneIDs, _weights):
-    return SPPSetSkinWeights(_obj, _boneIDs, _weights, [])
+def pymxs_SetSkinWeights(_obj, _boneIDs, _weights):
+    mxsBoneIDs = as_mxs_array(_boneIDs, dtype=int)
+    mxsWeights = as_mxs_array(_weights)
+    return SetSkinWeights(_obj, mxsBoneIDs, mxsWeights)
 
+@timer(set_timer_dict)
+def cppfp_SetSkinWeights(_obj, _boneIDs, _weights):
+    mxsBoneIDs = as_mxs_array(_boneIDs, dtype=int)
+    mxsWeights = as_mxs_array(_weights)
+    return SKINPP_SetSkinWeights(_obj, mxsBoneIDs, mxsWeights)
 
-obj = mxRt.GetNodeByName("Sphere001")
+@timer(set_timer_dict)
+def cpppm_SetSkinWeights(_obj, _boneIDs, _weights):
+    mxsBoneIDs = as_mxs_array(_boneIDs, dtype=int)
+    mxsWeights = as_mxs_array(_weights)
+    return SKINPPOPS_SetSkinWeights(_obj, mxsBoneIDs, mxsWeights, [])
+
+@timer(set_timer_dict)
+def cpppf_SetSkinWeights(_obj, _boneIDs, _weights):
+    mxsBoneIDs = as_mxs_array(_boneIDs, dtype=int)
+    mxsWeights = as_mxs_array(_weights)
+    return SPPSetSkinWeights(_obj, mxsBoneIDs, mxsWeights, [])
+
 
 get_function_list = (
     pymxs_GetSkinWeights,
@@ -211,13 +254,13 @@ get_function_list = (
 
 
 set_loops(1)
-def run_functions(function_list, _obj):
+def run_functions(function_list, _obj, _ids, _weights):
     for function in function_list:
-        result = function(_obj)
+        result = function(_obj, _ids, _weights)
         if result is None:
             continue
         print(type(result))
-        print(len(result))
+        # print(len(result))
 
 def process_results(time_data: "dict[str, tuple[float, Any, str]]"):
     # times = []
@@ -237,5 +280,27 @@ def process_results(time_data: "dict[str, tuple[float, Any, str]]"):
             message = f"{message} {percentage_ratio}x / {percentage_increase}% faster"
         print(message)
 
-run_functions(get_function_list, obj)
-process_results(get_timer_dict)
+# run_functions(get_function_list, obj)
+# process_results(get_timer_dict)
+
+import SkinPlusPlusPymxs
+
+
+
+set_function_list = (
+    mxs_SetSkinWeights,
+    pymxs_SetSkinWeights,
+    cppfp_SetSkinWeights,
+    cpppm_SetSkinWeights,
+    cpppf_SetSkinWeights,
+    set_skin_weights
+)
+run_functions(set_function_list, obj, boneIDs, weights)
+process_results(set_timer_dict)
+
+# npa = np.array([[1.0, 2.0], [1.0, 2.0]], dtype=float)
+# a1 = as_mxs_array(npa)
+# a2 = as_mxs_array(npa, dtype=int)
+# print(a1)
+# print(a2)
+# print(SkinPlusPlusPymxs.test_nested_np_array(npa))
