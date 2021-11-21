@@ -48,33 +48,33 @@ Performance tests are done on a mesh with 507,906 vertices, each with 6 influenc
 ### 3DsMax 2022
 #### Get Skin Data
 
-| Method                                      | Time in seconds     | x Faster             | % Faster            |
-|---------------------------------------------|---------------------|----------------------|---------------------|
-| pymxs -> list                               | 20.34769090000009   | base line            | base line           |
-| maxscript -> numpy array                    | 15.51825759999997   | 1.3112097649416599x  | 131.12097649416597% |
-| maxscript -> list                           | 14.42323169999986   | 1.4107580966060669x  | 141.0758096606067%  |
-| SDK primative -> list                       | 7.435437399999955   | 2.7365829076847867x  | 273.65829076847865% |
-| SDK function publish -> list                | 6.338866400000143   | 3.2099889185232917x  | 320.99889185232917% |
-| SDK struct primative -> list                | 5.98266609999996    | 3.4011075597216136x  | 340.11075597216137% |
-| pybind11 automatic -> numpy array           | 1.2681291999999758  | 16.045439928360988x  | 1604.5439928360988% |
-| pybind11 move -> numpy array                | 1.09791139999993    | 18.533090101807293x  | 1853.3090101807293% |
-| pybind11 copy -> numpy array                | 0.9864563000000999  | 20.627057579740764x  | 2062.7057579740763% |
-| pybind11 -> list                            | 0.9028401000000486  | 22.537424844110262x  | 2253.7424844110265% |
-| pybind11 reference_internal -> numpy array  | 0.4243109000001368  | 47.954674037347445x  | 4795.467403734745%  |
-| pybind11 automatic_reference -> numpy array | 0.4236172999999326  | 48.03319151508526x   | 4803.3191515085255% |
-| pybind11 take_ownership -> numpy array      | 0.41753419999986363 | 48.73299217167536x   | 4873.299217167536%  |
-| pybind11 reference -> numpy array           | 0.41740709999999126 | 48.747831313843285x  | 4874.783131384329%  |
+| Method                                      | Time-secs | x Faster | % Faster |
+|:--------------------------------------------|-----------|----------|----------|
+| pymxs -> list                               | 20.347    | base     | base     |
+| maxscript -> numpy array                    | 15.518    | 01.311x  | 0131.12% |
+| maxscript -> list                           | 14.423    | 01.410x  | 0141.07% |
+| SDK primative -> list                       | 07.435    | 02.736x  | 0273.65% |
+| SDK function publish -> list                | 06.338    | 03.209x  | 0320.99% |
+| SDK struct primative -> list                | 05.982    | 03.401x  | 0340.11% |
+| pybind11 automatic -> numpy array           | 01.268    | 16.045x  | 1604.54% |
+| pybind11 move -> numpy array                | 01.097    | 18.533x  | 1853.30% |
+| pybind11 copy -> numpy array                | 00.986    | 20.627x  | 2062.70% |
+| pybind11 -> list                            | 00.902    | 22.537x  | 2253.74% |
+| pybind11 reference_internal -> numpy array  | 00.424    | 47.954x  | 4795.46% |
+| pybind11 automatic_reference -> numpy array | 00.423    | 48.033x  | 4803.31% |
+| pybind11 take_ownership -> numpy array      | 00.417    | 48.732x  | 4873.29% |
+| pybind11 reference -> numpy array           | 00.417    | 48.747x  | 4874.78% |
 
 #### Set Skin Data
 
-| Function                                    | Time-secs           | x Faster            | % Faster            |
-|---------------------------------------------|---------------------|---------------------|---------------------|
-| pymxs <- mxs.Array                          | 10.008182200006559  | base line           | base line           |
-| maxscript <- mxs.Array                      | 8.258346500006155   | 1.2118869316029668x | 121.18869316029668% |
-| SDK function publish <- mxs.Array           | 7.368701700004749   | 1.3582015675841659x | 135.8201567584166%  |
-| SDK struct primative <- mxs.Array           | 5.838030200000503   | 1.7143080554817438x | 171.4308055481744%  |
-| SDK primative <- mxs.Array                  | 5.694018099995446   | 1.757666032009024x  | 175.7666032009024%  |
-| pybind11 <- np.ndarray                      | 0.18415770000137854 | 54.34571674131269x  | 5434.571674131269%  |
+| Function                          | Time-secs | x Faster | % Faster |
+|:----------------------------------|-----------|----------|----------|
+| pymxs <- mxs.Array                | 10.008    | base     | base     |
+| maxscript <- mxs.Array            | 08.258    | 01.211x  | 0121.18% |
+| SDK function publish <- mxs.Array | 07.368    | 01.358x  | 0135.82% |
+| SDK struct primative <- mxs.Array | 05.838    | 01.714x  | 0171.43% |
+| SDK primative <- mxs.Array        | 05.694    | 01.757x  | 0175.76% |
+| pybind11 <- np.ndarray            | 00.184    | 54.345x  | 5434.57% |
 
 ## Roadmap
 * Include Vertex Positions
