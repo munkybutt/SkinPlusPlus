@@ -35,43 +35,85 @@ INode* getChildByName(const wchar_t* name, INode* parent)
 }
 
 
-VertexData::VertexData(int vertexID, py::array_t<float> boneIDs, py::array_t<float> weights, Tab<INode*> skinBones)
+TriObject* getTriObjectFromNode(INode* node, TimeValue time)
 {
-	auto boneIDsSize = boneIDs.size();
-	if (boneIDs.size() != weights.size())
+	Object* object = node->EvalWorldState(time).obj;
+	auto classID = Class_ID(TRIOBJ_CLASS_ID, 0);
+	if (object->CanConvertToType(classID))
 	{
-		throw std::length_error(
-			"ids count does not match weights count" + static_cast<char>(vertexID)
-		);
+		TriObject* triObject = (TriObject*)object->ConvertToType(time, classID);
+		return triObject;
 	}
-
-	this->initialiseVariables(boneIDsSize);
-	float weightCap = 1.0f;
-	for (int vertexBoneIndex = 0; vertexBoneIndex < boneIDsSize; vertexBoneIndex++)
+	else
 	{
-		float weight = weights.at(vertexBoneIndex);
-		int vertexBoneID = boneIDs.at(vertexBoneIndex);
-		if (weight < 0.0f) continue;
-		this->bones.Append(1, &skinBones[vertexBoneID - 1]);
-		if (weight > 1.0f) this->weights.Append(1, &weightCap); else this->weights.Append(1, &weight);
+		return NULL;
 	}
-};
-
-void VertexData::initialiseVariables(int size)
-{
-	this->bones = Tab<INode*>();
-	this->weights = Tab<float>();
-	this->bones.Resize(size);
-	this->weights.Resize(size);
-
 }
 
-void VertexData::appendVariables(INode* bone, float weight)
+
+bool applyOffsetToVertices(INode* node, Point3 offset)
 {
-	this->bones.Append(1, &bone);
-	this->weights.Append(1, &weight);
+	static bool success = false;
+	//bool deleteIt = false;
+	TriObject* triObject = getTriObjectFromNode(node, GetCOREInterface()->GetTime());
+	if (triObject)
+	{
+		Mesh& mesh = triObject->GetMesh();
+		for (int vertIndex = 0; vertIndex < mesh.getNumVerts(); vertIndex++)
+		{
+			Point3 position = mesh.getVert(vertIndex);
+			mesh.setVert(vertIndex, position + offset);
+		}
+		mesh.InvalidateGeomCache();
+		mesh.InvalidateTopologyCache();
+		node->SetObjectRef(triObject);
+		triObject->NotifyDependents(FOREVER, OBJ_CHANNELS, REFMSG_CHANGE);
+		Interface* coreInterface = GetCOREInterface();
+		coreInterface->RedrawViews(coreInterface->GetTime());
+		success = true;
+	}
+	return success;
 }
 
+
+PolyObject* getPolyObjectFromNode(INode* inNode, TimeValue inTime, bool& deleteIt)
+{
+	Object* object = inNode->GetObjectRef();
+	auto classID = Class_ID(POLYOBJ_CLASS_ID, 0);
+	if (object->CanConvertToType(classID))
+	{
+		PolyObject* polyObject = (PolyObject*)object->ConvertToType(inTime, classID);
+		// Note that the polyObject should only be deleted
+		// if the pointer to it is not equal to the object
+
+		// pointer that called ConvertToType()
+		if (object != polyObject) deleteIt = true;
+		return polyObject;
+	}
+	else
+	{
+		return NULL;
+	}
+}
+
+
+//static bool applyOffsetToVertices(INode* inNode, Point3 inOffset)
+//{
+//	bool deleteIt = false;
+//	Interface* coreInterface = GetCOREInterface();
+//	PolyObject* polyObject = getPolyObjectFromNode(inNode, coreInterface->GetTime(), deleteIt);
+//	if (polyObject)
+//	{
+//		MNMesh& mnMesh = polyObject->GetMesh();
+//		for (int vertIndex = 0; vertIndex < mnMesh.VNum(); vertIndex++)
+//		{
+//			Point3 position = mnMesh.V(vertIndex)->p;
+//		}
+//		if (deleteIt) polyObject->DeleteMe();
+//		return true;
+//	}
+//	return false;
+//}
 
 
 bool SkinData::initialise(const wchar_t* name)
@@ -143,16 +185,164 @@ std::vector<std::vector<std::vector <float>>> SkinData::getSkinWeights()
 	return skinDataArray;
 }
 
-//bool SkinData::setVertexWeights(const int vertexIndex, Array* boneIDs, Array* vertexWeights, Tab<INode*> skinBones)
+
+void PySkinData::setInternalState(py::tuple data)
+{
+	this->boneIDs = py::cast<eg::MatrixXi>(data[0]);
+	this->weights = py::cast<eg::MatrixXf>(data[1]);
+	this->positions = py::cast<eg::MatrixXf>(data[2]);
+}
+
+
+const inline auto getMeshType(INode* node)
+{
+	ObjectState objectState = node->EvalWorldState(0);
+
+	if (objectState.obj)
+	{
+		Object* object = objectState.obj->FindBaseObject();
+		//if (object->ClassID() == Class_ID(EDITTRIOBJ_CLASS_ID, 0)) return 0;
+		//else if (object->ClassID() == EPOLYOBJ_CLASS_ID) return 1;
+		if (object->CanConvertToType(Class_ID(POLYOBJ_CLASS_ID, 0))) return 0;
+		else if (object->CanConvertToType(Class_ID(TRIOBJ_CLASS_ID, 0))) return 1;
+	}
+	return -1;
+}
+
+//PySkinData* SkinData::getData()
 //{
-//	Array* vertexBoneIDs = (Array*)boneIDs->data[vertexIndex];
-//	Array* vertexBoneWeights = (Array*)vertexWeights->data[vertexIndex];
-//	VertexData* vertexData = new VertexData(vertexIndex, vertexBoneIDs, vertexBoneWeights, skinBones);
-//	return this->iSkinImportData->AddWeights(this->node, vertexIndex, vertexData->getBones(), vertexData->getWeights());
+//	if (!this->isValid)
+//	{
+//		throw std::exception("SkinData object is invalid. Cannot get skin weights.");
+//	}
+//	unsigned int vertexCount = this->iSkinContextData->GetNumPoints();
+//	py::print(vertexCount);
+//	PySkinData* pySkinData = new PySkinData(vertexCount, 8);
+//	py::print(pySkinData);
+//
+//	ObjectState objectState = this->node->EvalWorldState(0);
+//	py::print("objectState");
+//
+//	//if (objectState.obj)
+//	//{
+//	//	//Look at the super class ID to determine the type of the object.
+//
+//	//	if (objectState.obj->IsSubClassOf(triObjectClassID))
+//	//	{
+//
+//	//		TriObject* triObject = (TriObject*)objectState.obj;	// Get a mesh from input object
+//	//		Mesh* mesh = &triObject->GetMesh();
+//	//		int numVert = mesh->getNumVerts();
+//	//		int numFaces = mesh->getNumFaces();
+//	Object* baseObject = objectState.obj->FindBaseObject();
+//	py::print("baseObject");
+//	//PolyObject* polyObject = (PolyObject*)baseObject;
+//	EPoly* iePoly = (EPoly*)(baseObject->GetInterface(EPOLY_INTERFACE));
+//	py::print("iePoly");
+//
+//	//This is where you get the Mesh and loop for all the verts.
+//	MNMesh* mnMesh = iePoly->GetMeshPtr();
+//	py::print("mnMesh");
+//	for (unsigned int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
+//	{
+//		py::print(vertexIndex);
+//		Point3 position = mnMesh->v[vertexIndex].p;
+//		pySkinData->positions(vertexIndex, 0) = position.x;
+//		pySkinData->positions(vertexIndex, 1) = position.y;
+//		pySkinData->positions(vertexIndex, 2) = position.z;
+//		auto influenceCount = this->iSkinContextData->GetNumAssignedBones(vertexIndex);
+//		for (auto influenceIndex = 0; influenceIndex < influenceCount; influenceIndex++)
+//		{
+//			auto infuenceWeight = this->iSkinContextData->GetBoneWeight(vertexIndex, influenceIndex);
+//			if (infuenceWeight <= 0.0f) continue;
+//			auto influenceBoneID = this->iSkinContextData->GetAssignedBone(vertexIndex, influenceIndex);
+//			pySkinData->weights(vertexIndex, influenceIndex) = infuenceWeight;
+//			pySkinData->boneIDs(vertexIndex, influenceIndex) = influenceBoneID;
+//		}
+//	};
+//	return pySkinData;
 //}
 
+void SkinData::collectWeightsAndBoneIDs(PySkinData* pySkinData, unsigned int vertexIndex)
+{
+	auto influenceCount = this->iSkinContextData->GetNumAssignedBones(vertexIndex);
+	if (influenceCount > this->maxInfluenceCount)
+	{
+		pySkinData->setMaximumInfluenceCount(influenceCount);
+		this->maxInfluenceCount = influenceCount;
+	}
+	for (auto influenceIndex = 0; influenceIndex < influenceCount; influenceIndex++)
+	{
+		auto infuenceWeight = this->iSkinContextData->GetBoneWeight(vertexIndex, influenceIndex);
+		if (infuenceWeight <= 0.0f) continue;
+		auto influenceBoneID = this->iSkinContextData->GetAssignedBone(vertexIndex, influenceIndex);
+		pySkinData->weights(vertexIndex, influenceIndex) = infuenceWeight;
+		pySkinData->boneIDs(vertexIndex, influenceIndex) = influenceBoneID;
+	}
+}
 
-bool SkinData::setSkinWeights(Eigen::MatrixXf& boneIDs, Eigen::MatrixXf& vertexWeights)
+PySkinData* SkinData::getData()
+{
+	if (!this->isValid)
+	{
+		throw std::exception("SkinData object is invalid. Cannot get skin weights.");
+	}
+	auto meshType = getMeshType(this->node);
+	if (meshType == 0)
+	{
+		return this->getDataMesh();
+	}
+	else if (meshType == 1)
+	{
+		return this->getDataPoly();
+	}
+
+	throw std::exception("Unsupported mesh type, convert to EditablePoly or EditableMesh!");
+}
+
+PySkinData* SkinData::getDataPoly()
+{
+	unsigned int vertexCount = this->iSkinContextData->GetNumPoints();
+	this->maxInfluenceCount = this->iSkinContextData->GetNumAssignedBones(0);
+	PySkinData* pySkinData = new PySkinData(vertexCount, this->maxInfluenceCount);
+
+	Matrix3 nodeTransform = this->node->GetObjectTM(0);
+	bool deleteIt;
+	PolyObject* polyObject = getPolyObjectFromNode(this->node, GetCOREInterface()->GetTime(), deleteIt);
+	MNMesh& mnMesh = polyObject->GetMesh();
+	for (unsigned int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
+	{
+		Point3 worldPosition = nodeTransform.PointTransform(mnMesh.V(vertexIndex)->p);
+		pySkinData->positions(vertexIndex, 0) = worldPosition.x;
+		pySkinData->positions(vertexIndex, 1) = worldPosition.y;
+		pySkinData->positions(vertexIndex, 2) = worldPosition.z;
+		this->collectWeightsAndBoneIDs(pySkinData, vertexIndex);
+	};
+	return pySkinData;
+}
+
+PySkinData* SkinData::getDataMesh()
+{
+	unsigned int vertexCount = this->iSkinContextData->GetNumPoints();
+	this->maxInfluenceCount = this->iSkinContextData->GetNumAssignedBones(0);
+	PySkinData* pySkinData = new PySkinData(vertexCount, this->maxInfluenceCount);
+
+	Matrix3 nodeTransform = this->node->GetObjectTM(0);
+	TriObject* triObject = getTriObjectFromNode(node, GetCOREInterface()->GetTime());
+	Mesh& mesh = triObject->GetMesh();
+	for (unsigned int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
+	{
+		Point3 worldPosition = nodeTransform.PointTransform(mesh.getVert(vertexIndex));
+		pySkinData->positions(vertexIndex, 0) = worldPosition.x;
+		pySkinData->positions(vertexIndex, 1) = worldPosition.y;
+		pySkinData->positions(vertexIndex, 2) = worldPosition.z;
+		this->collectWeightsAndBoneIDs(pySkinData, vertexIndex);
+	};
+	return pySkinData;
+}
+
+
+bool SkinData::setSkinWeights(Eigen::MatrixXi& boneIDs, Eigen::MatrixXf& vertexWeights)
 {
 	auto boneIDsRows = boneIDs.rows();
 	auto vertexWeightsRows = vertexWeights.rows();
@@ -193,6 +383,7 @@ bool SkinData::setSkinWeights(Eigen::MatrixXf& boneIDs, Eigen::MatrixXf& vertexW
 			bones.Append(1, &skinBones[boneID]);
 			weights.Append(1, &influenceWeight);
 		}
+
 		if (!this->iSkinImportData->AddWeights(this->node, vertexIndex, bones, weights))
 		{
 			return false;
@@ -205,20 +396,18 @@ bool SkinData::setSkinWeights(Eigen::MatrixXf& boneIDs, Eigen::MatrixXf& vertexW
 }
 
 
-
 inline std::vector<std::vector<std::vector <float>>> getSkinWeights(wchar_t* name)
 {
-	SkinData* skinData = new SkinData(name);
-	return skinData->getSkinWeights();
+	SkinData skinData(name);
+	return skinData.getSkinWeights();
 }
 
 
-bool setSkinWeights(wchar_t* name, Eigen::MatrixXf& boneIDs, Eigen::MatrixXf& weights)
+bool setSkinWeights(wchar_t* name, Eigen::MatrixXi& boneIDs, Eigen::MatrixXf& weights)
 {
-	SkinData* skinData = new SkinData(name);
-	return skinData->setSkinWeights(boneIDs, weights);
+	SkinData skinData(name);
+	return skinData.setSkinWeights(boneIDs, weights);
 }
-
 
 
 //inline bool setSkinWeights(wchar_t* name, py::array boneIDs, py::array weights)
@@ -255,17 +444,33 @@ bool setSkinWeights(wchar_t* name, Eigen::MatrixXf& boneIDs, Eigen::MatrixXf& we
 //}
 
 
-
-
 PYBIND11_MODULE(SkinPlusPlusPymxs, m) {
 
-	py::class_<SkinData>(m, "SkinData")
-		.def(py::init<>())
-		.def(py::init<const wchar_t*>())
-		.def("initialise", &SkinData::initialise)
-		.def("get_skin_weights", &SkinData::getSkinWeights)
-	;
-	//def("__init__", [](...) { ... }, py::arg().noconvert(), py::arg("arg2") = false);
+	py::class_<PySkinData>(m, "SkinData")
+		.def(py::init<int, int>())
+		.def_readonly("bone_ids", &PySkinData::boneIDs)
+		.def_readonly("weights", &PySkinData::weights)
+		.def_readonly("positions", &PySkinData::positions)
+		.def(
+			py::pickle(
+				[](const PySkinData& pySkinData) { // __getstate__
+					return py::make_tuple(pySkinData.boneIDs, pySkinData.weights, pySkinData.positions);
+				},
+				[](py::tuple data) { // __setstate__
+				
+					PySkinData pySkinData(data);
+
+					return pySkinData;
+				}
+			)
+		)
+		.def(
+			"__repr__", [](const PySkinData& o) {
+				auto vertexCount = o.boneIDs.rows();
+				auto influenceCount = o.boneIDs.cols();
+				return fmt::format("<PySkinData({}x{})>", vertexCount, influenceCount);
+			}
+		);
 	m.def("get_skin_weights", [&](wchar_t* name, int return_type)
 		{
 			std::vector<std::vector<std::vector<float>>> weights = getSkinWeights(name);
@@ -295,15 +500,17 @@ PYBIND11_MODULE(SkinPlusPlusPymxs, m) {
 		py::arg("name"),
 		py::arg("return_type")
 	);
-
-	m.def("test_nested_np_array", [&](py::array_t<float> array)
+	m.def("get_data", [&](wchar_t* name)
 		{
-			return array;
+			SkinData skinData(name);
+			PySkinData* pySkinData = skinData.getData();
+			return pySkinData;
+			
 		},
-		"Test nested np arrays",
-		py::arg("array")
+		"Get Skin Data",
+		py::arg("name")
 	);
-	m.def("set_skin_weights", [&](wchar_t* name, Eigen::MatrixXf& boneIDs, Eigen::MatrixXf& weights)
+	m.def("set_skin_weights", [&](wchar_t* name, Eigen::MatrixXi& boneIDs, Eigen::MatrixXf& weights)
 		{
 			return setSkinWeights(name, boneIDs, weights);
 		},
@@ -313,42 +520,8 @@ PYBIND11_MODULE(SkinPlusPlusPymxs, m) {
 		py::arg("weights")
 	);
 
-	//m.def("f", []() {
-	//		// Allocate and initialize some data; make this big so
-	//		// we can see the impact on the process memory use:
-	//		constexpr size_t size = 100 * 1000 * 1000;
-	//		double* foo = new double[size];
-	//		for (size_t i = 0; i < size; i++) {
-	//			foo[i] = (double)i;
-	//		}
-
-	//		// Create a Python object that will free the allocated
-	//		// memory when destroyed:
-	//		py::capsule free_when_done(foo, [](void* f) {
-	//			double* foo = reinterpret_cast<double*>(f);
-	//			std::cerr << "Element [0] = " << foo[0] << "\n";
-	//			std::cerr << "freeing memory @ " << f << "\n";
-	//			delete[] foo;
-	//			});
-
-	//		return py::array_t<double>(
-	//			{ 100, 1000, 1000 }, // shape
-	//			{ 1000 * 1000 * 8, 1000 * 8, 8 }, // C-style contiguous strides for double
-	//			foo, // the data pointer
-	//			free_when_done // numpy array references this parent
-	//		);
-	//	}
-	//);
-	//m.def("f", [&](wchar_t* name) {
-	//		std::vector<std::vector<std::vector <float>>> weights = getSkinWeights(name);
-	//		py::print(weights[0].size());
-	//		py::array_t<py::array_t<float>>({ 2, weights[0].size() }, weights[0])
-	//		
-	//		return py::array_t<py::array_t<py::array_t<float>>>(
-	//			{ 2, weights[0].size() }, // shape
-	//			{ 1000 * 1000 * 8, 1000 * 8, 8 }, // C-style contiguous strides for double
-	//			weights // the data pointer
-	//		);
+	//m.def("__repr__", [](const PySkinData& pySkinData) {
+	//	return "PySkinData<size:" + pySkinData.boneIDs.size() + "asdf>";
 	//	}
 	//);
 }

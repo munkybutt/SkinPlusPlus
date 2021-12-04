@@ -14,30 +14,67 @@
 #include <istdplug.h>
 #include <maxscript/util/listener.h>
 #include <modstack.h>
+#include <polyobj.h>
+#include <iepoly.h>
+#include <Max.h>
+#include <istdplug.h>
+#include <matrix3.h>
+
+#define FMT_HEADER_ONLY
+//#include <fmt/core.h>
+#include <fmt/format.h>
+//#include <fmt/format-inl.h>
+//#include <fmt/format.cc>
+//#include "iparamb2.h"
+//#include "iparamm2.h"
+//#include "notify.h"
+//#include "modstack.h"
+//#include "macrorec.h"
+//#include "utilapi.h"
+//#include "iFnPub.h"
 
 
 namespace py = pybind11;
+namespace eg = Eigen;
 
 
-//typedef std::vector<std::vector<std::vector <float>>> SkinDataVector_T;
-
-//using ValueArray = std::vector <float>;
-//using VertexArray = std::vector <ValueArray>;
-//using SkinArray = std::vector <VertexArray>;
-
-struct VertexData
+struct PySkinData final
 {
-private:
-	Tab<INode*> bones;
-	Tab<float> weights;
-
 public:
-	VertexData() {};
-	VertexData(int vertexID, py::array_t<float> boneIDs, py::array_t<float> weights, Tab<INode*> skinBones);
-	void initialiseVariables(int size);
-	void appendVariables(INode* bone, float weight);
-	Tab<INode*> getBones() { return this->bones; };
-	Tab<float> getWeights() { return this->weights; };
+	eg::MatrixXi boneIDs;
+	eg::MatrixXf weights;
+	eg::MatrixXf positions;
+
+	PySkinData() {}
+
+	PySkinData(int vertexCount, int maxInfluenceCount)
+	{
+		this->boneIDs = eg::MatrixXi(vertexCount, maxInfluenceCount);
+		this->weights = eg::MatrixXf(vertexCount, maxInfluenceCount);
+		this->positions = eg::MatrixXf(vertexCount, 3);
+	}
+
+	PySkinData(py::tuple data)
+	{
+		if (data.size() != 3)
+			throw std::runtime_error("Invalid state!");
+
+		this->setInternalState(data);
+	}
+
+	// Set the internal state of the object, replacing all data.
+	// The tuple structure is: (boneIDs, weights, positions).
+	void setInternalState(py::tuple data);
+
+	// Set a new maximum influence count
+	void setMaximumInfluenceCount(int influenceCount)
+	{
+		this->boneIDs.resize(eg::NoChange, influenceCount);
+		this->weights.resize(eg::NoChange, influenceCount);
+	}
+
+	~PySkinData() {}
+
 };
 
 
@@ -52,6 +89,10 @@ protected:
 	ISkin* iSkin;
 	ISkinContextData* iSkinContextData; // used to query skin data
 	ISkinImportData* iSkinImportData; // used to modify skin data
+	int maxInfluenceCount;
+
+private:
+	void collectWeightsAndBoneIDs(PySkinData* pySkinData, unsigned int vertexIndex);
 
 public:
 	SkinData() {};
@@ -59,10 +100,8 @@ public:
 	~SkinData(){}
 	bool initialise(const wchar_t* name);
 	std::vector<std::vector<std::vector <float>>> getSkinWeights();
-	//bool setSkinWeights(Array* boneIDs, Array* vertexWeights, Array* vertices = NULL);
-	//bool setSkinWeights(py::array_t<py::array_t<float>> boneIDs, py::array_t<py::array_t<float>> vertexWeights);
-	//bool setSkinWeights(py::array_t<float> boneIDs, py::array_t<float> vertexWeights);
-	bool setSkinWeights(Eigen::MatrixXf& boneIDs, Eigen::MatrixXf& vertexWeights);
-	bool setVertexWeights(int vertexIndex, Array* vertexBones, Array* vertexWeights);
-	bool setVertexWeights(const int vertexIndex, Array* inBoneIDs, Array* inVertexWeights, Tab<INode*> inSkinBones);
+	PySkinData* getDataMesh();
+	PySkinData* getDataPoly();
+	PySkinData* getData();
+	bool setSkinWeights(eg::MatrixXi& boneIDs, eg::MatrixXf& vertexWeights);
 };

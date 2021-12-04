@@ -5,12 +5,13 @@
     <ProjectGuid>e8b8f785-2830-442c-92f0-c9dd3291db0e</ProjectGuid>
     <ProjectHome>.</ProjectHome>
     <StartupFile>skin_plus_plus_pymxs.py</StartupFile>
-    <SearchPath>
-    </SearchPath>
+    <SearchPath>C:\Program Files\Python37;C:\Program Files\Python37\DLLs;C:\Program Files\Python37\tcl;C:\Program Files\Python37\Lib;C:\Program Files\Python37\libs</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>skin_plus_plus_pymxs</Name>
     <RootNamespace>skin_plus_plus_pymxs</RootNamespace>
+    <LaunchProvider>Standard Python launcher</LaunchProvider>
+    <EnableNativeCodeDebugging>True</EnableNativeCodeDebugging>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>

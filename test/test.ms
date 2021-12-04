@@ -5,23 +5,33 @@ fn mxsGetSkinWeights node = (
 	skopGetVertexWeight = skops.GetVertexWeight
 	skopGetVertexWeightCount = skops.GetVertexWeightCount
 	skopGetVertexWeightBoneID = skops.GetVertexWeightBoneID
-	-- skopReplaceVertexWeights = skops.ReplaceVertexWeights
-	-- skinOps.ReplaceVertexWeights <Skin> <vertex_integer> \ ( <vertex_bone_integer> | <vertex_bone_array> ) \
- 	-- ( <weight_float> | <weight_array> )  [(node:<node> | name:<string>)]
+	_polyOp = PolyOp()
+	polyOpGetVert = _polyOp.GetVert
+	_meshOp = MeshOp()
+	meshOpGetVert = _meshOp.GetVert
+	getVertPosition = polyOpGetVert
+	if ClassOf node == Editable_mesh do
+	(
+		getVertPosition = meshOpGetVert
+	)
+
 	skinModifier = node.Modifiers[Skin]
 	vertexCount = skops.GetNumberVertices(skinModifier)
 	skinWeights = #()
 	skinBoneIDs = #()
+	positions = #()
 	for vertexIndex = 1 to vertexCount do
 	(
 		influenceCount = skopGetVertexWeightCount skinModifier vertexIndex
 		vertexWeights = for influenceIndex = 1 to influenceCount collect skopGetVertexWeight skinModifier vertexIndex influenceIndex
 		vertexBoneIDs = for influenceIndex = 1 to influenceCount collect skopGetVertexWeightBoneID skinModifier vertexIndex influenceIndex
+		position = getVertPosition node vertexIndex
 		Append skinWeights vertexWeights
 		Append skinBoneIDs vertexBoneIDs
+		Append positions #(position.X, position.Y, position.Z)
 	)
 
-	#(skinWeights, skinBoneIDs)
+	#(skinWeights, skinBoneIDs, positions)
 )
 
 fn mxsSetSkinWeights node boneIDs weights = (
@@ -136,6 +146,7 @@ if False do
 	obj = $Sphere002
 	loopCount = 1
 
+	mxsGetSkinWeights obj
 	getFunctions = #(
 		mxs_GetSkinWeights,
 		cppfp_GetSkinWeights,
