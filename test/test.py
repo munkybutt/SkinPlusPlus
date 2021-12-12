@@ -1,13 +1,18 @@
 from __future__ import annotations
 
-import numpy as np
 import functools
+import numpy as np
 import pathlib
+import pickle
 import time
 
 from pymxs import runtime as mxRt
-from typing import Any
-from typing import Callable
+
+_typing = False
+if _typing:
+    from typing import Any
+    from typing import Callable
+del _typing
 
 _SKOPS = mxRt.SkinOps()
 GetVertexWeight = _SKOPS.GetVertexWeight
@@ -78,12 +83,18 @@ def getMxsFunctions():
 
 mxsGetSkinWeights, mxsSetSkinWeights = getMxsFunctions()
 
+
 def GetSkinWeights(node) -> tuple[list[list[float]], list[list[int]], list[tuple[float, float, float]]]:
     skinModifier = node.Modifiers[mxRt.Skin]
     vertexCount = _SKOPS.GetNumberVertices(skinModifier)
-    skinWeights: list[list[float]] = []
-    skinBoneIDs: list[list[int]] = []
-    positions: list[tuple[float, float, float]] = []
+    skinWeights: list[list[float]] = [None] * vertexCount
+    skinBoneIDs: list[list[int]] = [None] * vertexCount
+    positions: list[tuple[float, float, float]] = [None] * vertexCount
+
+    getVertPosition = POLYOP_GetVert
+    if mxRt.ClassOf(node) == mxRt.Editable_Mesh:
+        getVertPosition = MESHOP_GetVert
+
     for vertexIndex in range(1, vertexCount + 1):
         influenceCount = GetVertexWeightCount(skinModifier, vertexIndex)
         vertexWeights:list[float] = [
@@ -92,10 +103,45 @@ def GetSkinWeights(node) -> tuple[list[list[float]], list[list[int]], list[tuple
         vertexBoneIDs: list[int] = [
             GetVertexWeightBoneID(skinModifier, vertexIndex, influenceIndex) for influenceIndex in range(1, influenceCount + 1)
         ]
-        position = POLYOP_GetVert(node, vertexIndex)
-        skinWeights.append(vertexWeights)
-        skinBoneIDs.append(vertexBoneIDs)
-        positions.append((position.X, position.Y, position.Z))
+        position = getVertPosition(node, vertexIndex)
+        vertexIndexZero = vertexIndex - 1
+        skinWeights[vertexIndexZero] = vertexWeights
+        skinBoneIDs[vertexIndexZero] = vertexBoneIDs
+        positions[vertexIndexZero] = (position.X, position.Y, position.Z)
+
+    return skinWeights, skinBoneIDs, positions
+
+
+def GetSkinWeights_NP(node) -> tuple[np.ndarray[float, Any], np.ndarray[int, Any], np.ndarray[float, Any]]:
+    skinModifier = node.Modifiers[mxRt.Skin]
+    vertexCount = _SKOPS.GetNumberVertices(skinModifier)
+    getVertPosition = POLYOP_GetVert
+    if mxRt.ClassOf(node) == mxRt.Editable_Mesh:
+        getVertPosition = MESHOP_GetVert
+
+    skinWeights: np.ndarray[float, Any] = np.empty((vertexCount, 6), dtype=float)
+    skinBoneIDs: np.ndarray[float, Any] = np.empty((vertexCount, 6), dtype=int)
+    positions: np.ndarray[float, Any] = np.empty((vertexCount, 3), dtype=float)
+    for vertexIndex in range(1, vertexCount + 1):
+        influenceCount = GetVertexWeightCount(skinModifier, vertexIndex)
+        vertexWeights = np.array(
+            [
+                GetVertexWeight(skinModifier, vertexIndex, influenceIndex) for influenceIndex in range(1, influenceCount + 1)
+            ],
+            dtype=float
+        )
+        vertexBoneIDs = np.array(
+            [
+                GetVertexWeightBoneID(skinModifier, vertexIndex, influenceIndex) for influenceIndex in range(1, influenceCount + 1)
+            ],
+            dtype=float
+        )
+        mxs_position = list(getVertPosition(node, vertexIndex))
+        position = np.array(mxs_position, dtype=float)
+        vertexIndexZero = vertexIndex - 1
+        skinWeights[vertexIndexZero] = vertexWeights
+        skinBoneIDs[vertexIndexZero] = vertexBoneIDs
+        positions[vertexIndexZero] = position
 
     return skinWeights, skinBoneIDs, positions
 
@@ -106,7 +152,6 @@ def SetSkinWeights(node, boneIDs, weights) -> None:
     for vertexIndex in range(1, vertexCount):
         vertexIndexZero = vertexIndex - 1
         ReplaceVertexWeights(skinModifier, vertexIndex, boneIDs[vertexIndexZero], weights[vertexIndexZero])
-
 
 
 get_timer_dict: dict[str, tuple[float, Any, str]] = {}
@@ -139,31 +184,41 @@ def pymxs_GetSkinWeights(_obj):
 
 
 @timer(get_timer_dict)
+def pymxs_GetSkinWeights_NP(_obj):
+    return GetSkinWeights_NP(_obj)
+
+
+@timer(get_timer_dict)
 def cppfp_GetSkinWeights(_obj):
     data = SKINPP_GetSkinWeights(_obj)
-    weights = [list(weights) for weights in data[0]]
-    boneIDs = [list(boneIDs) for boneIDs in data[1]]
 
-    return weights, boneIDs
+    weights = np.array([list(weights) for weights in data[0]], dtype=float)
+    boneIDs = np.array([list(boneIDs) for boneIDs in data[1]], dtype=int)
+    positions = np.array([list(position) for position in data[2]], dtype=float)
+
+    return weights, boneIDs, positions
 
 
 @timer(get_timer_dict)
 def cpppm_GetSkinWeights(_obj):
     data = SKINPPOPS_GetSkinWeights(_obj)
-    weights = [list(weights) for weights in data[0]]
-    boneIDs = [list(boneIDs) for boneIDs in data[1]]
 
-    return weights, boneIDs
+    weights = np.array([list(weights) for weights in data[0]], dtype=float)
+    boneIDs = np.array([list(boneIDs) for boneIDs in data[1]], dtype=int)
+    positions = np.array([list(position) for position in data[2]], dtype=float)
+
+    return weights, boneIDs, positions
 
 
 @timer(get_timer_dict)
 def cpppf_GetSkinWeights(_obj):
     data = SPPGetSkinWeights(_obj)
 
-    weights = [list(weights) for weights in data[0]]
-    boneIDs = [list(boneIDs) for boneIDs in data[1]]
+    weights = np.array([list(weights) for weights in data[0]], dtype=float)
+    boneIDs = np.array([list(boneIDs) for boneIDs in data[1]], dtype=int)
+    positions = np.array([list(position) for position in data[2]], dtype=float)
 
-    return weights, boneIDs
+    return weights, boneIDs, positions
 
 
 @timer(get_timer_dict)
@@ -285,7 +340,7 @@ def run_functions(function_list, _obj, *args, loop_count: int = 1):
         # print(len(result))
 
 
-def process_results(time_data: "dict[str, tuple[float, Any, str]]"):
+def process_results(time_data: dict[str, tuple[float, Any, str]]):
     # times = []
     # values = []
     data = list(time_data.values())
@@ -306,11 +361,11 @@ def process_results(time_data: "dict[str, tuple[float, Any, str]]"):
 
 get_function_list = (
     pymxs_GetSkinWeights,
-    mxs_GetSkinWeights,
+    pymxs_GetSkinWeights_NP,
     mxs_GetSkinWeights_NP,
-    # cppfp_GetSkinWeights,
-    # cpppm_GetSkinWeights,
-    # cpppf_GetSkinWeights,
+    cppfp_GetSkinWeights,
+    cpppm_GetSkinWeights,
+    cpppf_GetSkinWeights,
     # pybind11_GetSkinWeights,
     # pybind11_GetSkinWeights_take_ownership,
     # pybind11_GetSkinWeights_copy,
@@ -323,31 +378,30 @@ get_function_list = (
     pybind11_GetData,
 )
 
-obj = mxRt.GetNodeByName("Sphere001")
+obj = mxRt.GetNodeByName("Sphere002")
 
 # print(mxRt.Selection[0].Transform.Position)
 
-# run_functions(get_function_list, obj)
-# process_results(get_timer_dict)
-import pickle
+run_functions(get_function_list, obj)
+process_results(get_timer_dict)
 
-data = pybind11_GetData(obj)
-print(data)
-print(data.bone_ids)
-print(len(data.bone_ids))
-print(data.weights)
-print(len(data.weights))
-with open(r"D:\Code\Git\SkinPlusPlus\test\skin_data.pkl", "wb") as file:
-    pickle.dump(data, file)
+# data = pybind11_GetData(obj)
+# print(data)
+# print(data.bone_ids)
+# print(len(data.bone_ids))
+# print(data.weights)
+# print(len(data.weights))
+# with open(r"D:\Code\Git\SkinPlusPlus\test\skin_data.pkl", "wb") as file:
+#     pickle.dump(data, file)
 
-with open(r"D:\Code\Git\SkinPlusPlus\test\skin_data.pkl", "rb") as file:
-    pdata = pickle.load(file)
+# with open(r"D:\Code\Git\SkinPlusPlus\test\skin_data.pkl", "rb") as file:
+#     pdata = pickle.load(file)
 
-print(pdata)
-print(pdata.bone_ids)
-print(len(pdata.bone_ids))
-print(pdata.weights)
-print(len(pdata.weights))
+# print(pdata)
+# print(pdata.bone_ids)
+# print(len(pdata.bone_ids))
+# print(pdata.weights)
+# print(len(pdata.weights))
 
 
 # print(pdata)

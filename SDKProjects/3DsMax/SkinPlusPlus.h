@@ -15,7 +15,10 @@
 #include <maxscript/foundation/numbers.h>
 #include "maxscript/macros/define_external_functions.h"
 #include <maxscript/macros/define_instantiation_functions.h>
+#include <maxscript/util/listener.h>
 #include <iskin.h>
+#include <polyobj.h>
+#include <iepoly.h>
 
 
 extern TCHAR *GetString(int id);

@@ -134,6 +134,26 @@ void VertexData::appendVariables(INode* bone, float weight)
 }
 
 
+PolyObject* getPolyObjectFromNode(INode* inNode, TimeValue inTime, bool& deleteIt)
+{
+	Object* object = inNode->GetObjectRef();
+	auto classID = Class_ID(POLYOBJ_CLASS_ID, 0);
+	if (object->CanConvertToType(classID))
+	{
+		PolyObject* polyObject = (PolyObject*)object->ConvertToType(inTime, classID);
+		// Note that the polyObject should only be deleted
+		// if the pointer to it is not equal to the object
+
+		// pointer that called ConvertToType()
+		if (object != polyObject) deleteIt = true;
+		return polyObject;
+	}
+	else
+	{
+		return NULL;
+	}
+}
+
  //SkinData Methods:
 
 bool SkinData::initialise(INode* skinnedNode)
@@ -172,13 +192,28 @@ void SkinData::getSkinWeights(Array& ioSkinData)
 	int vertexCount = this->iSkinContextData->GetNumPoints();
 	ScopedMaxScriptEvaluationContext scopedMaxScriptEvaluationContext;
 	MAXScript_TLS* _tls = scopedMaxScriptEvaluationContext.Get_TLS();
-	four_typed_value_locals_tls(Array* weights, Array* boneIDs, Array* influenceWeights, Array* influenceBoneIDs);
+	seven_typed_value_locals_tls(
+		Array * skinData,
+		Array * weights,
+		Array * positions,
+		Array * boneIDs,
+		Array * influenceWeights,
+		Array * influenceBoneIDs,
+		Array * position
+	);
 	vl.weights = new Array(vertexCount);
 	vl.boneIDs = new Array(vertexCount);
+	vl.positions = new Array(vertexCount);
 	vl.weights->size = vertexCount;
 	vl.boneIDs->size = vertexCount;
+	vl.positions->size = vertexCount;
+	Matrix3 nodeTransform = this->node->GetObjectTM(0);
+	bool deleteIt;
+	PolyObject* polyObject = getPolyObjectFromNode(this->node, GetCOREInterface()->GetTime(), deleteIt);
+	MNMesh& mnMesh = polyObject->GetMesh();
 	for (int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
 	{
+		the_listener->edit_stream->printf(_T("vertexIndex: %d"), vertexIndex);
 		int influenceCount = this->iSkinContextData->GetNumAssignedBones(vertexIndex);
 		vl.influenceWeights = new Array(influenceCount);
 		vl.influenceBoneIDs = new Array(influenceCount);
@@ -191,11 +226,22 @@ void SkinData::getSkinWeights(Array& ioSkinData)
 			vl.influenceWeights->data[influenceIndex] = Float::intern(infuenceWeight);
 			vl.influenceBoneIDs->data[influenceIndex] = Integer::intern(influenceBoneID);
 		}
+
+		Point3 localPosition = mnMesh.V(vertexIndex)->p;
+		Point3 worldPosition = nodeTransform.PointTransform(localPosition);
+		vl.position = new Array(3);
+		vl.position->size = 3;
+		vl.position->data[0] = Float::intern(worldPosition.x);
+		vl.position->data[1] = Float::intern(worldPosition.y);
+		vl.position->data[2] = Float::intern(worldPosition.z);
+
 		vl.weights->data[vertexIndex] = vl.influenceWeights;
 		vl.boneIDs->data[vertexIndex] = vl.influenceBoneIDs;
+		vl.positions->data[vertexIndex] = vl.position;
 	};
 	ioSkinData.data[0] = vl.weights;
 	ioSkinData.data[1] = vl.boneIDs;
+	ioSkinData.data[2] = vl.positions;
 }
 
 Array* SkinData::getSkinWeights()
@@ -203,15 +249,42 @@ Array* SkinData::getSkinWeights()
 	int vertexCount = this->iSkinContextData->GetNumPoints();
 	ScopedMaxScriptEvaluationContext scopedMaxScriptEvaluationContext;
 	MAXScript_TLS* _tls = scopedMaxScriptEvaluationContext.Get_TLS();
-	five_typed_value_locals_tls(
-		Array* skinData, Array* weights, Array* boneIDs, Array* influenceWeights, Array* influenceBoneIDs
+	seven_typed_value_locals_tls(
+		Array* skinData,
+		Array* weights,
+		Array* positions,
+		Array* boneIDs,
+		Array* influenceWeights,
+		Array* influenceBoneIDs,
+		Array* position
 	);
 	vl.weights = new Array(vertexCount);
 	vl.boneIDs = new Array(vertexCount);
+	vl.positions = new Array(vertexCount);
 	vl.weights->size = vertexCount;
 	vl.boneIDs->size = vertexCount;
+	vl.positions->size = vertexCount;
+
+	Matrix3 nodeTransform = this->node->GetObjectTM(0);
+	bool deleteIt;
+	PolyObject* polyObject = getPolyObjectFromNode(this->node, GetCOREInterface()->GetTime(), deleteIt);
+	MNMesh& mnMesh = polyObject->GetMesh();
+	//	pySkinData->positions(vertexIndex, 0) = worldPosition.x;
+	//	pySkinData->positions(vertexIndex, 1) = worldPosition.y;
+	//	pySkinData->positions(vertexIndex, 2) = worldPosition.z;
+
 	for (int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
 	{
+		the_listener->edit_stream->printf(_T("vertexIndex: %d"), vertexIndex);
+		Point3 worldPosition = nodeTransform.PointTransform(mnMesh.V(vertexIndex)->p);
+		vl.position = new Array(3);
+		vl.position->size = 3;
+		//vl.position->data[0] = Float::intern(worldPosition.x);
+		//vl.position->data[1] = Float::intern(worldPosition.y);
+		//vl.position->data[2] = Float::intern(worldPosition.z);
+		vl.position->data[0] = Float::intern(0.0f);
+		vl.position->data[1] = Float::intern(0.0f);
+		vl.position->data[2] = Float::intern(0.0f);
 		int influenceCount = this->iSkinContextData->GetNumAssignedBones(vertexIndex);
 		vl.influenceWeights = new Array(influenceCount);
 		vl.influenceBoneIDs = new Array(influenceCount);
@@ -226,11 +299,13 @@ Array* SkinData::getSkinWeights()
 		}
 		vl.weights->data[vertexIndex] = vl.influenceWeights;
 		vl.boneIDs->data[vertexIndex] = vl.influenceBoneIDs;
+		vl.positions->data[vertexIndex] = vl.position;
 	};
-	vl.skinData = new Array(2);
-	vl.skinData->size = 2;
+	vl.skinData = new Array(3);
+	vl.skinData->size = 3;
 	vl.skinData->data[0] = vl.weights;
 	vl.skinData->data[1] = vl.boneIDs;
+	vl.skinData->data[2] = vl.positions;
 	return_value_tls(vl.weights);
 }
 
@@ -330,8 +405,8 @@ Value* getSkinWeightsIO(Value** args)
 {
 	type_check(args[0], MAXNode, _T("getSkinWeights"));
 	one_typed_value_local(Array* skinData);
-	vl.skinData = new Array(2);
-	vl.skinData->size = 2;
+	vl.skinData = new Array(3);
+	vl.skinData->size = 3;
 	getSkinWeightsFn(((MAXNode*)args[0])->to_node(), *vl.skinData);
 	return_value(vl.skinData);
 }

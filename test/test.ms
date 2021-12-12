@@ -1,18 +1,22 @@
 pyTime = python.import "time"
 
+
+_SKINPPOPS = SkinPPOps()
+SkinPP.GetSkinWeights($Sphere002)
+
 fn mxsGetSkinWeights node = (
 	skops = SkinOps()
 	skopGetVertexWeight = skops.GetVertexWeight
 	skopGetVertexWeightCount = skops.GetVertexWeightCount
 	skopGetVertexWeightBoneID = skops.GetVertexWeightBoneID
+
 	_polyOp = PolyOp()
 	polyOpGetVert = _polyOp.GetVert
-	_meshOp = MeshOp()
-	meshOpGetVert = _meshOp.GetVert
 	getVertPosition = polyOpGetVert
 	if ClassOf node == Editable_mesh do
 	(
-		getVertPosition = meshOpGetVert
+		_meshOp = MeshOp()
+		getVertPosition = _meshOp.GetVert
 	)
 
 	skinModifier = node.Modifiers[Skin]
