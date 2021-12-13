@@ -3,12 +3,14 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>e8b8f785-2830-442c-92f0-c9dd3291db0e</ProjectGuid>
-    <ProjectHome>.</ProjectHome>
-    <StartupFile>skin_plus_plus_pymxs.py</StartupFile>
+    <ProjectHome>
+    </ProjectHome>
+    <StartupFile>
+    </StartupFile>
     <SearchPath>C:\Program Files\Python37;C:\Program Files\Python37\DLLs;C:\Program Files\Python37\tcl;C:\Program Files\Python37\Lib;C:\Program Files\Python37\libs</SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
-    <Name>skin_plus_plus_pymxs</Name>
+    <Name>skin_plus_plus</Name>
     <RootNamespace>skin_plus_plus_pymxs</RootNamespace>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
     <EnableNativeCodeDebugging>True</EnableNativeCodeDebugging>
@@ -22,7 +24,7 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="skin_plus_plus_pymxs.py" />
+    <Compile Include="skin_plus_plus.py" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

@@ -1,9 +1,5 @@
 #pragma once
-#include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
-#include <pybind11/stl.h>
-#include <pybind11/eigen.h>
-#include <Eigen/Geometry>
+#include <SkinPlusPlus.h>
 
 #include <cwchar>
 #include <locale>
@@ -12,96 +8,63 @@
 #include <inode.h>
 #include <iskin.h>
 #include <istdplug.h>
-#include <maxscript/util/listener.h>
 #include <modstack.h>
 #include <polyobj.h>
 #include <iepoly.h>
 #include <Max.h>
-#include <istdplug.h>
 #include <matrix3.h>
 
-#define FMT_HEADER_ONLY
-//#include <fmt/core.h>
-#include <fmt/format.h>
-//#include <fmt/format-inl.h>
-//#include <fmt/format.cc>
-//#include "iparamb2.h"
-//#include "iparamm2.h"
-//#include "notify.h"
-//#include "modstack.h"
-//#include "macrorec.h"
-//#include "utilapi.h"
-//#include "iFnPub.h"
 
 
-namespace py = pybind11;
-namespace eg = Eigen;
-
-
-struct PySkinData final
+class SkinManager
 {
-public:
-	eg::MatrixXi boneIDs;
-	eg::MatrixXf weights;
-	eg::MatrixXf positions;
-
-	PySkinData() {}
-
-	PySkinData(int vertexCount, int maxInfluenceCount)
-	{
-		this->boneIDs = eg::MatrixXi(vertexCount, maxInfluenceCount);
-		this->weights = eg::MatrixXf(vertexCount, maxInfluenceCount);
-		this->positions = eg::MatrixXf(vertexCount, 3);
-	}
-
-	PySkinData(py::tuple data)
-	{
-		if (data.size() != 3)
-			throw std::runtime_error("Invalid state!");
-
-		this->setInternalState(data);
-	}
-
-	// Set the internal state of the object, replacing all data.
-	// The tuple structure is: (boneIDs, weights, positions).
-	void setInternalState(py::tuple data);
-
-	// Set a new maximum influence count
-	void setMaximumInfluenceCount(int influenceCount)
-	{
-		this->boneIDs.resize(eg::NoChange, influenceCount);
-		this->weights.resize(eg::NoChange, influenceCount);
-	}
-
-	~PySkinData() {}
-
-};
-
-
-class SkinData
-{
-protected:
-	// Properties:
-	bool isValid = false;
-	INode* node;
-	IDerivedObject* iDerivedObject;
-	Modifier* skinModifier;
-	ISkin* iSkin;
-	ISkinContextData* iSkinContextData; // used to query skin data
-	ISkinImportData* iSkinImportData; // used to modify skin data
-	int maxInfluenceCount;
-
 private:
+	// Whether or not the skin manager is in a valid state.
+	// Either no node with the given name can be found, or
+	// the given node has no skin modifier on it.
+	bool isValid = false;
+
+	// The node with the skin modifier on it:
+	INode* node;
+
+	// Skin modifier, used to get the interfaces
+	Modifier* skinModifier;
+
+	// Interface for the skin modifier, used to query bone objects when setting skin weights
+	ISkin* iSkin;
+
+	// Used to query skin data without selecing skin modifier
+	ISkinContextData* iSkinContextData; 
+
+	// Used to modify skin data without selecting skin modifier
+	ISkinImportData* iSkinImportData;
+
+	// Used to track the maximum number of vertex weights, allowing data to be resized only when needed
+	int maximumVertexWeightCount;
+
+	// Get the vertex weights and bone ids and add them to the given PySkinData
 	void collectWeightsAndBoneIDs(PySkinData* pySkinData, unsigned int vertexIndex);
 
-public:
-	SkinData() {};
-	SkinData(const wchar_t* name) { this->initialise(name); }
-	~SkinData(){}
-	bool initialise(const wchar_t* name);
-	std::vector<std::vector<std::vector <float>>> getSkinWeights();
+	// Get the vertex weights, bone ids and positions - on an editable mesh:
 	PySkinData* getDataMesh();
+
+	// Get the vertex weights, bone ids and positions - on an editable poly:
 	PySkinData* getDataPoly();
+
+public:
+	SkinManager() {};
+	SkinManager(const wchar_t* name) { this->initialise(name); }
+	~SkinManager(){}
+
+	// Initialise the skin manager with the given node name
+	bool initialise(const wchar_t* name);
+
+	// Get the skin weights from the given node's skin modifier
+	std::vector<std::vector<std::vector <float>>> getSkinWeights();
+
+	// Get the vertex weights, bone ids and positions from the given node
 	PySkinData* getData();
+
+	// Set the skin weights to the given node's skin modifier
 	bool setSkinWeights(eg::MatrixXi& boneIDs, eg::MatrixXf& vertexWeights);
 };

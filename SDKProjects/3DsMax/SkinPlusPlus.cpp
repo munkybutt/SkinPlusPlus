@@ -137,8 +137,9 @@ void VertexData::appendVariables(INode* bone, float weight)
 PolyObject* getPolyObjectFromNode(INode* inNode, TimeValue inTime, bool& deleteIt)
 {
 	Object* object = inNode->GetObjectRef();
+	Object* nodeObjectBase = object->FindBaseObject();
 	auto classID = Class_ID(POLYOBJ_CLASS_ID, 0);
-	if (object->CanConvertToType(classID))
+	if (nodeObjectBase->CanConvertToType(classID))
 	{
 		PolyObject* polyObject = (PolyObject*)object->ConvertToType(inTime, classID);
 		// Note that the polyObject should only be deleted
@@ -155,7 +156,6 @@ PolyObject* getPolyObjectFromNode(INode* inNode, TimeValue inTime, bool& deleteI
 }
 
  //SkinData Methods:
-
 bool SkinData::initialise(INode* skinnedNode)
 {
 	this->allVertexData = Tab<VertexData*>();
@@ -187,8 +187,15 @@ bool SkinData::initialise(INode* skinnedNode)
 	return false;
 }
 
+
 void SkinData::getSkinWeights(Array& ioSkinData)
 {
+	Interface* coreInterface = GetCOREInterface();
+	ObjectState objectState = this->node->EvalWorldState(coreInterface->GetTime(), true);
+	Object* nodeObjectBase = objectState.obj->FindBaseObject();
+	EPoly* ePolyInterface = (EPoly*)(nodeObjectBase->GetInterface(EPOLY_INTERFACE));
+	MNMesh* mnMesh = ePolyInterface->GetMeshPtr();
+
 	int vertexCount = this->iSkinContextData->GetNumPoints();
 	ScopedMaxScriptEvaluationContext scopedMaxScriptEvaluationContext;
 	MAXScript_TLS* _tls = scopedMaxScriptEvaluationContext.Get_TLS();
@@ -208,9 +215,7 @@ void SkinData::getSkinWeights(Array& ioSkinData)
 	vl.boneIDs->size = vertexCount;
 	vl.positions->size = vertexCount;
 	Matrix3 nodeTransform = this->node->GetObjectTM(0);
-	bool deleteIt;
-	PolyObject* polyObject = getPolyObjectFromNode(this->node, GetCOREInterface()->GetTime(), deleteIt);
-	MNMesh& mnMesh = polyObject->GetMesh();
+
 	for (int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
 	{
 		the_listener->edit_stream->printf(_T("vertexIndex: %d"), vertexIndex);
@@ -227,7 +232,8 @@ void SkinData::getSkinWeights(Array& ioSkinData)
 			vl.influenceBoneIDs->data[influenceIndex] = Integer::intern(influenceBoneID);
 		}
 
-		Point3 localPosition = mnMesh.V(vertexIndex)->p;
+		MNVert vertex = mnMesh->v[vertexIndex];
+		Point3 localPosition = vertex.p;
 		Point3 worldPosition = nodeTransform.PointTransform(localPosition);
 		vl.position = new Array(3);
 		vl.position->size = 3;
@@ -243,6 +249,7 @@ void SkinData::getSkinWeights(Array& ioSkinData)
 	ioSkinData.data[1] = vl.boneIDs;
 	ioSkinData.data[2] = vl.positions;
 }
+
 
 Array* SkinData::getSkinWeights()
 {
@@ -269,9 +276,6 @@ Array* SkinData::getSkinWeights()
 	bool deleteIt;
 	PolyObject* polyObject = getPolyObjectFromNode(this->node, GetCOREInterface()->GetTime(), deleteIt);
 	MNMesh& mnMesh = polyObject->GetMesh();
-	//	pySkinData->positions(vertexIndex, 0) = worldPosition.x;
-	//	pySkinData->positions(vertexIndex, 1) = worldPosition.y;
-	//	pySkinData->positions(vertexIndex, 2) = worldPosition.z;
 
 	for (int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
 	{
@@ -279,9 +283,6 @@ Array* SkinData::getSkinWeights()
 		Point3 worldPosition = nodeTransform.PointTransform(mnMesh.V(vertexIndex)->p);
 		vl.position = new Array(3);
 		vl.position->size = 3;
-		//vl.position->data[0] = Float::intern(worldPosition.x);
-		//vl.position->data[1] = Float::intern(worldPosition.y);
-		//vl.position->data[2] = Float::intern(worldPosition.z);
 		vl.position->data[0] = Float::intern(0.0f);
 		vl.position->data[1] = Float::intern(0.0f);
 		vl.position->data[2] = Float::intern(0.0f);
@@ -309,6 +310,7 @@ Array* SkinData::getSkinWeights()
 	return_value_tls(vl.weights);
 }
 
+
 bool SkinData::setVertexWeights(int vertexIndex, Array* vertexBones, Array* vertexWeights)
 {
 	if (!(vertexWeights->size == vertexBones->size))
@@ -330,6 +332,7 @@ bool SkinData::setVertexWeights(int vertexIndex, Array* vertexBones, Array* vert
 	return result;
 }
 
+
 bool SkinData::setVertexWeights(const int vertexIndex, Array* boneIDs, Array* vertexWeights, Tab<INode*> skinBones)
 {
 	Array* vertexBoneIDs = (Array*)boneIDs->data[vertexIndex];
@@ -337,6 +340,7 @@ bool SkinData::setVertexWeights(const int vertexIndex, Array* boneIDs, Array* ve
 	VertexData* vertexData = new VertexData(vertexIndex, vertexBoneIDs, vertexBoneWeights, skinBones);
 	return this->iSkinImportData->AddWeights(this->node, vertexIndex, vertexData->getBones(), vertexData->getWeights());
 }
+
 
 bool SkinData::setSkinWeights(Array* boneIDs, Array* vertexWeights, Array* vertices)
 {
@@ -375,12 +379,12 @@ bool SkinData::setSkinWeights(Array* boneIDs, Array* vertexWeights, Array* verti
 
 
 // SkinData Functions:
-
 void getSkinWeightsFn(INode* node, Array& ioSkinData)
 {
 	SkinData* skinData = new SkinData(node);
 	skinData->getSkinWeights(ioSkinData);
 }
+
 
 Array* getSkinWeightsFn(INode* node)
 {
@@ -388,11 +392,13 @@ Array* getSkinWeightsFn(INode* node)
 	return skinData->getSkinWeights();
 }
 
+
 bool setVertexWeights(INode* node, int vertexIndex, Array* weightData)
 {
 	SkinData* skinData = new SkinData(node);
 	return skinData->setVertexWeights(vertexIndex, (Array*)weightData->data[0], (Array*)weightData->data[1]);
 }
+
 
 bool setSkinWeightsFn(INode* node, Array* boneIDs, Array* vertexWeights, Array* vertices)
 {
@@ -411,11 +417,6 @@ Value* getSkinWeightsIO(Value** args)
 	return_value(vl.skinData);
 }
 
-Value* getSkinWeightsIO(Value** args, int a)
-{
-	type_check(args[0], MAXNode, _T("getSkinWeights"));
-	return getSkinWeightsFn(((MAXNode*)args[0])->to_node());
-}
 
 Value* setSkinWeightsIO(Value** args)
 {
@@ -438,12 +439,6 @@ Value* getSkinWeightsMethod_cf(Value** arg_list, int count)
 	return getSkinWeightsIO(arg_list);
 }
 
-Value* getSkinWeightsMethod2_cf(Value** arg_list, int count)
-{
-	check_arg_count_with_keys(getSkinWeightsMethod2, 1, count);
-	return getSkinWeightsIO(arg_list, 0);
-}
-
 Value* getSkinWeightsFunction_cf(Value** arg_list, int count)
 {
 	check_arg_count_with_keys(getSkinWeightsFunction, 1, count);
@@ -451,8 +446,6 @@ Value* getSkinWeightsFunction_cf(Value** arg_list, int count)
 }
 
 def_struct_primitive_debug_ok(getSkinWeightsMethod, SkinPPOps, "GetSkinWeights");
-
-def_struct_primitive_debug_ok(getSkinWeightsMethod2, SkinPPOps, "GetSkinWeights2");
 
 def_visible_primitive_debug_ok(getSkinWeightsFunction, "SPPGetSkinWeights");
 
@@ -474,6 +467,76 @@ Value* setSkinWeightsFunction_cf(Value** arg_list, int count)
 def_struct_primitive(setSkinWeightsMethod, SkinPPOps, "SetSkinWeights");
 
 def_visible_primitive(setSkinWeightsFunction, "SPPSetSkinWeights");
+
+
+static bool applyOffsetToVertices(INode* inNode, Point3 inOffset)
+{
+	static bool success = false;
+	bool deleteIt = false;
+	bool polyDeleteIt = false;
+	Interface* coreInterface = GetCOREInterface();
+	PolyObject* polyObject = getPolyObjectFromNode(inNode, coreInterface->GetTime(), deleteIt);
+	if (polyObject)
+	{
+		MNMesh& mesh = polyObject->GetMesh();
+		for (int vertIndex = 0; vertIndex < mesh.VNum(); vertIndex++)
+		{
+			MNVert* vert = mesh.V(vertIndex);
+			vert->p += inOffset;
+		}
+		inNode->SetObjectRef(polyObject);
+		polyObject->FreeCaches();
+		polyObject->NotifyDependents(FOREVER, OBJ_CHANNELS, REFMSG_CHANGE);
+		coreInterface->RedrawViews(coreInterface->GetTime());
+		success = true;
+	}
+	return success;
+}
+
+Value* getPositions(INode* inNode)
+{
+	static bool success = false;
+	bool deleteIt = false;
+	bool polyDeleteIt = false;
+	Interface* coreInterface = GetCOREInterface();
+	PolyObject* polyObject = getPolyObjectFromNode(inNode, coreInterface->GetTime(), deleteIt);
+	if (polyObject)
+	{
+		ObjectState objectState = inNode->EvalWorldState(coreInterface->GetTime(), true);
+		Object* nodeObjectBase = objectState.obj->FindBaseObject();
+		EPoly* ePolyInterface = (EPoly*)(nodeObjectBase->GetInterface(EPOLY_INTERFACE));
+		MNMesh* mnMesh = ePolyInterface->GetMeshPtr();
+
+		Array* positions = new Array(mnMesh->VNum());
+		positions->size = mnMesh->VNum();
+		for (int index = 0; index < mnMesh->VNum(); index++)
+		{
+			MNVert vertex = mnMesh->v[0];
+			Point3 vertexPosition = vertex.p;
+			Array* _position = new Array(3);
+			_position->size = 3;
+			_position->data[0] = Float::intern(vertexPosition.x);
+			_position->data[1] = Float::intern(vertexPosition.y);
+			_position->data[2] = Float::intern(vertexPosition.z);
+			positions->data[index] = _position;
+			//deltaTab[index] = inOffset;
+		}
+
+		return positions;
+		//ePolyInterface->ApplyDelta(deltaTab, ePolyInterface, coreInterface->GetTime());
+	}
+	return &false_value;
+}
+
+Value* getPositions_cf(Value** arg_list, int count)
+{
+	// INode* skinnedNode, Value* boneIDs, Value* vertexWeights, Value* vertices
+	check_arg_count_with_keys(getPositions, 1, count);
+	INode* node = ((MAXNode*)arg_list[0])->to_node();
+	return getPositions(node);
+}
+
+def_struct_primitive(getPositions, SkinPPOps, "getPositions");
 
 
 struct SkinPlusPlusFunctionPublish : public FPStaticInterface
@@ -498,9 +561,10 @@ struct SkinPlusPlusFunctionPublish : public FPStaticInterface
 	const Array* Fn_GetSkinWeights(INode* skinnedNode)
 	{
 		one_typed_value_local(Array* skinData);
-		vl.skinData = new Array(2);
-		vl.skinData->size = 2;
-		getSkinWeightsFn(skinnedNode, *vl.skinData);
+		//vl.skinData = new Array(2);
+		//vl.skinData->size = 2;
+		//getSkinWeightsFn(skinnedNode, *vl.skinData);
+		vl.skinData = getSkinWeightsFn(skinnedNode);
 		return_value(vl.skinData);
 	}
 	

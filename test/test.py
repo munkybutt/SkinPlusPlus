@@ -39,9 +39,12 @@ POLYOP_GetVert = _POLYOP.GetVert
 
 import site
 # site.addsitedir(r"D:\Code\Git\SkinPlusPlus\PyModules\skin_plus_plus\x64\Debug")
-site.addsitedir(r"D:\Code\Git\SkinPlusPlus\PyModules\skin_plus_plus\x64\Release")
+site.addsitedir(r"D:\Code\Git\SkinPlusPlus\PYProjects\skin_plus_plus\output\x64\2022-Release")
+site.addsitedir(r"D:\Code\Git\SkinPlusPlus\PYProjects\skin_plus_plus\x64\Release")
 
 import SkinPlusPlusPymxs
+import SkinPlusPlusPy
+
 
 # skin_data = SkinPlusPlusPymxs.SkinData()
 # skin_data.initialise("Sphere001")
@@ -364,8 +367,8 @@ get_function_list = (
     pymxs_GetSkinWeights_NP,
     mxs_GetSkinWeights_NP,
     cppfp_GetSkinWeights,
-    cpppm_GetSkinWeights,
-    cpppf_GetSkinWeights,
+    # cpppm_GetSkinWeights,
+    # cpppf_GetSkinWeights,
     # pybind11_GetSkinWeights,
     # pybind11_GetSkinWeights_take_ownership,
     # pybind11_GetSkinWeights_copy,

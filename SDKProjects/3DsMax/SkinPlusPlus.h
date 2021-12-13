@@ -3,22 +3,23 @@
 
 #include "3dsmaxsdk_preinclude.h"
 #include "resource.h"
-#include <istdplug.h>
 #include <iparamb2.h>
 #include <iparamm2.h>
 #include <maxtypes.h>
 #include <guplib.h>
-#include "modstack.h"
-//#include "modifiers/bonesdef/BONESDEF.H"
+#include <modstack.h>
 #include <maxscript/maxwrapper/mxsobjects.h>
 #include <maxscript/maxscript.h>
 #include <maxscript/foundation/numbers.h>
-#include "maxscript/macros/define_external_functions.h"
+#include <maxscript/macros/define_external_functions.h>
 #include <maxscript/macros/define_instantiation_functions.h>
 #include <maxscript/util/listener.h>
+#include <inode.h>
 #include <iskin.h>
+#include <istdplug.h>
 #include <polyobj.h>
 #include <iepoly.h>
+#include <Max.h>
 
 
 extern TCHAR *GetString(int id);
