@@ -52,12 +52,12 @@ Data returned is:
 ### 3DsMax 2022
 #### Get Skin Data
 
-| Method                                      | Time-secs | x Faster  | % Faster |
-|:--------------------------------------------|-----------|-----------|----------|
-| pymxs -> numpy array                        | 68.231    | base      | base     |
-| maxscript -> numpy array                    | 47.859    | 001.426x  | 0142.56% |
-| SDK function publish -> numpy array         | 12.800    | 005.330x  | 0533.06% |
-| pybind11 -> numpy array                     | 00.335    | 203.631x  | 4874.78% |
+| Method                                      | Time-secs | x Faster  | % Faster  |
+|:--------------------------------------------|-----------|-----------|-----------|
+| pymxs -> numpy array                        | 68.231    | base      | base      |
+| maxscript -> numpy array                    | 47.859    | 001.426x  | 00142.56% |
+| SDK function publish -> numpy array         | 12.800    | 005.330x  | 00533.06% |
+| pybind11 -> numpy array                     | 00.335    | 203.631x  | 20363.10% |
 
 #### Set Skin Data
 
