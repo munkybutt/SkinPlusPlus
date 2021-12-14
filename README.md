@@ -44,26 +44,20 @@
 
 ## Performance
 Performance tests are done on a mesh with 507,906 vertices, each with 6 influences.
+Data returned is:
+- numpy array of vertex weights
+- numpy array of vertex bone ids
+- numpy array of vertex positions
 
 ### 3DsMax 2022
 #### Get Skin Data
 
-| Method                                      | Time-secs | x Faster | % Faster |
-|:--------------------------------------------|-----------|----------|----------|
-| pymxs -> list                               | 20.347    | base     | base     |
-| maxscript -> numpy array                    | 15.518    | 01.311x  | 0131.12% |
-| maxscript -> list                           | 14.423    | 01.410x  | 0141.07% |
-| SDK primative -> list                       | 07.435    | 02.736x  | 0273.65% |
-| SDK function publish -> list                | 06.338    | 03.209x  | 0320.99% |
-| SDK struct primative -> list                | 05.982    | 03.401x  | 0340.11% |
-| pybind11 automatic -> numpy array           | 01.268    | 16.045x  | 1604.54% |
-| pybind11 move -> numpy array                | 01.097    | 18.533x  | 1853.30% |
-| pybind11 copy -> numpy array                | 00.986    | 20.627x  | 2062.70% |
-| pybind11 -> list                            | 00.902    | 22.537x  | 2253.74% |
-| pybind11 reference_internal -> numpy array  | 00.424    | 47.954x  | 4795.46% |
-| pybind11 automatic_reference -> numpy array | 00.423    | 48.033x  | 4803.31% |
-| pybind11 take_ownership -> numpy array      | 00.417    | 48.732x  | 4873.29% |
-| pybind11 reference -> numpy array           | 00.417    | 48.747x  | 4874.78% |
+| Method                                      | Time-secs | x Faster  | % Faster |
+|:--------------------------------------------|-----------|-----------|----------|
+| pymxs -> numpy array                        | 68.231    | base      | base     |
+| maxscript -> numpy array                    | 47.859    | 001.426x  | 0142.56% |
+| SDK function publish -> numpy array         | 12.800    | 005.330x  | 0533.06% |
+| pybind11 -> numpy array                     | 00.335    | 203.631x  | 4874.78% |
 
 #### Set Skin Data
 
