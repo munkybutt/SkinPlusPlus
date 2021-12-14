@@ -73,6 +73,7 @@ Data returned is:
 ## Roadmap
 * Include Vertex Positions
   - This will enable features for applying skin data to different topologies
+  - DONE
 
 * Support multiple DCCs
   - Maya
