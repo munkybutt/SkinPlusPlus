@@ -204,14 +204,19 @@ def cppfp_GetSkinWeights(_obj):
 
 @timer(get_timer_dict)
 def cpppm_GetSkinWeights(_obj):
-    data = SKINPPOPS_GetSkinWeights(_obj)
+    weights, boneIDs, positions = SKINPPOPS_GetSkinWeights(_obj)
 
-    weights = np.array([list(weights) for weights in data[0]], dtype=float)
-    boneIDs = np.array([list(boneIDs) for boneIDs in data[1]], dtype=int)
-    positions = np.array([list(position) for position in data[2]], dtype=float)
+    weights = np.array([list(weights) for weights in weights], dtype=float)
+    boneIDs = np.array([list(boneIDs) for boneIDs in boneIDs], dtype=int)
+    # positions = np.array([list(position) for position in positions], dtype=float)
+    # print(len(list(data[2])))
+    # print("---------------------")
+    # positions = np.array([list(position) for position in data[2]], dtype=float)
 
     return weights, boneIDs, positions
 
+# vals = mxRt._SKINPPOPS.GetSkinWeights(obj)
+# print(vals[2])
 
 @timer(get_timer_dict)
 def cpppf_GetSkinWeights(_obj):
@@ -366,8 +371,8 @@ get_function_list = (
     pymxs_GetSkinWeights,
     pymxs_GetSkinWeights_NP,
     mxs_GetSkinWeights_NP,
-    cppfp_GetSkinWeights,
-    # cpppm_GetSkinWeights,
+    # cppfp_GetSkinWeights,
+    cpppm_GetSkinWeights,
     # cpppf_GetSkinWeights,
     # pybind11_GetSkinWeights,
     # pybind11_GetSkinWeights_take_ownership,
@@ -381,7 +386,7 @@ get_function_list = (
     pybind11_GetData,
 )
 
-obj = mxRt.GetNodeByName("Sphere002")
+obj = mxRt.GetNodeByName("Sphere001")
 
 # print(mxRt.Selection[0].Transform.Position)
 

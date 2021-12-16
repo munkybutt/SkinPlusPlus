@@ -1,5 +1,5 @@
 #pragma once
-#include <SkinPlusPlus.h>
+#include <skin_plus_plus_py.h>
 
 #include <cwchar>
 #include <locale>

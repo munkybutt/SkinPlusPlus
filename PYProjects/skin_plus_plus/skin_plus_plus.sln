@@ -3,24 +3,26 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31912.275
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "skin_plus_plus", "skin_plus_plus_pymxs\skin_plus_plus.pyproj", "{E8B8F785-2830-442C-92F0-C9DD3291DB0E}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "skin_plus_plus_pymxs", "skin_plus_plus_pymxs\skin_plus_plus_pymxs.vcxproj", "{7BF5EA8D-2105-425A-967C-590AD47EC6CB}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SkinPlusPlusPymxs", "skin_plus_plus_pymxs\src\SkinPlusPlusPymxs\SkinPlusPlusPymxs.vcxproj", "{7BF5EA8D-2105-425A-967C-590AD47EC6CB}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SkinPlusPlusPy", "SkinPlusPlusPy\SkinPlusPlusPy.vcxproj", "{6A977F79-6449-4D2F-8B5F-9363A19F5046}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "skin_plus_plus_py", "skin_plus_plus_py\skin_plus_plus_py.vcxproj", "{6A977F79-6449-4D2F-8B5F-9363A19F5046}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		2021-Release|x64 = 2021-Release|x64
 		2022-Debug|x64 = 2022-Debug|x64
 		2022-Release|x64 = 2022-Release|x64
 		Debug|x64 = Debug|x64
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E8B8F785-2830-442C-92F0-C9DD3291DB0E}.2021-Release|x64.ActiveCfg = 2021-Release|Any CPU
 		{E8B8F785-2830-442C-92F0-C9DD3291DB0E}.2022-Debug|x64.ActiveCfg = 2022-Debug|Any CPU
 		{E8B8F785-2830-442C-92F0-C9DD3291DB0E}.2022-Release|x64.ActiveCfg = 2022-Release|Any CPU
 		{E8B8F785-2830-442C-92F0-C9DD3291DB0E}.Debug|x64.ActiveCfg = 2022-Debug|Any CPU
 		{E8B8F785-2830-442C-92F0-C9DD3291DB0E}.Release|x64.ActiveCfg = 2022-Release|Any CPU
+		{7BF5EA8D-2105-425A-967C-590AD47EC6CB}.2021-Release|x64.ActiveCfg = 2021-Release|x64
+		{7BF5EA8D-2105-425A-967C-590AD47EC6CB}.2021-Release|x64.Build.0 = 2021-Release|x64
 		{7BF5EA8D-2105-425A-967C-590AD47EC6CB}.2022-Debug|x64.ActiveCfg = 2022-Debug|x64
 		{7BF5EA8D-2105-425A-967C-590AD47EC6CB}.2022-Debug|x64.Build.0 = 2022-Debug|x64
 		{7BF5EA8D-2105-425A-967C-590AD47EC6CB}.2022-Release|x64.ActiveCfg = 2022-Release|x64
@@ -29,6 +31,8 @@ Global
 		{7BF5EA8D-2105-425A-967C-590AD47EC6CB}.Debug|x64.Build.0 = 2022-Debug|x64
 		{7BF5EA8D-2105-425A-967C-590AD47EC6CB}.Release|x64.ActiveCfg = 2022-Release|x64
 		{7BF5EA8D-2105-425A-967C-590AD47EC6CB}.Release|x64.Build.0 = 2022-Release|x64
+		{6A977F79-6449-4D2F-8B5F-9363A19F5046}.2021-Release|x64.ActiveCfg = Release|x64
+		{6A977F79-6449-4D2F-8B5F-9363A19F5046}.2021-Release|x64.Build.0 = Release|x64
 		{6A977F79-6449-4D2F-8B5F-9363A19F5046}.2022-Debug|x64.ActiveCfg = Debug|x64
 		{6A977F79-6449-4D2F-8B5F-9363A19F5046}.2022-Debug|x64.Build.0 = Debug|x64
 		{6A977F79-6449-4D2F-8B5F-9363A19F5046}.2022-Release|x64.ActiveCfg = Release|x64

@@ -1,7 +1,8 @@
-#include <SkinPlusPlus.h>
+#pragma once
+#include <skin_plus_plus_py.h>
 
 
-PYBIND11_MODULE(SkinPlusPlusPy, m) {
+PYBIND11_MODULE(skin_plus_plus_py, m) {
 
 	py::class_<PySkinData>(m, "SkinData")
 		.def(py::init<int, int>())

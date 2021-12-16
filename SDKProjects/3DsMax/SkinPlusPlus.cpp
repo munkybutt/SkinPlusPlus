@@ -155,6 +155,7 @@ PolyObject* getPolyObjectFromNode(INode* inNode, TimeValue inTime, bool& deleteI
 	}
 }
 
+
  //SkinData Methods:
 bool SkinData::initialise(INode* skinnedNode)
 {
@@ -190,23 +191,17 @@ bool SkinData::initialise(INode* skinnedNode)
 
 void SkinData::getSkinWeights(Array& ioSkinData)
 {
-	Interface* coreInterface = GetCOREInterface();
-	ObjectState objectState = this->node->EvalWorldState(coreInterface->GetTime(), true);
-	Object* nodeObjectBase = objectState.obj->FindBaseObject();
-	EPoly* ePolyInterface = (EPoly*)(nodeObjectBase->GetInterface(EPOLY_INTERFACE));
-	MNMesh* mnMesh = ePolyInterface->GetMeshPtr();
-
 	int vertexCount = this->iSkinContextData->GetNumPoints();
 	ScopedMaxScriptEvaluationContext scopedMaxScriptEvaluationContext;
 	MAXScript_TLS* _tls = scopedMaxScriptEvaluationContext.Get_TLS();
 	seven_typed_value_locals_tls(
-		Array * skinData,
-		Array * weights,
-		Array * positions,
-		Array * boneIDs,
-		Array * influenceWeights,
-		Array * influenceBoneIDs,
-		Array * position
+		Array* skinData,
+		Array* weights,
+		Array* positions,
+		Array* boneIDs,
+		Array* influenceWeights,
+		Array* influenceBoneIDs,
+		Array* position
 	);
 	vl.weights = new Array(vertexCount);
 	vl.boneIDs = new Array(vertexCount);
@@ -215,10 +210,13 @@ void SkinData::getSkinWeights(Array& ioSkinData)
 	vl.boneIDs->size = vertexCount;
 	vl.positions->size = vertexCount;
 	Matrix3 nodeTransform = this->node->GetObjectTM(0);
+	Object* nodeBaseObject = this->node->GetObjectRef()->FindBaseObject();
 
+	//if (nodeBaseObject->CanConvertToType(Class_ID(POLYOBJ_CLASS_ID, 0)))
+	EPoly* ePolyInterface = (EPoly*)(nodeBaseObject->GetInterface(EPOLY_INTERFACE));
+	MNMesh* mnMesh = ePolyInterface->GetMeshPtr();
 	for (int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
 	{
-		the_listener->edit_stream->printf(_T("vertexIndex: %d"), vertexIndex);
 		int influenceCount = this->iSkinContextData->GetNumAssignedBones(vertexIndex);
 		vl.influenceWeights = new Array(influenceCount);
 		vl.influenceBoneIDs = new Array(influenceCount);
@@ -231,10 +229,10 @@ void SkinData::getSkinWeights(Array& ioSkinData)
 			vl.influenceWeights->data[influenceIndex] = Float::intern(infuenceWeight);
 			vl.influenceBoneIDs->data[influenceIndex] = Integer::intern(influenceBoneID);
 		}
-
 		MNVert vertex = mnMesh->v[vertexIndex];
-		Point3 localPosition = vertex.p;
-		Point3 worldPosition = nodeTransform.PointTransform(localPosition);
+		Point3 vertexPosition = vertex.p;
+		Point3 worldPosition = nodeTransform.PointTransform(vertexPosition);
+
 		vl.position = new Array(3);
 		vl.position->size = 3;
 		vl.position->data[0] = Float::intern(worldPosition.x);
@@ -495,18 +493,11 @@ static bool applyOffsetToVertices(INode* inNode, Point3 inOffset)
 
 Value* getPositions(INode* inNode)
 {
-	static bool success = false;
-	bool deleteIt = false;
-	bool polyDeleteIt = false;
-	Interface* coreInterface = GetCOREInterface();
-	PolyObject* polyObject = getPolyObjectFromNode(inNode, coreInterface->GetTime(), deleteIt);
-	if (polyObject)
+	Object* nodeBaseObject = inNode->GetObjectRef()->FindBaseObject();
+	if (nodeBaseObject->CanConvertToType(Class_ID(POLYOBJ_CLASS_ID, 0)))
 	{
-		ObjectState objectState = inNode->EvalWorldState(coreInterface->GetTime(), true);
-		Object* nodeObjectBase = objectState.obj->FindBaseObject();
-		EPoly* ePolyInterface = (EPoly*)(nodeObjectBase->GetInterface(EPOLY_INTERFACE));
+		EPoly* ePolyInterface = (EPoly*)(nodeBaseObject->GetInterface(EPOLY_INTERFACE));
 		MNMesh* mnMesh = ePolyInterface->GetMeshPtr();
-
 		Array* positions = new Array(mnMesh->VNum());
 		positions->size = mnMesh->VNum();
 		for (int index = 0; index < mnMesh->VNum(); index++)
@@ -519,13 +510,11 @@ Value* getPositions(INode* inNode)
 			_position->data[1] = Float::intern(vertexPosition.y);
 			_position->data[2] = Float::intern(vertexPosition.z);
 			positions->data[index] = _position;
-			//deltaTab[index] = inOffset;
 		}
 
 		return positions;
-		//ePolyInterface->ApplyDelta(deltaTab, ePolyInterface, coreInterface->GetTime());
 	}
-	return &false_value;
+	return &Undefined_class;
 }
 
 Value* getPositions_cf(Value** arg_list, int count)

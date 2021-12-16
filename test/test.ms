@@ -2,11 +2,12 @@ pyTime = python.import "time"
 
 
 _SKINPPOPS = SkinPPOps()
--- getPropNames _SKINPPOPS
-_SKINPPOPS.GetSkinWeights $Sphere001
-_SKINPPOPS.getPositions $Sphere001 [0, 0, 0]
+-- -- getPropNames _SKINPPOPS
+vals = _SKINPPOPS.GetSkinWeights $Sphere002
+vals[3].Count
+-- _SKINPPOPS.getPositions $Sphere001
 
-SkinPP.GetSkinWeights $Sphere001
+-- SkinPP.GetSkinWeights $Sphere001
 
 fn mxsGetSkinWeights node = (
 	skops = SkinOps()

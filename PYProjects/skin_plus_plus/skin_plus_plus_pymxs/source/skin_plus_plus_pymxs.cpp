@@ -1,5 +1,5 @@
 #pragma once
-#include <SkinPlusPlusPymxs.h>
+#include <skin_plus_plus_pymxs.h>
 
 
 char convertWCharToChar(const wchar_t* text)
@@ -308,7 +308,7 @@ bool setSkinWeights(wchar_t* name, Eigen::MatrixXi& boneIDs, Eigen::MatrixXf& we
 }
 
 
-PYBIND11_MODULE(SkinPlusPlusPymxs, m) {
+PYBIND11_MODULE(skin_plus_plus_pymxs, m) {
 	m.def("get_skin_weights", [&](wchar_t* name, int return_type)
 		{
 			std::vector<std::vector<std::vector<float>>> weights = getSkinWeights(name);
