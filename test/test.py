@@ -39,14 +39,14 @@ POLYOP_GetVert = _POLYOP.GetVert
 
 import site
 # site.addsitedir(r"D:\Code\Git\SkinPlusPlus\PyModules\skin_plus_plus\x64\Debug")
-site.addsitedir(r"D:\Code\Git\SkinPlusPlus\PYProjects\skin_plus_plus\output\x64\2022-Release")
-site.addsitedir(r"D:\Code\Git\SkinPlusPlus\PYProjects\skin_plus_plus\x64\Release")
+site.addsitedir(r"D:\Code\Git\SkinPlusPlus\PYProjects\source\build\x64\2022-Release")
+site.addsitedir(r"D:\Code\Git\SkinPlusPlus\PYProjects\source\build\x64\Release")
 
-import SkinPlusPlusPymxs
-import SkinPlusPlusPy
+import skin_plus_plus_pymxs
+# import skin_plus_plus_py
 
 
-# skin_data = SkinPlusPlusPymxs.SkinData()
+# skin_data = skin_plus_plus_pymxs.SkinData()
 # skin_data.initialise("Sphere001")
 # skin_weights = skin_data.getSkinWeights()
 # print(skin_weights[0][1])
@@ -231,57 +231,58 @@ def cpppf_GetSkinWeights(_obj):
 
 @timer(get_timer_dict)
 def pybind11_GetSkinWeights(_obj):
-    return SkinPlusPlusPymxs.get_skin_weights(_obj.Name, 0)
+    return skin_plus_plus_pymxs.get_skin_weights(_obj.Name, 0)
 
 
 @timer(get_timer_dict)
 def pybind11_GetSkinWeights_take_ownership(_obj):
-    return SkinPlusPlusPymxs.get_skin_weights(_obj.Name, 1)
+    return skin_plus_plus_pymxs.get_skin_weights(_obj.Name, 1)
 
 
 @timer(get_timer_dict)
 def pybind11_GetSkinWeights_copy(_obj):
-    return SkinPlusPlusPymxs.get_skin_weights(_obj.Name, 2)
+    return skin_plus_plus_pymxs.get_skin_weights(_obj.Name, 2)
 
 
 @timer(get_timer_dict)
 def pybind11_GetSkinWeights_move(_obj):
-    return SkinPlusPlusPymxs.get_skin_weights(_obj.Name, 3)
+    return skin_plus_plus_pymxs.get_skin_weights(_obj.Name, 3)
 
 
 @timer(get_timer_dict)
 def pybind11_GetSkinWeights_reference(_obj):
-    return SkinPlusPlusPymxs.get_skin_weights(_obj.Name, 4)
+    return skin_plus_plus_pymxs.get_skin_weights(_obj.Name, 4)
 
 
 @timer(get_timer_dict)
 def pybind11_GetSkinWeights_reference_internal(_obj):
-    return SkinPlusPlusPymxs.get_skin_weights(_obj.Name, 5)
+    return skin_plus_plus_pymxs.get_skin_weights(_obj.Name, 5)
 
 
 @timer(get_timer_dict)
 def pybind11_GetSkinWeights_automatic(_obj):
-    return SkinPlusPlusPymxs.get_skin_weights(_obj.Name, 6)
+    return skin_plus_plus_pymxs.get_skin_weights(_obj.Name, 6)
 
 
 @timer(get_timer_dict)
 def pybind11_GetSkinWeights_automatic_reference(_obj):
-    return SkinPlusPlusPymxs.get_skin_weights(_obj.Name, 7)
+    return skin_plus_plus_pymxs.get_skin_weights(_obj.Name, 7)
 
 
 @timer(get_timer_dict)
 def pybind11_GetData(_obj):
-    return SkinPlusPlusPymxs.get_data(_obj.Name)
+    print(skin_plus_plus_pymxs.get_data)
+    return skin_plus_plus_pymxs.get_data(_obj.Name)
 
 @timer(get_timer_dict)
 def pybind11_GetData2(_obj):
-    return SkinPlusPlusPymxs.get_data2()
+    return skin_plus_plus_pymxs.get_data2()
 
 set_timer_dict: dict[str, tuple[float, Any, str]] = {}
 
 @timer(set_timer_dict)
 def set_skin_weights(_obj, _boneIDs, _weights):
-    SkinPlusPlusPymxs.set_skin_weights(
+    skin_plus_plus_pymxs.set_skin_weights(
         _obj.Name,
         _boneIDs,
         _weights
@@ -368,11 +369,11 @@ def process_results(time_data: dict[str, tuple[float, Any, str]]):
 
 
 get_function_list = (
-    pymxs_GetSkinWeights,
-    pymxs_GetSkinWeights_NP,
-    mxs_GetSkinWeights_NP,
+    # pymxs_GetSkinWeights,
+    # pymxs_GetSkinWeights_NP,
+    # mxs_GetSkinWeights_NP,
     # cppfp_GetSkinWeights,
-    cpppm_GetSkinWeights,
+    # cpppm_GetSkinWeights,
     # cpppf_GetSkinWeights,
     # pybind11_GetSkinWeights,
     # pybind11_GetSkinWeights_take_ownership,
@@ -440,6 +441,6 @@ set_function_list = (
 # a2 = as_mxs_array(npa, dtype=int)
 # print(a1)
 # print(a2)
-# print(SkinPlusPlusPymxs.test_nested_np_array(npa))
+# print(skin_plus_plus_pymxs.test_nested_np_array(npa))
 
-# SkinPlusPlusPymxs
+# skin_plus_plus_pymxs

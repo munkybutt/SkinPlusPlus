@@ -26,8 +26,10 @@
 
 <p align="center">
   <a href="#key-features">Key Features</a> •
+  <a href="#usage">Usage</a> •
   <a href="#performance">Performance</a> •
-  <a href="#roadmap">Roadmap</a>
+  <a href="#roadmap">Roadmap</a> •
+  <a href="#personal-info">Personal Info</a> •
 </p>
 
 
@@ -42,12 +44,23 @@
   - 3DsMax:
   	- Provided bindings are for 2022, but the backend should be compatible with any version of 3DsMax that has python
 
+## Usage
+There are three types of data that are of interest when working with skin data:
+- vertex bone weights (float)
+- vertex bone ids (int)
+- vertex positions (float)
+
+PySkinData is a c++ struct containing the above data, exposed to python as the SkinData class.  
+This struct allows the data to be typed correctly rather than all typed as floats.  
+On the c++ side, the data is stored in Eigen matrices.  
+On the Python side, the data is exposed via Pybind11 as numpy arrays.  
+It also provides a friendly interface to the raw data in the form of the following properties:
+- SkinData.weights
+- SkinData.bone_ids
+- SkinData.positions
+
 ## Performance
 Performance tests are done on a mesh with 507,906 vertices, each with 6 influences.
-Data returned is:
-- numpy array of vertex weights
-- numpy array of vertex bone ids
-- numpy array of vertex positions
 
 ### 3DsMax 2022
 #### Get Skin Data
@@ -69,6 +82,9 @@ Data returned is:
 | SDK struct primative <- mxs.Array | 05.838    | 01.714x  | 0171.43% |
 | SDK primative <- mxs.Array        | 05.694    | 01.757x  | 0175.76% |
 | pybind11 <- np.ndarray            | 00.184    | 54.345x  | 5434.57% |
+
+## Compilation Setup
+### Requirements
 
 ## Roadmap
 * Include Vertex Positions

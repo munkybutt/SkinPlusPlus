@@ -348,6 +348,16 @@ PYBIND11_MODULE(skin_plus_plus_pymxs, m) {
 		"Get Skin Data",
 		py::arg("name")
 	);
+	m.def("get_vertex_positions", [&](wchar_t* name)
+		{
+			SkinManager skinData(name);
+			PySkinData* pySkinData = skinData.getData();
+			return pySkinData;
+
+		},
+		"Get Skin Data",
+			py::arg("name")
+	);
 	m.def("set_skin_weights", [&](wchar_t* name, Eigen::MatrixXi& boneIDs, Eigen::MatrixXf& weights)
 		{
 			return setSkinWeights(name, boneIDs, weights);

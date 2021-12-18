@@ -442,3 +442,4 @@ MigrationBackup/
 PyProjects/3rdParty/
 PyProjects/venv37/
 temp.cpp
+*.max
