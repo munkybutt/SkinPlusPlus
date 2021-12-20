@@ -28,6 +28,7 @@
   <a href="#key-features">Key Features</a> •
   <a href="#usage">Usage</a> •
   <a href="#performance">Performance</a> •
+  <a href="#how-to-compile">How To Compile</a> •
   <a href="#roadmap">Roadmap</a> •
   <a href="#personal-info">Personal Info</a> •
 </p>
@@ -60,7 +61,7 @@ It also provides a friendly interface to the raw data in the form of the followi
 - SkinData.positions
 
 ## Performance
-Performance tests are done on a mesh with 507,906 vertices, each with 6 influences.
+Performance benchmarks are done on a mesh with 507,906 vertices, each with 6 influences.
 
 ### 3DsMax 2022
 #### Get Skin Data
@@ -83,8 +84,15 @@ Performance tests are done on a mesh with 507,906 vertices, each with 6 influenc
 | SDK primative <- mxs.Array        | 05.694    | 01.757x  | 0175.76% |
 | pybind11 <- np.ndarray            | 00.184    | 54.345x  | 5434.57% |
 
-## Compilation Setup
-### Requirements
+## How To Compile
+### Dependencies
+The c++ backend has 3 main dependencies
+- Pybind11
+  - Exposes c++ logic to python, circumventing native SDK mechanisms
+- Eigen
+  - Matrix library for c++, provides extremely performant backend for numpy
+- fmt
+  - Allows for easy string formatting in c++
 
 ## Roadmap
 * Include Vertex Positions
