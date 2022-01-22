@@ -99,6 +99,7 @@ The c++ backend has 3 main dependencies
   - [X] This will enable features for applying skin data to different topologies
 
 * Support multiple DCCs
+  - [x] 3DsMax
   - [ ] Maya
   - [ ] Blender
   - [ ] MotionBuilder
