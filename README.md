@@ -43,7 +43,9 @@
 
 * Currently supported DCCs:
   - 3DsMax:
-  	- Provided bindings are for 2022, but the backend should be compatible with any version of 3DsMax that has python
+  	- Compatible with 2021 and 2022 as they are the only versions with Python37
+  - Maya:
+    - Compatible 2022 as this is the only version with Python37
 
 ## Usage
 There are three types of data that are of interest when working with skin data:
@@ -100,7 +102,7 @@ The c++ backend has 3 main dependencies
 
 * Support multiple DCCs
   - [x] 3DsMax
-  - [ ] Maya
+  - [x] Maya
   - [ ] Blender
   - [ ] MotionBuilder
   - [ ] Houdini
