@@ -42,8 +42,8 @@ import site
 site.addsitedir(r"D:\Code\Git\SkinPlusPlus\PYProjects\source\build\x64\2022-Release")
 site.addsitedir(r"D:\Code\Git\SkinPlusPlus\PYProjects\source\build\x64\Release")
 
+import skin_plus_plus_py
 import skin_plus_plus_pymxs
-# import skin_plus_plus_py
 
 
 # skin_data = skin_plus_plus_pymxs.SkinData()
@@ -387,24 +387,24 @@ get_function_list = (
     pybind11_GetData,
 )
 
-obj = mxRt.GetNodeByName("Sphere001")
+obj = mxRt.GetNodeByName("test_mesh")
 
 # print(mxRt.Selection[0].Transform.Position)
 
-run_functions(get_function_list, obj)
-process_results(get_timer_dict)
+# run_functions(get_function_list, obj)
+# process_results(get_timer_dict)
 
-# data = pybind11_GetData(obj)
-# print(data)
-# print(data.bone_ids)
-# print(len(data.bone_ids))
-# print(data.weights)
-# print(len(data.weights))
-# with open(r"D:\Code\Git\SkinPlusPlus\test\skin_data.pkl", "wb") as file:
-#     pickle.dump(data, file)
+data = pybind11_GetData(obj)
+print(data)
+print(data.bone_ids)
+print(len(data.bone_ids))
+print(data.weights)
+print(len(data.weights))
+with open(r"D:\Code\Git\SkinPlusPlus\test\skin_data.pkl", "wb") as file:
+    pickle.dump(data, file)
 
-# with open(r"D:\Code\Git\SkinPlusPlus\test\skin_data.pkl", "rb") as file:
-#     pdata = pickle.load(file)
+with open(r"D:\Code\Git\SkinPlusPlus\test\skin_data.pkl", "rb") as file:
+    pdata = pickle.load(file)
 
 # print(pdata)
 # print(pdata.bone_ids)

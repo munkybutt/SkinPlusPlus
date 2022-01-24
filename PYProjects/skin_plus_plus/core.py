@@ -6,7 +6,7 @@ from . import get_vertex_positions
 from . import set_skin_weights
 
 import enum
-import json
+import pickle
 import scipy.sparse
 import pathlib
 
@@ -29,7 +29,8 @@ def export_skin_data(mesh_name: str, path: pathlib.Path):
 	"""
 
 	skin_data = get_data(mesh_name)
-	json.dump(path, skin_data)
+	with open(path, "wb") as path_data:
+		pickle.dump(skin_data, path_data)
 
 
 def import_skin_data(mesh_name: str, path: pathlib.Path, import_type: ImportType = ImportType.order):
@@ -37,8 +38,8 @@ def import_skin_data(mesh_name: str, path: pathlib.Path, import_type: ImportType
 	Load skin data from disk and apply it to the given mesh.
 	"""
 
-	with open(path, "wb") as path_data:
-		skin_data = json.load(path_data)
+	with open(path, "rb") as path_data:
+		skin_data = pickle.load(path_data)
 
 	return set_skin_weights(mesh_name, skin_data)
 

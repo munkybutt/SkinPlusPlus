@@ -364,8 +364,17 @@ PYBIND11_MODULE(skin_plus_plus_pymxs, m) {
 		},
 		"Set Skin Weights",
 		py::arg("name"),
-		py::arg("boneIDs"),
+		py::arg("bone_ids"),
 		py::arg("weights")
+	);
+	m.def("set_skin_weights", [&](wchar_t* name, PySkinData& skinData)
+		{
+			SkinManager skinManager(name);
+			return skinManager.setSkinWeights(skinData.boneIDs, skinData.weights);
+		},
+		"Set Skin Weights",
+		py::arg("name"),
+		py::arg("skin_data")
 	);
 
 	//m.def("__repr__", [](const PySkinData& pySkinData) {
