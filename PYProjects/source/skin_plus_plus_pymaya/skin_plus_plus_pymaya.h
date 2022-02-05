@@ -64,5 +64,6 @@ public:
 	PySkinData getData();
 
 	// Set the skin weights to the given node's skin modifier
-	//bool setSkinWeights(eg::MatrixXi& boneIDs, eg::MatrixXf& vertexWeights);
+	bool setSkinWeights(eg::MatrixXi& boneIDs, eg::MatrixXf& vertexWeights);
+	bool setSkinWeights(eg::MatrixXi& boneIDs, eg::MatrixXf& vertexWeights, int option, bool fixedIds);
 };

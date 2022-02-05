@@ -247,14 +247,14 @@ bool SkinManager::setSkinWeights(Eigen::MatrixXi& boneIDs, Eigen::MatrixXf& vert
 	auto boneIDsCols = boneIDs.cols();
 	auto vertexWeightsCols = vertexWeights.cols();
 	if (boneIDsRows != vertexWeightsRows) throw std::length_error(
-		"skin bone ids count does not match skin weights count" + convertWCharToChar(this->node->GetName())
+		"skin bone ids count does not match skin weights count: " + convertWCharToChar(this->node->GetName())
 	);
 	if (boneIDsCols != vertexWeightsCols) throw std::length_error(
-		"skin bone ids count does not match skin weights count" + convertWCharToChar(this->node->GetName())
+		"skin bone ids count does not match skin weights count: " + convertWCharToChar(this->node->GetName())
 	);
 	auto vertexCount = this->iSkinContextData->GetNumPoints();
 	if (boneIDsRows != vertexCount) throw std::length_error(
-		"skin vertex count does not match provided data count" + convertWCharToChar(this->node->GetName())
+		"skin vertex count does not match provided data count: " + convertWCharToChar(this->node->GetName())
 	);
 	Tab<INode*> skinBones;
 	auto skinBonesCount = this->iSkin->GetNumBones();
