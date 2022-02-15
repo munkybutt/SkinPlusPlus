@@ -23,6 +23,7 @@ public:
 	eg::MatrixXi boneIDs;
 	eg::MatrixXf weights;
 	eg::MatrixXf positions;
+	std::vector<std::string> boneNames;
 
 	PySkinData() {}
 
@@ -35,19 +36,20 @@ public:
 
 	PySkinData(py::tuple data)
 	{
-		if (data.size() != 3)
+		if (data.size() != 4)
 			throw std::runtime_error("Invalid state!");
 
 		this->setInternalState(data);
 	}
 
 	// Set the internal state of the object, replacing all data.
-	// The tuple structure is: (boneIDs, weights, positions).
+	// The tuple structure is: (boneNames, boneIDs, weights, positions).
 	void setInternalState(py::tuple data)
 	{
-		this->boneIDs = py::cast<eg::MatrixXi>(data[0]);
-		this->weights = py::cast<eg::MatrixXf>(data[1]);
-		this->positions = py::cast<eg::MatrixXf>(data[2]);
+		this->boneNames = py::cast<std::vector<std::string>>(data[0]);
+		this->boneIDs = py::cast<eg::MatrixXi>(data[1]);
+		this->weights = py::cast<eg::MatrixXf>(data[2]);
+		this->positions = py::cast<eg::MatrixXf>(data[3]);
 	}
 
 	// Set a new maximum influence count

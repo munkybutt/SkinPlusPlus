@@ -9,19 +9,93 @@
 //#include <maya/MItSurfaceCV.h>
 #include <maya/MFnDagNode.h>
 #include <maya/MFnMesh.h>
+#include <maya/MFnSingleIndexedComponent.h>
 #include <maya/MFnSkinCluster.h>
 #include <maya/MItDependencyGraph.h>
 #include <maya/MPlug.h>
 #include <maya/MSelectionList.h>
 
 
-//#include <iostream>
-//
-//#include <maya/MItMeshPolygon.h>
-//#include <maya/MPointArray.h>
-//
-//#include <maya/MTime.h>
-//#include <maya/MAnimControl.h>
+
+const char* convertStringToChar(std::string text)
+{
+	const char* charArray;
+	charArray = &text[0];
+	return charArray;
+}
+
+
+bool getDagPathAndComponent(MString name, MDagPath& dagPath, MObject& component)
+{
+	MObject node;
+	MSelectionList selectionList;
+	selectionList.clear();
+	selectionList.add(name, true);
+	if (selectionList.isEmpty())
+	{
+		return false;
+	}
+	for (size_t i = 0; i < selectionList.length(); i++)
+	{
+		MStatus status = selectionList.getDependNode(i, node);
+		if (status == MS::kSuccess) // && node.hasFn(MFn::kSkinClusterFilter))
+		{
+			selectionList.getDagPath(i, dagPath, component);
+			if (component.isNull())
+			{
+				//Try to get the skin from the sel;
+				MStatus status;
+				dagPath.extendToShape();
+
+				MFnSingleIndexedComponent singleIndexComponent;
+				singleIndexComponent.setComplete(true);
+				component = singleIndexComponent.create(MFn::kMeshVertComponent, &status);
+				if (status != MS::kSuccess || component.isNull()) py::print("Component not defined!");
+			}
+		}
+
+
+		return dagPath.isValid();
+
+	}
+	throw std::exception("Given node is invalid or is not compatible with skin clusters");
+}
+
+
+bool getDagPathAndComponent(const wchar_t* name, MDagPath& dagPath, MObject& component)
+{
+	MString mName(name);
+	return getDagPathAndComponent(mName, dagPath, component);
+}
+
+
+MStatus getMeshAndSkinFns(MFnMesh& fnMesh, MFnSkinCluster& fnSkinCluster)
+{
+	MStatus status;
+	MObject meshObj = fnMesh.object(&status);
+	if (status != MS::kSuccess)
+	{
+		return status;
+	}
+	MItDependencyGraph itDependencyGraph(
+		meshObj,
+		MFn::kSkinClusterFilter,
+		MItDependencyGraph::kUpstream,
+		MItDependencyGraph::kBreadthFirst,
+		MItDependencyGraph::kNodeLevel,
+		&status
+	);
+	if (status != MS::kSuccess)
+	{
+		return status;
+	}
+	if (itDependencyGraph.isDone())
+	{
+		throw std::exception("Given node is invalid or is not compatible with skin clusters");
+	}
+
+	return fnSkinCluster.setObject(itDependencyGraph.currentItem());
+}
 
 
 class SkinManagerMaya
@@ -47,6 +121,8 @@ private:
 
 	MObject component;
 
+	MString name;
+
 public:
 	SkinManagerMaya(const wchar_t* name) {
 		this->initialise(name);
@@ -65,5 +141,4 @@ public:
 
 	// Set the skin weights to the given node's skin modifier
 	bool setSkinWeights(eg::MatrixXi& boneIDs, eg::MatrixXf& vertexWeights);
-	bool setSkinWeights(eg::MatrixXi& boneIDs, eg::MatrixXf& vertexWeights, int option, bool fixedIds);
 };

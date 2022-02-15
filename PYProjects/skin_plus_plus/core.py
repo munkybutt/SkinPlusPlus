@@ -1,13 +1,14 @@
 from __future__ import annotations
 
+# DO NOT REMOVE - Required for access to SkinData class:
 from . import skin_plus_plus_py
-from . import get_data
-from . import get_vertex_positions
+from . import get_skin_data
+# from . import get_vertex_positions
 from . import set_skin_weights
 
 import enum
 import pickle
-import scipy.sparse
+# import scipy.sparse
 import pathlib
 
 _typing = False
@@ -28,7 +29,7 @@ def export_skin_data(mesh_name: str, path: pathlib.Path):
 	Get skin data from the given mesh and save it to disk.
 	"""
 
-	skin_data = get_data(mesh_name)
+	skin_data = get_skin_data(mesh_name)
 	with open(path, "wb") as path_data:
 		pickle.dump(skin_data, path_data)
 

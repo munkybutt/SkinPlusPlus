@@ -11,6 +11,11 @@ char convertWCharToChar(const wchar_t* text)
 	return StoreTextBuffer[0];
 }
 
+std::string convertWChartoString(const wchar_t* text)
+{
+	std::wstring ws(text);
+	return std::string(ws.begin(), ws.end());
+}
 
 INode* getChildByName(const wchar_t* name, INode* parent)
 {
@@ -79,8 +84,6 @@ const inline auto getMeshType(INode* node)
 	if (objectState.obj)
 	{
 		Object* object = objectState.obj->FindBaseObject();
-		//if (object->ClassID() == Class_ID(EDITTRIOBJ_CLASS_ID, 0)) return 0;
-		//else if (object->ClassID() == EPOLYOBJ_CLASS_ID) return 1;
 		if (object->CanConvertToType(Class_ID(POLYOBJ_CLASS_ID, 0))) return 0;
 		else if (object->CanConvertToType(Class_ID(TRIOBJ_CLASS_ID, 0))) return 1;
 	}
@@ -128,35 +131,35 @@ bool SkinManager::initialise(const wchar_t* name)
 }
 
 
-std::vector<std::vector<std::vector <float>>> SkinManager::getSkinWeights()
-{
-	if (!this->isValid)
-	{
-		throw std::exception("SkinData object is invalid. Cannot get skin weights.");
-	}
-	unsigned int vertexCount = this->iSkinContextData->GetNumPoints();
-	std::vector<std::vector<std::vector <float>>> skinDataArray(
-		2, std::vector<std::vector<float>>(vertexCount)
-	);
-	for (unsigned int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
-	{
-		auto influenceCount = this->iSkinContextData->GetNumAssignedBones(vertexIndex);
-		std::vector<float> influenceWeights(influenceCount);
-		std::vector<float> influenceBoneIDs(influenceCount);
-		skinDataArray[0][vertexIndex] = influenceWeights;  //influenceWeights
-		skinDataArray[1][vertexIndex] = influenceBoneIDs;  //influenceBoneIDs
-		for (auto influenceIndex = 0; influenceIndex < influenceCount; influenceIndex++)
-		{
-			auto infuenceWeight = this->iSkinContextData->GetBoneWeight(vertexIndex, influenceIndex);
-			if (infuenceWeight <= 0.0f) continue;
-			auto influenceBoneID = this->iSkinContextData->GetAssignedBone(vertexIndex, influenceIndex);
-			influenceWeights[influenceIndex] = infuenceWeight;
-			influenceBoneIDs[influenceIndex] = float(influenceBoneID);
-		}
-	};
-	return skinDataArray;
-}
-
+//std::vector<std::vector<std::vector <float>>> SkinManager::getSkinWeights()
+//{
+//	if (!this->isValid)
+//	{
+//		throw std::exception("SkinData object is invalid. Cannot get skin weights.");
+//	}
+//	unsigned int vertexCount = this->iSkinContextData->GetNumPoints();
+//	std::vector<std::vector<std::vector <float>>> skinDataArray(
+//		2, std::vector<std::vector<float>>(vertexCount)
+//	);
+//	for (unsigned int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
+//	{
+//		auto influenceCount = this->iSkinContextData->GetNumAssignedBones(vertexIndex);
+//		std::vector<float> influenceWeights(influenceCount);
+//		std::vector<float> influenceBoneIDs(influenceCount);
+//		skinDataArray[0][vertexIndex] = influenceWeights;  //influenceWeights
+//		skinDataArray[1][vertexIndex] = influenceBoneIDs;  //influenceBoneIDs
+//		for (auto influenceIndex = 0; influenceIndex < influenceCount; influenceIndex++)
+//		{
+//			auto infuenceWeight = this->iSkinContextData->GetBoneWeight(vertexIndex, influenceIndex);
+//			if (infuenceWeight <= 0.0f) continue;
+//			auto influenceBoneID = this->iSkinContextData->GetAssignedBone(vertexIndex, influenceIndex);
+//			influenceWeights[influenceIndex] = infuenceWeight;
+//			influenceBoneIDs[influenceIndex] = float(influenceBoneID);
+//		}
+//	};
+//	return skinDataArray;
+//}
+//
 
 void SkinManager::collectWeightsAndBoneIDs(PySkinData* pySkinData, unsigned int vertexIndex)
 {
@@ -183,25 +186,32 @@ PySkinData* SkinManager::getData()
 	{
 		throw std::exception("SkinData object is invalid. Cannot get skin weights.");
 	}
+
+	unsigned int vertexCount = this->iSkinContextData->GetNumPoints();
+	this->maximumVertexWeightCount = this->iSkinContextData->GetNumAssignedBones(0);
+	this->pySkinData = new PySkinData(vertexCount, this->maximumVertexWeightCount);
+	auto skinBonesCount = this->iSkin->GetNumBones();
+	this->pySkinData->boneNames = std::vector<std::string>(skinBonesCount);
+	for (auto boneIndex = 0; boneIndex < skinBonesCount; boneIndex++)
+	{
+		this->pySkinData->boneNames[boneIndex] = convertWChartoString(this->iSkin->GetBone(boneIndex)->GetName());
+	}
 	auto meshType = getMeshType(this->node);
 	if (meshType == 0)
 	{
-		return this->getDataMesh();
+		return this->getDataMesh(vertexCount);
 	}
 	else if (meshType == 1)
 	{
-		return this->getDataPoly();
+		return this->getDataPoly(vertexCount);
 	}
 
 	throw std::exception("Unsupported mesh type, convert to EditablePoly or EditableMesh!");
 }
 
 
-PySkinData* SkinManager::getDataPoly()
+PySkinData* SkinManager::getDataPoly(int vertexCount)
 {
-	unsigned int vertexCount = this->iSkinContextData->GetNumPoints();
-	this->maximumVertexWeightCount = this->iSkinContextData->GetNumAssignedBones(0);
-	PySkinData* pySkinData = new PySkinData(vertexCount, this->maximumVertexWeightCount);
 
 	Matrix3 nodeTransform = this->node->GetObjectTM(0);
 	bool deleteIt;
@@ -210,42 +220,56 @@ PySkinData* SkinManager::getDataPoly()
 	for (unsigned int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
 	{
 		Point3 worldPosition = nodeTransform.PointTransform(mnMesh.V(vertexIndex)->p);
-		pySkinData->positions(vertexIndex, 0) = worldPosition.x;
-		pySkinData->positions(vertexIndex, 1) = worldPosition.y;
-		pySkinData->positions(vertexIndex, 2) = worldPosition.z;
-		this->collectWeightsAndBoneIDs(pySkinData, vertexIndex);
+		this->pySkinData->positions(vertexIndex, 0) = worldPosition.x;
+		this->pySkinData->positions(vertexIndex, 1) = worldPosition.y;
+		this->pySkinData->positions(vertexIndex, 2) = worldPosition.z;
+		this->collectWeightsAndBoneIDs(this->pySkinData, vertexIndex);
 	};
-	return pySkinData;
+	return this->pySkinData;
 }
 
 
-PySkinData* SkinManager::getDataMesh()
+PySkinData* SkinManager::getDataMesh(int vertexCount)
 {
-	unsigned int vertexCount = this->iSkinContextData->GetNumPoints();
-	this->maximumVertexWeightCount = this->iSkinContextData->GetNumAssignedBones(0);
-	PySkinData* pySkinData = new PySkinData(vertexCount, this->maximumVertexWeightCount);
-
 	Matrix3 nodeTransform = this->node->GetObjectTM(0);
 	TriObject* triObject = getTriObjectFromNode(node, GetCOREInterface()->GetTime());
 	Mesh& mesh = triObject->GetMesh();
 	for (unsigned int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
 	{
 		Point3 worldPosition = nodeTransform.PointTransform(mesh.getVert(vertexIndex));
-		pySkinData->positions(vertexIndex, 0) = worldPosition.x;
-		pySkinData->positions(vertexIndex, 1) = worldPosition.y;
-		pySkinData->positions(vertexIndex, 2) = worldPosition.z;
-		this->collectWeightsAndBoneIDs(pySkinData, vertexIndex);
+		this->pySkinData->positions(vertexIndex, 0) = worldPosition.x;
+		this->pySkinData->positions(vertexIndex, 1) = worldPosition.y;
+		this->pySkinData->positions(vertexIndex, 2) = worldPosition.z;
+		this->collectWeightsAndBoneIDs(this->pySkinData, vertexIndex);
 	};
-	return pySkinData;
+	return this->pySkinData;
 }
 
 
-bool SkinManager::setSkinWeights(Eigen::MatrixXi& boneIDs, Eigen::MatrixXf& vertexWeights)
+std::vector<int> getSortedBoneIDs(std::vector<std::string> cachedSkinBoneNames, std::vector<std::string> skinBoneNames)
 {
-	auto boneIDsRows = boneIDs.rows();
-	auto vertexWeightsRows = vertexWeights.rows();
-	auto boneIDsCols = boneIDs.cols();
-	auto vertexWeightsCols = vertexWeights.cols();
+	auto size = cachedSkinBoneNames.size();
+	auto sortedSkinBoneIDs = std::vector<int>(size);
+	for (size_t boneIndex = 0; boneIndex < size; boneIndex++)
+	{
+		std::string boneNameToFind = cachedSkinBoneNames[boneIndex];
+		auto itterator = std::find(skinBoneNames.begin(), skinBoneNames.end(), boneNameToFind);
+		if (itterator == skinBoneNames.end())
+		{
+			py::print("Cannot find bone named: {}", boneNameToFind);
+			continue;
+		}
+		auto index = std::distance(skinBoneNames.begin(), itterator);
+	}
+}
+
+
+bool SkinManager::setSkinWeights(PySkinData& skinData)
+{
+	auto boneIDsRows = skinData.boneIDs.rows();
+	auto vertexWeightsRows = skinData.weights.rows();
+	auto boneIDsCols = skinData.boneIDs.cols();
+	auto vertexWeightsCols = skinData.weights.cols();
 	if (boneIDsRows != vertexWeightsRows) throw std::length_error(
 		"skin bone ids count does not match skin weights count: " + convertWCharToChar(this->node->GetName())
 	);
@@ -258,6 +282,7 @@ bool SkinManager::setSkinWeights(Eigen::MatrixXi& boneIDs, Eigen::MatrixXf& vert
 	);
 	Tab<INode*> skinBones;
 	auto skinBonesCount = this->iSkin->GetNumBones();
+	auto skinBoneNames = std::vector<std::string>(skinBonesCount);
 	for (auto boneIndex = 0; boneIndex < skinBonesCount; boneIndex++)
 	{
 		INode* bone = this->iSkin->GetBone(boneIndex);
@@ -267,7 +292,9 @@ bool SkinManager::setSkinWeights(Eigen::MatrixXi& boneIDs, Eigen::MatrixXf& vert
 			continue;
 		}
 		skinBones.Append(1, &bone);
+		skinBoneNames[boneIndex] = convertWChartoString(bone->GetName());
 	}
+	//auto sortedBoneIDs = getSortedBoneIDs(skinData.boneNames, skinBoneNames);
 	for (auto vertexIndex = 0; vertexIndex < boneIDsRows; vertexIndex++)
 	{
 		Tab<INode*> bones = Tab<INode*>();
@@ -276,8 +303,9 @@ bool SkinManager::setSkinWeights(Eigen::MatrixXi& boneIDs, Eigen::MatrixXf& vert
 		weights.Resize(boneIDsCols);
 		for (auto influenceIndex = 0; influenceIndex < boneIDsCols; influenceIndex++)
 		{
-			auto boneID = boneIDs(vertexIndex, influenceIndex);
-			auto influenceWeight = vertexWeights(vertexIndex, influenceIndex);
+			auto boneID = skinData.boneIDs(vertexIndex, influenceIndex);
+			auto influenceWeight = skinData.weights(vertexIndex, influenceIndex);
+			//bones.Append(1, &skinBones[sortedBoneIDs[boneID]]);
 			bones.Append(1, &skinBones[boneID]);
 			weights.Append(1, &influenceWeight);
 		}
@@ -294,51 +322,51 @@ bool SkinManager::setSkinWeights(Eigen::MatrixXi& boneIDs, Eigen::MatrixXf& vert
 }
 
 
-inline std::vector<std::vector<std::vector <float>>> getSkinWeights(wchar_t* name)
-{
-	SkinManager skinData(name);
-	return skinData.getSkinWeights();
-}
+//inline std::vector<std::vector<std::vector <float>>> getSkinWeights(wchar_t* name)
+//{
+//	SkinManager skinData(name);
+//	return skinData.getSkinWeights();
+//}
 
 
-bool setSkinWeights(wchar_t* name, Eigen::MatrixXi& boneIDs, Eigen::MatrixXf& weights)
+bool setSkinWeights(wchar_t* name, PySkinData& skinData)
 {
-	SkinManager skinData(name);
-	return skinData.setSkinWeights(boneIDs, weights);
+	SkinManager skinData_(name);
+	return skinData_.setSkinWeights(skinData);
 }
 
 
 PYBIND11_MODULE(skin_plus_plus_pymxs, m) {
-	m.def("get_skin_weights", [&](wchar_t* name, int return_type)
-		{
-			std::vector<std::vector<std::vector<float>>> weights = getSkinWeights(name);
-			switch (return_type) {
-				case 0:
-					return py::cast(weights);
-				case 1:
-					return py::cast(weights, py::return_value_policy::take_ownership);
-				case 2:
-					return py::cast(weights, py::return_value_policy::copy);
-				case 3:
-					return py::cast(weights, py::return_value_policy::move);
-				case 4:
-					return py::cast(weights, py::return_value_policy::reference);
-				case 5:
-					return py::cast(weights, py::return_value_policy::reference_internal);
-				case 6:
-					return py::cast(weights, py::return_value_policy::automatic);
-				case 7:
-					return py::cast(weights, py::return_value_policy::automatic_reference);
-				default:
-					return py::cast(weights);
-			}
-			
-		},
-		"Get Skin Weights",
-		py::arg("name"),
-		py::arg("return_type")
-	);
-	m.def("get_data", [&](wchar_t* name)
+	//m.def("get_skin_weights", [&](wchar_t* name, int return_type)
+	//	{
+	//		std::vector<std::vector<std::vector<float>>> weights = getSkinWeights(name);
+	//		switch (return_type) {
+	//			case 0:
+	//				return py::cast(weights);
+	//			case 1:
+	//				return py::cast(weights, py::return_value_policy::take_ownership);
+	//			case 2:
+	//				return py::cast(weights, py::return_value_policy::copy);
+	//			case 3:
+	//				return py::cast(weights, py::return_value_policy::move);
+	//			case 4:
+	//				return py::cast(weights, py::return_value_policy::reference);
+	//			case 5:
+	//				return py::cast(weights, py::return_value_policy::reference_internal);
+	//			case 6:
+	//				return py::cast(weights, py::return_value_policy::automatic);
+	//			case 7:
+	//				return py::cast(weights, py::return_value_policy::automatic_reference);
+	//			default:
+	//				return py::cast(weights);
+	//		}
+	//		
+	//	},
+	//	"Get Skin Weights",
+	//	py::arg("name"),
+	//	py::arg("return_type")
+	//);
+	m.def("get_skin_data", [&](wchar_t* name)
 		{
 			SkinManager skinData(name);
 			PySkinData* pySkinData = skinData.getData();
@@ -352,25 +380,16 @@ PYBIND11_MODULE(skin_plus_plus_pymxs, m) {
 		{
 			SkinManager skinData(name);
 			PySkinData* pySkinData = skinData.getData();
-			return pySkinData;
+			return pySkinData->positions;
 
 		},
 		"Get Skin Data",
-			py::arg("name")
-	);
-	m.def("set_skin_weights", [&](wchar_t* name, Eigen::MatrixXi& boneIDs, Eigen::MatrixXf& weights)
-		{
-			return setSkinWeights(name, boneIDs, weights);
-		},
-		"Set Skin Weights",
-		py::arg("name"),
-		py::arg("bone_ids"),
-		py::arg("weights")
+		py::arg("name")
 	);
 	m.def("set_skin_weights", [&](wchar_t* name, PySkinData& skinData)
 		{
 			SkinManager skinManager(name);
-			return skinManager.setSkinWeights(skinData.boneIDs, skinData.weights);
+			return skinManager.setSkinWeights(skinData);
 		},
 		"Set Skin Weights",
 		py::arg("name"),

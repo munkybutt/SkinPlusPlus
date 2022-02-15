@@ -26,9 +26,19 @@ if "3ds max" in executable:
     import_path = f"{__name__}.dccs.max.{max_sub_module_name}.skin_plus_plus_pymxs"
     skin_plus_plus_pymxs = importlib.import_module(import_path)
 
-    get_data = skin_plus_plus_pymxs.get_data
-    get_vertex_positions = skin_plus_plus_pymxs.get_vertex_positions
+    get_skin_data = skin_plus_plus_pymxs.get_skin_data
+    # get_vertex_positions = skin_plus_plus_pymxs.get_vertex_positions
     set_skin_weights = skin_plus_plus_pymxs.set_skin_weights
+
+
+elif "maya" in executable:
+
+    # from maya import cmds
+    from .dccs.maya.skin_plus_plus_pymaya_2022 import skin_plus_plus_pymaya
+
+    get_skin_data = skin_plus_plus_pymaya.get_skin_data
+    # get_vertex_positions = skin_plus_plus_pymaya.get_vertex_positions
+    set_skin_weights = skin_plus_plus_pymaya.set_skin_weights
 
 else:
     raise RuntimeError(f"Unsupported executable: {executable}")
@@ -39,8 +49,8 @@ from .core import import_skin_data
 
 __all__ = (
     "export_skin_data",
-    "get_data",
-    "get_vertex_positions",
+    "get_skin_data",
+    # "get_vertex_positions",
     "import_skin_data",
     "set_skin_weights"
 )

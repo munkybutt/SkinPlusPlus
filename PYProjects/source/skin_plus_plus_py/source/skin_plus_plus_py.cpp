@@ -6,13 +6,19 @@ PYBIND11_MODULE(skin_plus_plus_py, m) {
 
 	py::class_<PySkinData>(m, "SkinData")
 		.def(py::init<int, int>())
+		.def_readonly("bone_names", &PySkinData::boneNames)
 		.def_readonly("bone_ids", &PySkinData::boneIDs)
 		.def_readonly("weights", &PySkinData::weights)
 		.def_readonly("positions", &PySkinData::positions)
 		.def(
 			py::pickle(
 				[](const PySkinData& pySkinData) { // __getstate__
-					return py::make_tuple(pySkinData.boneIDs, pySkinData.weights, pySkinData.positions);
+					return py::make_tuple(
+						pySkinData.boneNames,
+						pySkinData.boneIDs,
+						pySkinData.weights,
+						pySkinData.positions
+					);
 				},
 				[](py::tuple data) { // __setstate__
 

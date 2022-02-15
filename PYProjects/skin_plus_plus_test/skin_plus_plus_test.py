@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import functools
+import inspect
 import numpy as np
 import pathlib
+import pickle
 import site
 import sys
 import time
@@ -11,13 +13,17 @@ import unittest
 if __name__ == "__main__":
 
     def __setup__():
-
-        current_directory = pathlib.Path(__file__).parent
+        current_file = pathlib.Path(inspect.getfile(lambda: None))
+        if str(current_file) == "<maya console>":
+            # maya is a piece of shit:
+            current_file = pathlib.Path(
+                r"D:\Code\Git\SkinPlusPlus\PYProjects\skin_plus_plus_test\skin_plus_plus_test.py"
+            )
+        current_directory = current_file.parent
         site.addsitedir(str(current_directory.parent))
 
     __setup__()
 
-# raise
 import skin_plus_plus
 
 if __name__ == "__main__":
@@ -242,7 +248,7 @@ class SkinPlusPlusTestBase(unittest.TestCase):
 
         @timer(get_timer_dict)
         def pybind11_GetData(_obj):
-            return SkinPlusPlusPymxs.get_data(_obj.Name)
+            return SkinPlusPlusPymxs.get_skin_data(_obj.Name)
 
 
         set_timer_dict: dict[str, tuple[float, Any, str]] = {}
@@ -568,7 +574,7 @@ class SkinPlusPlusTestMax(SkinPlusPlusTestBase):
 
         @timer(get_timer_dict)
         def skin_plus_plus_get_data(_obj):
-            return skin_plus_plus.get_data(_obj.Name)
+            return skin_plus_plus.get_skin_data(_obj.Name)
 
 
         def run_functions(function_list, _obj, *args, loop_count: int = 1):
@@ -635,6 +641,10 @@ class SkinPlusPlusTestMax(SkinPlusPlusTestBase):
 
 
 if __name__ == "__main__":
+
+    # from pymxs import runtime as mxRt
+
+    # sel = tuple(mxRt.Selection)
     # unittest.main()
 
     # suite = unittest.TestSuite()
@@ -642,6 +652,13 @@ if __name__ == "__main__":
     # runner = unittest.TextTestRunner()
     # runner.run(suite)
 
-    runner = unittest.TextTestRunner()
-    suite = unittest.makeSuite(SkinPlusPlusTestMax)
-    runner.run(suite)
+    # runner = unittest.TextTestRunner()
+    # suite = unittest.makeSuite(SkinPlusPlusTestMax)
+    # runner.run(suite)
+    skin_data = skin_plus_plus.get_skin_data("test_mesh_low")
+    skin_plus_plus.set_skin_weights("test_mesh_low", skin_data)
+    # print(skin_data.positions)
+    # # assert False
+    # save_path = pathlib.Path(r"D:\Code\Git\SkinPlusPlus\PYProjects\skin_plus_plus_test\dcc_test_files\skin_data\mesh_low.skin")
+    # with save_path.open("wb") as file:
+    #     pickle.dump(skin_data, file)

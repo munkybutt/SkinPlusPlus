@@ -42,14 +42,16 @@ private:
 	// Used to track the maximum number of vertex weights, allowing data to be resized only when needed
 	int maximumVertexWeightCount;
 
+	PySkinData* pySkinData;
+
 	// Get the vertex weights and bone ids and add them to the given PySkinData
 	void collectWeightsAndBoneIDs(PySkinData* pySkinData, unsigned int vertexIndex);
 
 	// Get the vertex weights, bone ids and positions - on an editable mesh:
-	PySkinData* getDataMesh();
+	PySkinData* getDataMesh(int vertexCount);
 
 	// Get the vertex weights, bone ids and positions - on an editable poly:
-	PySkinData* getDataPoly();
+	PySkinData* getDataPoly(int vertexCount);
 
 public:
 	SkinManager() {};
@@ -66,5 +68,5 @@ public:
 	PySkinData* getData();
 
 	// Set the skin weights to the given node's skin modifier
-	bool setSkinWeights(eg::MatrixXi& boneIDs, eg::MatrixXf& vertexWeights);
+	bool setSkinWeights(PySkinData& skinData);
 };
