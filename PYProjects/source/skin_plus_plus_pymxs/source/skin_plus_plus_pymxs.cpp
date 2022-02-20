@@ -248,19 +248,27 @@ PySkinData* SkinManager::getDataMesh(int vertexCount)
 
 std::vector<int> getSortedBoneIDs(std::vector<std::string> cachedSkinBoneNames, std::vector<std::string> skinBoneNames)
 {
-	auto size = cachedSkinBoneNames.size();
-	auto sortedSkinBoneIDs = std::vector<int>(size);
-	for (size_t boneIndex = 0; boneIndex < size; boneIndex++)
+	auto cachedSize = cachedSkinBoneNames.size();
+	auto size = skinBoneNames.size();
+	auto sortedSkinBoneIDs = std::vector<int>(cachedSize);
+	for (size_t boneIndex = 0; boneIndex < cachedSize; boneIndex++)
 	{
 		std::string boneNameToFind = cachedSkinBoneNames[boneIndex];
-		auto itterator = std::find(skinBoneNames.begin(), skinBoneNames.end(), boneNameToFind);
-		if (itterator == skinBoneNames.end())
-		{
-			py::print("Cannot find bone named: {}", boneNameToFind);
-			continue;
-		}
-		auto index = std::distance(skinBoneNames.begin(), itterator);
+		auto index = std::distance(skinBoneNames.begin(), find(skinBoneNames.begin(), skinBoneNames.end(), boneNameToFind));
+		//auto itterator = std::find(skinBoneNames.begin(), skinBoneNames.end(), boneNameToFind);
+		//if (itterator == skinBoneNames.end())
+		//{
+		//	py::print("Cannot find bone named: {}", boneNameToFind);
+		//	continue;
+		//}
+		//auto index = std::distance(skinBoneNames.begin(), itterator);
+		if (index >= size) index = 0;
+		sortedSkinBoneIDs[boneIndex] = index;
+
+		py::print("boneIndex: {}", boneIndex);
+		py::print("index: {}", index);
 	}
+	return sortedSkinBoneIDs;
 }
 
 
@@ -294,7 +302,7 @@ bool SkinManager::setSkinWeights(PySkinData& skinData)
 		skinBones.Append(1, &bone);
 		skinBoneNames[boneIndex] = convertWChartoString(bone->GetName());
 	}
-	//auto sortedBoneIDs = getSortedBoneIDs(skinData.boneNames, skinBoneNames);
+	auto sortedBoneIDs = getSortedBoneIDs(skinData.boneNames, skinBoneNames);
 	for (auto vertexIndex = 0; vertexIndex < boneIDsRows; vertexIndex++)
 	{
 		Tab<INode*> bones = Tab<INode*>();
