@@ -73,7 +73,7 @@ Performance benchmarks are done on a mesh with 507,906 vertices, each with 6 inf
 | pymxs -> numpy array                        | 68.231    | base      | base      |
 | maxscript -> numpy array                    | 47.859    | 001.426x  | 00142.56% |
 | SDK function publish -> numpy array         | 12.800    | 005.330x  | 00533.06% |
-| pybind11 -> numpy array                     | 00.335    | 203.631x  | 20363.10% |
+| skin_plus_plus -> numpy array               | 00.335    | 203.631x  | 20363.10% |
 
 #### Set Skin Data
 
@@ -84,7 +84,16 @@ Performance benchmarks are done on a mesh with 507,906 vertices, each with 6 inf
 | SDK function publish <- mxs.Array | 07.368    | 01.358x  | 0135.82% |
 | SDK struct primative <- mxs.Array | 05.838    | 01.714x  | 0171.43% |
 | SDK primative <- mxs.Array        | 05.694    | 01.757x  | 0175.76% |
-| pybind11 <- np.ndarray            | 00.184    | 54.345x  | 5434.57% |
+| skin_plus_plus <- np.ndarray      | 00.184    | 54.345x  | 5434.57% |
+
+### Maya 2022
+#### Get Skin Data
+
+| Method                        | Time-secs | x Faster  | % Faster  |
+|:------------------------------|-----------|-----------|-----------|
+| maya.cmds -> numpy array      | 81.572    | base      | base      |
+| pymel -> numpy array          | 04.647    | 017.550x  | 01755.08% |
+| skin_plus_plus -> numpy array | 0.5235    | 155.810x  | 15580.99% |
 
 ## How To Compile
 ### Dependencies
