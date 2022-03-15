@@ -1,8 +1,6 @@
 #include <skin_plus_plus_pymaya.h>
 
 
-
-
 //bool getMeshPositions(const MDagPath& dagPath, Array<Vector3>* pointArray)
 //{
 //	nvDebugCheck(pointArray != NULL);
@@ -108,25 +106,6 @@ PySkinData SkinManagerMaya::getData()
 
 bool SkinManagerMaya::setSkinWeights(eg::MatrixXi& boneIDs, eg::MatrixXf& vertexWeights)
 {
-	/*
-	if you want to set the weights for three components for influences 7 and 10,
-	the influence array would contain[7, 10], and the values array would contain:
-	[
-		component#1 weight for influence 7,
-		component #1 weight for influence 10,
-		component#2 weight for influence 7,
-		component#2 weight for influence 10,
-		...
-	]
-	setWeights(const MDagPath & path,
-		const MObject & components,
-		MIntArray & influenceIndices,
-		MDoubleArray & values,
-		bool 	normalize = true,
-		MDoubleArray * oldValues = NULL
-	)
-	*/
-
 	size_t vertexCount = boneIDs.rows();
 	size_t vertexWeightsRows = vertexWeights.rows();
 	size_t influenceCount = boneIDs.cols();
@@ -140,6 +119,7 @@ bool SkinManagerMaya::setSkinWeights(eg::MatrixXi& boneIDs, eg::MatrixXf& vertex
 	}
 	if (influenceCount != vertexWeightsCols)
 	{
+		//fmt::to_char();
 		const char* exceptionText = convertStringToChar(
 			fmt::format("boneIDs column size: {} does not match vertexWeights column size: {}", influenceCount, vertexWeightsCols)
 		);
@@ -158,10 +138,6 @@ bool SkinManagerMaya::setSkinWeights(eg::MatrixXi& boneIDs, eg::MatrixXf& vertex
 			arrayIndex += influenceIndex;
 			auto boneID = boneIDs(vertexIndex, influenceIndex);
 			auto vertexWeight = vertexWeights(vertexIndex, influenceIndex);
-			//if (!fixedIds)
-			//{
-			//	mBoneIDs[arrayIndex] = boneID;
-			//}
 			mWeights[arrayIndex] = vertexWeight;
 		}
 	}
@@ -181,6 +157,8 @@ bool SkinManagerMaya::setSkinWeights(eg::MatrixXi& boneIDs, eg::MatrixXf& vertex
 
 
 PYBIND11_MODULE(skin_plus_plus_pymaya, m) {
+	#include <skin_plus_plus_py.h>
+
 	m.def("get_skin_data", [&](wchar_t* name)
 		{
 			SkinManagerMaya skinData(name);

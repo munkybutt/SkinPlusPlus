@@ -11,11 +11,15 @@ char convertWCharToChar(const wchar_t* text)
 	return StoreTextBuffer[0];
 }
 
-std::string convertWChartoString(const wchar_t* text)
-{
-	std::wstring ws(text);
-	return std::string(ws.begin(), ws.end());
-}
+
+//std::string convertWChartoString(const wchar_t* text)
+//{
+//	//fmt::format(text);
+//	auto text_ = fmt::to_string(text);
+//	std::wstring ws(text);
+//	return std::string(ws.begin(), ws.end());
+//}
+
 
 INode* getChildByName(const wchar_t* name, INode* parent)
 {
@@ -131,36 +135,6 @@ bool SkinManager::initialise(const wchar_t* name)
 }
 
 
-//std::vector<std::vector<std::vector <float>>> SkinManager::getSkinWeights()
-//{
-//	if (!this->isValid)
-//	{
-//		throw std::exception("SkinData object is invalid. Cannot get skin weights.");
-//	}
-//	unsigned int vertexCount = this->iSkinContextData->GetNumPoints();
-//	std::vector<std::vector<std::vector <float>>> skinDataArray(
-//		2, std::vector<std::vector<float>>(vertexCount)
-//	);
-//	for (unsigned int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
-//	{
-//		auto influenceCount = this->iSkinContextData->GetNumAssignedBones(vertexIndex);
-//		std::vector<float> influenceWeights(influenceCount);
-//		std::vector<float> influenceBoneIDs(influenceCount);
-//		skinDataArray[0][vertexIndex] = influenceWeights;  //influenceWeights
-//		skinDataArray[1][vertexIndex] = influenceBoneIDs;  //influenceBoneIDs
-//		for (auto influenceIndex = 0; influenceIndex < influenceCount; influenceIndex++)
-//		{
-//			auto infuenceWeight = this->iSkinContextData->GetBoneWeight(vertexIndex, influenceIndex);
-//			if (infuenceWeight <= 0.0f) continue;
-//			auto influenceBoneID = this->iSkinContextData->GetAssignedBone(vertexIndex, influenceIndex);
-//			influenceWeights[influenceIndex] = infuenceWeight;
-//			influenceBoneIDs[influenceIndex] = float(influenceBoneID);
-//		}
-//	};
-//	return skinDataArray;
-//}
-//
-
 void SkinManager::collectWeightsAndBoneIDs(PySkinData* pySkinData, unsigned int vertexIndex)
 {
 	auto influenceCount = this->iSkinContextData->GetNumAssignedBones(vertexIndex);
@@ -194,7 +168,7 @@ PySkinData* SkinManager::getData()
 	this->pySkinData->boneNames = std::vector<std::string>(skinBonesCount);
 	for (auto boneIndex = 0; boneIndex < skinBonesCount; boneIndex++)
 	{
-		this->pySkinData->boneNames[boneIndex] = convertWChartoString(this->iSkin->GetBone(boneIndex)->GetName());
+		this->pySkinData->boneNames[boneIndex] = fmt::to_string(this->iSkin->GetBone(boneIndex)->GetName());
 	}
 	auto meshType = getMeshType(this->node);
 	if (meshType == 0)
@@ -300,7 +274,7 @@ bool SkinManager::setSkinWeights(PySkinData& skinData)
 			continue;
 		}
 		skinBones.Append(1, &bone);
-		skinBoneNames[boneIndex] = convertWChartoString(bone->GetName());
+		skinBoneNames[boneIndex] = fmt::to_string(bone->GetName());
 	}
 	auto sortedBoneIDs = getSortedBoneIDs(skinData.boneNames, skinBoneNames);
 	for (auto vertexIndex = 0; vertexIndex < boneIDsRows; vertexIndex++)
@@ -330,13 +304,6 @@ bool SkinManager::setSkinWeights(PySkinData& skinData)
 }
 
 
-//inline std::vector<std::vector<std::vector <float>>> getSkinWeights(wchar_t* name)
-//{
-//	SkinManager skinData(name);
-//	return skinData.getSkinWeights();
-//}
-
-
 bool setSkinWeights(wchar_t* name, PySkinData& skinData)
 {
 	SkinManager skinData_(name);
@@ -345,35 +312,8 @@ bool setSkinWeights(wchar_t* name, PySkinData& skinData)
 
 
 PYBIND11_MODULE(skin_plus_plus_pymxs, m) {
-	//m.def("get_skin_weights", [&](wchar_t* name, int return_type)
-	//	{
-	//		std::vector<std::vector<std::vector<float>>> weights = getSkinWeights(name);
-	//		switch (return_type) {
-	//			case 0:
-	//				return py::cast(weights);
-	//			case 1:
-	//				return py::cast(weights, py::return_value_policy::take_ownership);
-	//			case 2:
-	//				return py::cast(weights, py::return_value_policy::copy);
-	//			case 3:
-	//				return py::cast(weights, py::return_value_policy::move);
-	//			case 4:
-	//				return py::cast(weights, py::return_value_policy::reference);
-	//			case 5:
-	//				return py::cast(weights, py::return_value_policy::reference_internal);
-	//			case 6:
-	//				return py::cast(weights, py::return_value_policy::automatic);
-	//			case 7:
-	//				return py::cast(weights, py::return_value_policy::automatic_reference);
-	//			default:
-	//				return py::cast(weights);
-	//		}
-	//		
-	//	},
-	//	"Get Skin Weights",
-	//	py::arg("name"),
-	//	py::arg("return_type")
-	//);
+	#include <skin_plus_plus_py.h>
+
 	m.def("get_skin_data", [&](wchar_t* name)
 		{
 			SkinManager skinData(name);

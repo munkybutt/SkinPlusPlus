@@ -2,9 +2,9 @@ pyTime = python.import "time"
 
 
 _SKINPPOPS = SkinPPOps()
--- -- getPropNames _SKINPPOPS
-vals = _SKINPPOPS.GetSkinWeights $Sphere002
-vals[3].Count
+-- getPropNames _SKINPPOPS
+-- vals = _SKINPPOPS.GetSkinWeights $Sphere002
+-- vals[3].Count
 -- _SKINPPOPS.getPositions $Sphere001
 
 -- SkinPP.GetSkinWeights $Sphere001

@@ -370,32 +370,33 @@ class SkinPlusPlusTestMaya(SkinPlusPlusTestBase):
     def test_get_performance(self):
         get_timer_dict: dict[str, tuple[float, Any, str]] = {}
 
-        def findRelatedSkinCluster(geometry):
+        def find_related_skin_cluster(geometry):
             if not self.cmds.objExists(geometry):
-                raise Exception('Object '+geometry+' does not exist!')
+                raise Exception(f"Object {geometry} does not exist!")
 
             if self.cmds.objectType(geometry) == "transform":
                 try: geometry = self.cmds.listRelatives(geometry, s=True, ni=True, pa=True)[0]
-                except: raise Exception('Object '+geometry+' has no deformable geometry!')
+                except: raise Exception(f"Object {geometry} has no deformable geometry!")
 
-            skin = self.mel.eval(f'findRelatedSkinCluster "{geometry}"')
+            skin = self.mel.eval(f"findRelatedSkinCluster '{geometry}'")
             if not skin:
                 skin = self.cmds.ls(self.cmds.listHistory(geometry),type='skinCluster')
-                if skin: skin = skin[0]
-            if not skin: skin = ''
+                skin = skin[0] if skin else None
+
+            if not skin:
+                raise RuntimeError(f"{geometry} has no skin cluster!")
 
             return skin
 
         @timer(get_timer_dict)
-        def get_skin_weights_cmds(_obj: str):
+        def cmds_get_skin_weights(_obj: str):
             vertex_count = self.cmds.polyEvaluate(_obj, vertex=True)
-            skin_cluster = findRelatedSkinCluster(_obj)
+            skin_cluster = find_related_skin_cluster(_obj)
             skin_weights = np.empty((vertex_count, 6), dtype=float)
             skin_bone_names = [None] * vertex_count
             positions: np.ndarray[float, Any] = np.empty((vertex_count, 3), dtype=float)
             for vertex_index in range(vertex_count):
                 vertex_index_str = f"{_obj}.vtx[{vertex_index}]"
-
                 vertex_weights = np.array(
                     self.cmds.skinPercent(
                         skin_cluster,
@@ -428,7 +429,7 @@ class SkinPlusPlusTestMaya(SkinPlusPlusTestBase):
             return skin_weights, positions, skin_bone_names
 
         @timer(get_timer_dict)
-        def get_skin_weights_pymel(_obj: str):
+        def pymel_get_skin_weights(_obj: str):
 
             def get_skin_cluster(__obj):
                 """Get the skincluster of a given object
@@ -550,8 +551,8 @@ class SkinPlusPlusTestMaya(SkinPlusPlusTestBase):
 
 
         get_function_list = (
-            get_skin_weights_cmds,
-            get_skin_weights_pymel,
+            cmds_get_skin_weights,
+            pymel_get_skin_weights,
             skin_plus_plus_get_skin_data,
         )
 
@@ -610,7 +611,7 @@ class SkinPlusPlusTestMaya(SkinPlusPlusTestBase):
 
 if __name__ == "__main__":
 
-    # get_skin_weights_cmds("test_mesh_low")
+    # cmds_get_skin_weights("test_mesh_low")
 
     # from pymxs import runtime as mxRt
 
@@ -618,7 +619,8 @@ if __name__ == "__main__":
     # unittest.main()
 
     suite = unittest.TestSuite()
-    suite.addTest(SkinPlusPlusTestMaya("test_get_performance"))
+    suite.addTest(SkinPlusPlusTestMax("test_get_performance"))
+    # suite.addTest(SkinPlusPlusTestMaya("test_get_performance"))
     runner = unittest.TextTestRunner()
     runner.run(suite)
 

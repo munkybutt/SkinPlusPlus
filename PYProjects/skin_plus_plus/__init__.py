@@ -2,12 +2,35 @@ from __future__ import annotations
 
 import importlib
 import pathlib
-import site
 import sys
 
+get_skin_data = None
+set_skin_weights = None
+# get_vertex_positions = None
 
-# DO NOT REMOVE - Required for access to SkinData class:
-from . import skin_plus_plus_py
+def __get_dcc_backend(dcc:str, version: str, api:str):
+    current_directory = pathlib.Path(__file__).parent
+    sub_module_name = f"skin_plus_plus_{api}_{version}"
+    sub_module_path = current_directory / f"dccs/{dcc}" / sub_module_name
+
+    print(f"sub_module_path: {sub_module_path}")
+
+    if not sub_module_path.exists():
+        raise FileNotFoundError(f"Unsupported DCC version!")
+
+    import_path = f"{__name__}.dccs.{dcc}.{sub_module_name}.skin_plus_plus_{api}"
+    backend = importlib.import_module(import_path)
+
+    global get_skin_data
+    global set_skin_weights
+    # global get_vertex_positions
+
+    get_skin_data = backend.get_skin_data
+    set_skin_weights = backend.set_skin_weights
+    # get_vertex_positions = skin_plus_plus_pymxs.get_vertex_positions
+
+    return backend
+
 
 executable = sys.executable.lower()
 if "3ds max" in executable:
@@ -16,29 +39,15 @@ if "3ds max" in executable:
 
     version_info = mxRt.MaxVersion()
     version_number = version_info[0]
-    current_directory = pathlib.Path(__file__).parent
-    max_sub_module_name = f"skin_plus_plus_pymxs_{version_number}"
-    max_sub_module_path = current_directory / "dccs/max" / max_sub_module_name
-
-    if not max_sub_module_path.exists():
-        raise FileNotFoundError(f"Unsupported DCC version!")
-
-    import_path = f"{__name__}.dccs.max.{max_sub_module_name}.skin_plus_plus_pymxs"
-    skin_plus_plus_pymxs = importlib.import_module(import_path)
-
-    get_skin_data = skin_plus_plus_pymxs.get_skin_data
-    # get_vertex_positions = skin_plus_plus_pymxs.get_vertex_positions
-    set_skin_weights = skin_plus_plus_pymxs.set_skin_weights
+    __get_dcc_backend("max", version_number, "pymxs")
 
 
 elif "maya" in executable:
 
-    # from maya import cmds
-    from .dccs.maya.skin_plus_plus_pymaya_2022 import skin_plus_plus_pymaya
+    from pymel import versions
 
-    get_skin_data = skin_plus_plus_pymaya.get_skin_data
-    # get_vertex_positions = skin_plus_plus_pymaya.get_vertex_positions
-    set_skin_weights = skin_plus_plus_pymaya.set_skin_weights
+    version = str(versions.current())[:4]
+    __get_dcc_backend("maya", version, "pymaya")
 
 else:
     raise RuntimeError(f"Unsupported executable: {executable}")
