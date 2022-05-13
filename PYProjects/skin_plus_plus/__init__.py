@@ -13,8 +13,6 @@ def __get_dcc_backend(dcc:str, version: str, api:str):
     sub_module_name = f"skin_plus_plus_{api}_{version}"
     sub_module_path = current_directory / f"dccs/{dcc}" / sub_module_name
 
-    print(f"sub_module_path: {sub_module_path}")
-
     if not sub_module_path.exists():
         raise FileNotFoundError(f"Unsupported DCC version!")
 

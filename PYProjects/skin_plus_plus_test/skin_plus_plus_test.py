@@ -4,6 +4,7 @@ import functools
 import inspect
 import numpy as np
 import pathlib
+import random
 import site
 import sys
 import time
@@ -64,6 +65,8 @@ def timer(data_dict: dict[str, tuple[float, Any, str]]) -> Callable:
 
 class SkinPlusPlusTestBase(unittest.TestCase):
 
+    nodes_to_delete = []
+
     @classmethod
     def setUpClass(cls):
         try:
@@ -73,6 +76,16 @@ class SkinPlusPlusTestBase(unittest.TestCase):
         cls._current_directory = pathlib.Path(file).parent
         cls._dcc_test_files_directory = cls._current_directory / "dcc_test_files"
         cls._skin_data_file = cls._dcc_test_files_directory / "test_skin_data.sknd"
+
+    @classmethod
+    def tearDownClass(cls):
+        # print("tearDownClass")
+        # print(f"cls.nodes_to_delete: {cls.nodes_to_delete}")
+        cls.delete_nodes(cls.nodes_to_delete)
+
+    @classmethod
+    def delete_nodes(cls, nodes):
+        raise NotImplementedError()
 
     @staticmethod
     def run_functions(function_list, _obj, *args, loop_count: int = 1):
@@ -114,52 +127,61 @@ class SkinPlusPlusTestMax(SkinPlusPlusTestBase):
         super().setUpClass()
         executable = sys.executable.lower()
         assert "3ds max" in executable
-
-        from pymxs import runtime as mxRt
-
-        cls.mxRt = mxRt
         cls.setup_mxs_environment()
 
-        version_info = cls.mxRt.MaxVersion()
-        max_file_path = pathlib.Path(
-            f"{cls._dcc_test_files_directory}/max/test_skin_data_{version_info[0]}.max"
-        )
-        current_max_file_path = pathlib.Path(cls.mxRt.MaxFilePath) / cls.mxRt.MaxFileName
-        if current_max_file_path == max_file_path:
-            return
-
-        if not max_file_path.exists():
-            raise FileNotFoundError(f"No test file for current max version:\n - {max_file_path}")
-
-        cls.mxRt.LoadMaxFile(str(max_file_path))
+    @classmethod
+    def delete_nodes(cls, nodes):
+        return cls.mxRt.Delete(nodes)
 
     @classmethod
     def setup_mxs_environment(cls):
-        skinOps = cls.mxRt.SkinOps()
+        from pymxs import runtime as mxRt
+
+        cls.mxRt = mxRt
+
+        skinOps = mxRt.SkinOps()
         cls.skinOps_GetNumberVertices = skinOps.GetNumberVertices
         cls.skinOps_GetVertexWeight = skinOps.GetVertexWeight
         cls.skinOps_GetVertexWeightCount = skinOps.GetVertexWeightCount
         cls.skinOps_GetVertexWeightBoneID = skinOps.GetVertexWeightBoneID
         cls.skinOps_ReplaceVertexWeights = skinOps.ReplaceVertexWeights
 
-
-        cls.skinPPOps = cls.mxRt.SkinPPOps()
+        cls.skinPPOps = mxRt.SkinPPOps()
         cls.sdk_primative_method_get_skin_weights = cls.skinPPOps.GetSkinWeights
-        cls.SkinPP_GetSkinWeights = cls.mxRt.SkinPP.GetSkinWeights
-        cls.SPP_GetSkinWeights = cls.mxRt.SPPGetSkinWeights
+        cls.SkinPP_GetSkinWeights = mxRt.SkinPP.GetSkinWeights
+        cls.SPP_GetSkinWeights = mxRt.SPPGetSkinWeights
 
-        cls.SKINPP_SetSkinWeights = cls.mxRt.SkinPP.SetSkinWeights
+        cls.SKINPP_SetSkinWeights = mxRt.SkinPP.SetSkinWeights
         cls.SKINPPOPS_SetSkinWeights = cls.skinPPOps.SetSkinWeights
-        cls.SPPSetSkinWeights = cls.mxRt.SPPSetSkinWeights
+        cls.SPPSetSkinWeights = mxRt.SPPSetSkinWeights
 
-
-        meshOp = cls.mxRt.MeshOp()
+        meshOp = mxRt.MeshOp()
         cls.meshOp_GetVert = meshOp.GetVert
 
-        polyOp = cls.mxRt.PolyOp()
+        polyOp = mxRt.PolyOp()
         cls.polyOp_GetVert = polyOp.GetVert
 
         cls.mxs_get_skin_weights, cls.mxs_set_skin_weights = cls.get_mxs_functions()
+
+        cls.skinned_sphere = mxRt.Sphere(Name="SkinnedSphere")
+        cls.skin_modifier = mxRt.Skin()
+        mxRt.AddModifier(cls.skinned_sphere, cls.skin_modifier)
+        cls.skinned_points = []
+        for num in range(4):
+            skinned_point = mxRt.Point(Name=f"SkinnedPoint_{num}")
+            update = -1 if num < 3 else 0
+            skinOps.AddBone(cls.skin_modifier, skinned_point, update)
+            cls.skinned_points.append(skinned_point)
+
+        cls.nodes_to_delete.append(cls.skinned_sphere)
+        cls.nodes_to_delete.extend(cls.skinned_points)
+        cls.weights = np.zeros((cls.skinned_sphere.Verts.Count, 4), dtype=float)
+        for index in range(cls.skinned_sphere.Verts.Count):
+            weights = [random.random() for _ in range(4)]
+            weights_total = sum(weights)
+            weights = [float(i) / weights_total for i in weights]
+            cls.weights[index] = np.array(weights, dtype=float)
+            cls.skinOps_ReplaceVertexWeights(cls.skin_modifier, index + 1, [1, 2, 3, 4], weights)
 
     @classmethod
     def get_mxs_functions(cls):
@@ -168,6 +190,8 @@ class SkinPlusPlusTestMax(SkinPlusPlusTestBase):
         return cls.mxRt.mxsGetSkinWeights, cls.mxRt.mxsSetSkinWeights
 
     def test_get_performance(self):
+
+        return
         get_timer_dict: dict[str, tuple[float, Any, str]] = {}
 
         @timer(get_timer_dict)
@@ -250,8 +274,15 @@ class SkinPlusPlusTestMax(SkinPlusPlusTestBase):
         self.run_functions(get_function_list, obj)
         self.process_results(get_timer_dict)
 
-    def test_set_performance(self):
+    def test_get_skin_data(self):
+        skin_data = skin_plus_plus.get_skin_data(self.skinned_sphere.Name)
+        # because the values returned from 3ds max are 32bit, there can be rounding errors
+        # which can cause a direct comparison to fail, so we use np.allclose instead:
+        # https://numpy.org/doc/stable/reference/generated/numpy.allclose.html#numpy.allclose
+        self.assertTrue(np.allclose(skin_data.weights, self.weights))
 
+    def test_set_performance(self):
+        return
         def _as_mxs_array(value, dtype=float):
             mxsArray = self.mxRt.Array()
             array_length = len(value)
@@ -615,11 +646,13 @@ if __name__ == "__main__":
 
     # from pymxs import runtime as mxRt
 
-    # sel = tuple(mxRt.Selection)
-    # unittest.main()
+    # # sel = tuple(mxRt.Selection)
+    # # unittest.main()
+    # mxRt.Delete(list(mxRt.Selection))
 
     suite = unittest.TestSuite()
-    suite.addTest(SkinPlusPlusTestMax("test_get_performance"))
+    suite.addTest(SkinPlusPlusTestMax("test_get_skin_data"))
+    # suite.addTest(SkinPlusPlusTestMax("test_get_performance"))
     # suite.addTest(SkinPlusPlusTestMaya("test_get_performance"))
     runner = unittest.TextTestRunner()
     runner.run(suite)
@@ -627,6 +660,7 @@ if __name__ == "__main__":
     # runner = unittest.TextTestRunner()
     # suite = unittest.makeSuite(SkinPlusPlusTestMax)
     # runner.run(suite)
+
     # skin_data = skin_plus_plus.get_skin_data("test_mesh_low")
     # skin_plus_plus.set_skin_weights("test_mesh_low", skin_data)
     # print(skin_data.positions)
