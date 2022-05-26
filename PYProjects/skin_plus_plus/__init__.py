@@ -8,6 +8,21 @@ get_skin_data = None
 set_skin_weights = None
 # get_vertex_positions = None
 
+
+def __get_environmet_core(python_version: str):
+    import importlib
+    import pathlib
+    current_directory = pathlib.Path(__file__).parent
+    sub_module_path = current_directory / f"py/{python_version}"
+
+    if not sub_module_path.exists():
+        raise FileNotFoundError(f"Unsupported Python version!")
+
+    import_path = f"skin_plus_plus.py.{python_version}.skin_plus_plus_py"
+    core = importlib.import_module(import_path)
+    return core
+
+
 def __get_dcc_backend(dcc:str, version: str, api:str):
     current_directory = pathlib.Path(__file__).parent
     sub_module_name = f"skin_plus_plus_{api}_{version}"
@@ -29,10 +44,13 @@ def __get_dcc_backend(dcc:str, version: str, api:str):
 
     return backend
 
+# DO NOT REMOVE - Required for access to SkinData class:
+__version = f"{sys.version_info.major}{sys.version_info.minor}"
+__get_environmet_core(__version)
+
 
 executable = sys.executable.lower()
 if "3ds max" in executable:
-
     from pymxs import runtime as mxRt
 
     version_info = mxRt.MaxVersion()
@@ -41,7 +59,6 @@ if "3ds max" in executable:
 
 
 elif "maya" in executable:
-
     from pymel import versions
 
     version = str(versions.current())[:4]

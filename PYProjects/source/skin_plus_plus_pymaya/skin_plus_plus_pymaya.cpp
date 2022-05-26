@@ -157,6 +157,7 @@ bool SkinManagerMaya::setSkinWeights(eg::MatrixXi& boneIDs, eg::MatrixXf& vertex
 
 
 PYBIND11_MODULE(skin_plus_plus_pymaya, m) {
+	// This makes the base SkinData class available to the module:
 	#include <skin_plus_plus_py.h>
 
 	m.def("get_skin_data", [&](wchar_t* name)

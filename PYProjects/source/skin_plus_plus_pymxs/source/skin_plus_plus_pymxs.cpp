@@ -239,8 +239,8 @@ std::vector<int> getSortedBoneIDs(std::vector<std::string> cachedSkinBoneNames, 
 		if (index >= size) index = 0;
 		sortedSkinBoneIDs[boneIndex] = index;
 
-		py::print("boneIndex: {}", boneIndex);
-		py::print("index: {}", index);
+		//py::print("boneIndex: {}", boneIndex);
+		//py::print("index: {}", index);
 	}
 	return sortedSkinBoneIDs;
 }
@@ -312,6 +312,7 @@ bool setSkinWeights(wchar_t* name, PySkinData& skinData)
 
 
 PYBIND11_MODULE(skin_plus_plus_pymxs, m) {
+	// This makes the base SkinData class available to the module:
 	#include <skin_plus_plus_py.h>
 
 	m.def("get_skin_data", [&](wchar_t* name)

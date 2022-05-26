@@ -4,6 +4,7 @@ import functools
 import inspect
 import numpy as np
 import pathlib
+import pickle
 import random
 import site
 import sys
@@ -28,7 +29,7 @@ import skin_plus_plus
 
 if __name__ == "__main__":
     from importlib import reload
-    reload(skin_plus_plus)
+    # reload(skin_plus_plus)
 
 _typing = False
 if _typing:
@@ -650,19 +651,26 @@ if __name__ == "__main__":
     # # unittest.main()
     # mxRt.Delete(list(mxRt.Selection))
 
-    suite = unittest.TestSuite()
-    suite.addTest(SkinPlusPlusTestMax("test_get_skin_data"))
-    # suite.addTest(SkinPlusPlusTestMax("test_get_performance"))
-    # suite.addTest(SkinPlusPlusTestMaya("test_get_performance"))
-    runner = unittest.TextTestRunner()
-    runner.run(suite)
+    # suite = unittest.TestSuite()
+    # suite.addTest(SkinPlusPlusTestMax("test_get_skin_data"))
+    # # suite.addTest(SkinPlusPlusTestMax("test_get_performance"))
+    # # suite.addTest(SkinPlusPlusTestMaya("test_get_performance"))
+    # runner = unittest.TextTestRunner()
+    # runner.run(suite)
 
     # runner = unittest.TextTestRunner()
     # suite = unittest.makeSuite(SkinPlusPlusTestMax)
     # runner.run(suite)
 
-    # skin_data = skin_plus_plus.get_skin_data("test_mesh_low")
-    # skin_plus_plus.set_skin_weights("test_mesh_low", skin_data)
+    save_path = pathlib.Path(r"D:\Code\Git\SkinPlusPlus\PYProjects\skin_plus_plus_test\dcc_test_files\skin_data\mesh_low.skin")
+    skin_data = skin_plus_plus.get_skin_data("test_mesh_low")
+    with save_path.open("wb") as file:
+        pickle.dump(skin_data, file)
+
+    with save_path.open("rb") as file:
+        loaded_skin_data = pickle.load(file)
+
+    skin_plus_plus.set_skin_weights("test_mesh_low", loaded_skin_data)
     # print(skin_data.positions)
     # # assert False
     # save_path = pathlib.Path(r"D:\Code\Git\SkinPlusPlus\PYProjects\skin_plus_plus_test\dcc_test_files\skin_data\mesh_low.skin")
