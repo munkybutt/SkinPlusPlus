@@ -12,7 +12,7 @@
   <a href="https://github.com/munkybutt/SkinPlusPlus/blob/main/LICENSE">
     <img src="https://img.shields.io/github/license/munkybutt/SkinPlusPlus?style=for-the-badge"
   </a>
-  <a href="https://github.com/munkybutt/SkinPlusPlus/releases/tag/v0.2.0">
+  <a href="https://github.com/munkybutt/SkinPlusPlus/releases/tag/v0.3.0">
     <!-- <img src="https://badge.fury.io/gh/munkybutt%2FSkinPlusPlus.svg?style=for-the-badge"> -->
     <img src="https://img.shields.io/github/release/munkybutt/SkinPlusPlus?style=for-the-badge&include_prereleases">
   </a>
