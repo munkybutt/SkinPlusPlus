@@ -16,7 +16,6 @@
 #include <matrix3.h>
 
 
-
 class SkinManager
 {
 private:
@@ -34,7 +33,7 @@ private:
 	// Interface for the skin modifier, used to query bone objects when setting skin weights
 	ISkin* iSkin;
 
-	// Used to query skin data without selecing skin modifier
+	// Used to query skin data without selecting skin modifier
 	ISkinContextData* iSkinContextData; 
 
 	// Used to modify skin data without selecting skin modifier
@@ -46,16 +45,18 @@ private:
 	PySkinData* pySkinData;
 
 	// Get the vertex weights and bone ids and add them to the given PySkinData
-	void collectWeightsAndBoneIDs(PySkinData* pySkinData, unsigned int vertexIndex);
+	void collectWeightsAndBoneIDs(unsigned int vertexIndex);
 
 	// Get the vertex weights, bone ids and positions - on an editable mesh:
 	PySkinData* getDataMesh(int vertexCount);
 
 	// Get the vertex weights, bone ids and positions - on an editable poly:
 	PySkinData* getDataPoly(int vertexCount);
+	
+	// Add missing bones to the skin modifier based on the given vector of missing bone names
+	void addMissingBones(std::vector<std::string> missingBoneNames);
 
 public:
-	SkinManager() {};
 	SkinManager(const wchar_t* name) { this->initialise(name); }
 	~SkinManager(){}
 

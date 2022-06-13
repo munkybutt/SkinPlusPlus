@@ -6,9 +6,33 @@ char convertWCharToChar(const wchar_t* text)
 {
 	size_t length = std::wcslen(text);
 	std::wstring_convert<std::codecvt<wchar_t, char, std::mbstate_t>> conv;
-	std::string StoreTextBuffer = conv.to_bytes(text, text + length);
+	std::string storeTextBuffer = conv.to_bytes(text, text + length);
 
-	return StoreTextBuffer[0];
+	return storeTextBuffer[0];
+}
+
+std::string convertWCharToString(const wchar_t* text)
+{
+	size_t length = std::wcslen(text);
+	std::wstring_convert<std::codecvt<wchar_t, char, std::mbstate_t>> conv;
+	std::string storeTextBuffer = conv.to_bytes(text, text + length);
+
+	return storeTextBuffer;
+}
+
+std::wstring convertStringToWString(const std::string& multi) {
+	std::wstring wide;
+	wchar_t w;
+	mbstate_t mb{};
+	size_t n = 0, len = multi.length() + 1;
+	while (auto res = mbrtowc(&w, multi.c_str() + n, len - n, &mb)) {
+		if (res == size_t(-1) || res == size_t(-2))
+			throw "invalid encoding";
+
+		n += res;
+		wide += w;
+	}
+	return wide;
 }
 
 
@@ -39,7 +63,6 @@ INode* getChildByName(const wchar_t* name, INode* parent)
 		try { node = getChildByName(name, parent = node); } catch (const std::invalid_argument&) { continue; }
 		return node;
 	}
-	//name->length();
 	throw std::invalid_argument("No node with name: " + convertWCharToChar(name));
 }
 
@@ -135,12 +158,12 @@ bool SkinManager::initialise(const wchar_t* name)
 }
 
 
-void SkinManager::collectWeightsAndBoneIDs(PySkinData* pySkinData, unsigned int vertexIndex)
+void SkinManager::collectWeightsAndBoneIDs(unsigned int vertexIndex)
 {
 	auto influenceCount = this->iSkinContextData->GetNumAssignedBones(vertexIndex);
 	if (influenceCount > this->maximumVertexWeightCount)
 	{
-		pySkinData->setMaximumVertexWeightCount(influenceCount);
+		this->pySkinData->setMaximumVertexWeightCount(influenceCount);
 		this->maximumVertexWeightCount = influenceCount;
 	}
 	for (auto influenceIndex = 0; influenceIndex < influenceCount; influenceIndex++)
@@ -148,8 +171,8 @@ void SkinManager::collectWeightsAndBoneIDs(PySkinData* pySkinData, unsigned int 
 		auto infuenceWeight = this->iSkinContextData->GetBoneWeight(vertexIndex, influenceIndex);
 		if (infuenceWeight <= 0.0f) continue;
 		auto influenceBoneID = this->iSkinContextData->GetAssignedBone(vertexIndex, influenceIndex);
-		pySkinData->weights(vertexIndex, influenceIndex) = infuenceWeight;
-		pySkinData->boneIDs(vertexIndex, influenceIndex) = influenceBoneID;
+		this->pySkinData->weights(vertexIndex, influenceIndex) = infuenceWeight;
+		this->pySkinData->boneIDs(vertexIndex, influenceIndex) = influenceBoneID;
 	}
 }
 
@@ -168,7 +191,7 @@ PySkinData* SkinManager::getData()
 	this->pySkinData->boneNames = std::vector<std::string>(skinBonesCount);
 	for (auto boneIndex = 0; boneIndex < skinBonesCount; boneIndex++)
 	{
-		this->pySkinData->boneNames[boneIndex] = fmt::to_string(this->iSkin->GetBone(boneIndex)->GetName());
+		this->pySkinData->boneNames[boneIndex] = convertWCharToString(this->iSkin->GetBone(boneIndex)->GetName());
 	}
 	auto meshType = getMeshType(this->node);
 	if (meshType == 0)
@@ -197,7 +220,7 @@ PySkinData* SkinManager::getDataPoly(int vertexCount)
 		this->pySkinData->positions(vertexIndex, 0) = worldPosition.x;
 		this->pySkinData->positions(vertexIndex, 1) = worldPosition.y;
 		this->pySkinData->positions(vertexIndex, 2) = worldPosition.z;
-		this->collectWeightsAndBoneIDs(this->pySkinData, vertexIndex);
+		this->collectWeightsAndBoneIDs(vertexIndex);
 	};
 	return this->pySkinData;
 }
@@ -214,35 +237,175 @@ PySkinData* SkinManager::getDataMesh(int vertexCount)
 		this->pySkinData->positions(vertexIndex, 0) = worldPosition.x;
 		this->pySkinData->positions(vertexIndex, 1) = worldPosition.y;
 		this->pySkinData->positions(vertexIndex, 2) = worldPosition.z;
-		this->collectWeightsAndBoneIDs(this->pySkinData, vertexIndex);
+		this->collectWeightsAndBoneIDs(vertexIndex);
 	};
 	return this->pySkinData;
 }
 
 
-std::vector<int> getSortedBoneIDs(std::vector<std::string> cachedSkinBoneNames, std::vector<std::string> skinBoneNames)
-{
-	auto cachedSize = cachedSkinBoneNames.size();
-	auto size = skinBoneNames.size();
-	auto sortedSkinBoneIDs = std::vector<int>(cachedSize);
-	for (size_t boneIndex = 0; boneIndex < cachedSize; boneIndex++)
-	{
-		std::string boneNameToFind = cachedSkinBoneNames[boneIndex];
-		auto index = std::distance(skinBoneNames.begin(), find(skinBoneNames.begin(), skinBoneNames.end(), boneNameToFind));
-		//auto itterator = std::find(skinBoneNames.begin(), skinBoneNames.end(), boneNameToFind);
-		//if (itterator == skinBoneNames.end())
-		//{
-		//	py::print("Cannot find bone named: {}", boneNameToFind);
-		//	continue;
-		//}
-		//auto index = std::distance(skinBoneNames.begin(), itterator);
-		if (index >= size) index = 0;
-		sortedSkinBoneIDs[boneIndex] = index;
+//void addBonesOpperator(ISkinImportData* inSkinImportData, ISkin* inSkinModifier, Array* inBones)
+//{
+//	MaxSDK::Array<ULONG> currentSkinModifierHandles = getSkinModifierBoneHandles(inSkinModifier);
+//	for (int boneIndex = 0; boneIndex < inBones->size; boneIndex++)
+//	{
+//		Value* mxsBone = inBones->data[boneIndex];
+//		ULONG nodeHandle = mxsBone->to_node()->GetHandle();
+//		if (currentSkinModifierHandles.find(nodeHandle) == -1)
+//		{
+//			INode* bone = mxsBone->to_node();
+//			if (boneIndex == inBones->size)
+//			{
+//				inSkinImportData->AddBoneEx(bone, true);
+//			}
+//			else
+//			{
+//				inSkinImportData->AddBoneEx(bone, false);
+//			}
+//			currentSkinModifierHandles.append(nodeHandle);
+//		}
+//	}
+//}
+//
+//static bool addBones(Value* inSkinnedNode, Array* ioBones)
+//{
+//	INode* node = inSkinnedNode->to_node();
+//	SkinDescription* skinDescription = getSkinDescription(node);
+//	if (!skinDescription)
+//	{
+//		return false;
+//	}
+//
+//	//MaxSDK::Array<ULONG> currentSkinModifierHandles = getSkinModifierBoneHandles(skinDescription);
+//	//for (int boneIndex = 0; boneIndex < ioBones->size; boneIndex++)
+//	//{
+//	//	Value* mxsBone = ioBones->data[boneIndex];
+//	//	if (!is_node(mxsBone))
+//	//	{
+//	//		throw RuntimeError(_T("Can only add nodes to skin modifier! "), mxsBone);
+//	//	}
+//
+//	//	ULONG nodeHandle = mxsBone->to_node()->GetHandle();
+//	//	if (currentSkinModifierHandles.find(nodeHandle) == -1)
+//	//	{
+//	//		INode* bone = mxsBone->to_node();
+//	//		if (boneIndex == ioBones->size)
+//	//		{
+//	//			skinDescription->skinImportData->AddBoneEx(bone, true);
+//	//		}
+//	//		else
+//	//		{
+//	//			skinDescription->skinImportData->AddBoneEx(bone, false);
+//	//		}
+//	//		currentSkinModifierHandles.append(nodeHandle);
+//	//	}
+//	//}
+//	addBonesOpperator(skinDescription->skinImportData, skinDescription->skin, ioBones);
+//	skinDescription->boneModData->reevaluate = TRUE;
+//	skinDescription->modifier->NotifyDependents(FOREVER, PART_OBJ, REFMSG_CHANGE);
+//	GetCOREInterface()->RedrawViews(GetCOREInterface()->GetTime());
+//
+//	return true;
+//}
+//
+//static bool addBones(Modifier* inSkinModifier, Array* inBones)
+//{
+//	ISkinImportData* skinImportData = (ISkinImportData*)inSkinModifier->GetInterface(I_SKINIMPORTDATA);
+//	if (!skinImportData)
+//	{
+//		return false;
+//	}
+//	ISkin* skin = (ISkin*)inSkinModifier->GetInterface(I_SKIN);
+//	if (!skin)
+//	{
+//		return false;
+//	}
+//	addBonesOpperator(skinImportData, skin, inBones);
+//	inSkinModifier->NotifyDependents(FOREVER, PART_OBJ, REFMSG_CHANGE);
+//	GetCOREInterface()->RedrawViews(GetCOREInterface()->GetTime());
+//
+//	return true;
+//}
+//
+//
+//static Value* addSkinModifier(Array* inNodes, Value* inBones = NULL, int inInflucentCount = 8/*, bool inAlwaysDeform=true*/)
+//{
+//	Array* bones = NULL;
+//	if (inBones && inBones != &undefined)
+//	{
+//		bones = (Array*)inBones;
+//	}
+//	Array* outArray = new Array(inNodes->size);
+//	for (int nodeIndex = 0; nodeIndex < inNodes->size; nodeIndex++)
+//	{
+//		MAXNode* mxsNode = (MAXNode*)inNodes->data[nodeIndex];
+//		INode* node = mxsNode->to_node();
+//		Modifier* skinModifier = getSkinModifier(node);
+//		if (!skinModifier)
+//		{
+//			skinModifier = (Modifier*)GetCOREInterface()->CreateInstance(OSM_CLASS_ID, SKIN_CLASSID);
+//			GetCOREInterface12()->AddModifier(*node, *skinModifier);
+//		}
+//		if (bones)
+//		{
+//			addBones(skinModifier, bones);
+//		}
+//		IParamBlock2* skinParamBlock = skinModifier->GetParamBlock(3);
+//		skinParamBlock->SetValue(skin_advance_bonelimit, GetCOREInterface()->GetTime(), inInflucentCount);
+//		outArray->append(MAXModifier::intern(skinModifier));
+//	}
+//	return outArray;
+//}
 
-		//py::print("boneIndex: {}", boneIndex);
-		//py::print("index: {}", index);
+
+//Get the Handles of all bones in the given skin modifier.
+static std::vector<ULONG> getSkinnedBoneHandles(ISkin* skinModifier)
+{
+	const int boneCount = skinModifier->GetNumBones();
+	std::vector<ULONG> skinnedBoneIDs(boneCount);
+	for (int boneIndex = 0; boneIndex < boneCount; boneIndex++)
+	{
+		INode* bone = skinModifier->GetBone(boneIndex);
+		skinnedBoneIDs[boneIndex] = bone->GetHandle();
 	}
-	return sortedSkinBoneIDs;
+
+	return skinnedBoneIDs;
+}
+
+
+void SkinManager::addMissingBones(std::vector<std::string> missingBoneNames)
+{
+	std::vector<INode*> missingBones(missingBoneNames.size());
+	for (size_t index = 0; index < missingBoneNames.size(); index++)
+	{
+		py::print(missingBoneNames[index]);
+		auto missingBoneName = convertStringToWString(missingBoneNames[index]);
+		auto missingBone = getChildByName(missingBoneName.c_str(), NULL);
+		if (!missingBone)
+		{
+			throw py::value_error("No node in scene with name: '" + convertWCharToString(missingBoneName.c_str()) + "'");
+		}
+		missingBones[index] = missingBone;
+	}
+	
+	std::vector<ULONG> skinnedBoneHandles = getSkinnedBoneHandles(this->iSkin);
+	for (int index = 0; index < missingBones.size(); index++)
+	{
+		INode* bone = missingBones[index];
+		ULONG nodeHandle = bone->GetHandle();
+		ULONG nodeHandleIndex = getItemIndex(skinnedBoneHandles, nodeHandle);
+		if (nodeHandleIndex == NULL)
+		{
+			if (index == missingBones.size())
+			{
+				this->iSkinImportData->AddBoneEx(bone, true);
+			}
+			else
+			{
+				this->iSkinImportData->AddBoneEx(bone, false);
+			}
+			skinnedBoneHandles.push_back(nodeHandle);
+		}
+	}
 }
 
 
@@ -263,20 +426,23 @@ bool SkinManager::setSkinWeights(PySkinData& skinData)
 		"skin vertex count does not match provided data count: " + convertWCharToChar(this->node->GetName())
 	);
 	Tab<INode*> skinBones;
+	skinBones.Resize(boneIDsCols);
 	auto skinBonesCount = this->iSkin->GetNumBones();
-	auto skinBoneNames = std::vector<std::string>(skinBonesCount);
+	std::vector<std::string> skinBoneNames(skinBonesCount);
 	for (auto boneIndex = 0; boneIndex < skinBonesCount; boneIndex++)
 	{
 		INode* bone = this->iSkin->GetBone(boneIndex);
-		if (boneIndex == 0)
-		{
-			skinBones.Append(1, &bone, skinBonesCount);
-			continue;
-		}
+		auto wcharBoneName = bone->GetName();
+		auto stringBoneName = convertWCharToString(wcharBoneName);
 		skinBones.Append(1, &bone);
-		skinBoneNames[boneIndex] = fmt::to_string(bone->GetName());
+		skinBoneNames[boneIndex] = stringBoneName;
 	}
-	auto sortedBoneIDs = getSortedBoneIDs(skinData.boneNames, skinBoneNames);
+	SortedBoneNameData sortedBoneIDs = skinData.getSortedBoneIDs(skinBoneNames);
+	if (sortedBoneIDs.unfoundBoneNames.size() > 0)
+	{
+		this->addMissingBones(sortedBoneIDs.unfoundBoneNames);
+	}
+	sortedBoneIDs = skinData.getSortedBoneIDs(skinBoneNames);
 	for (auto vertexIndex = 0; vertexIndex < boneIDsRows; vertexIndex++)
 	{
 		Tab<INode*> bones = Tab<INode*>();
@@ -285,9 +451,9 @@ bool SkinManager::setSkinWeights(PySkinData& skinData)
 		weights.Resize(boneIDsCols);
 		for (auto influenceIndex = 0; influenceIndex < boneIDsCols; influenceIndex++)
 		{
-			auto boneID = skinData.boneIDs(vertexIndex, influenceIndex);
-			auto influenceWeight = skinData.weights(vertexIndex, influenceIndex);
-			//bones.Append(1, &skinBones[sortedBoneIDs[boneID]]);
+			auto sortedBoneID = sortedBoneIDs.sortedBoneIDs[influenceIndex];
+			auto boneID = skinData.boneIDs(vertexIndex, sortedBoneID);
+			auto influenceWeight = skinData.weights(vertexIndex, sortedBoneID);
 			bones.Append(1, &skinBones[boneID]);
 			weights.Append(1, &influenceWeight);
 		}

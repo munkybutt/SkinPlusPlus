@@ -663,16 +663,35 @@ if __name__ == "__main__":
     # runner.run(suite)
 
     save_path = pathlib.Path(r"D:\Code\Git\SkinPlusPlus\PYProjects\skin_plus_plus_test\dcc_test_files\skin_data\mesh_low.skin")
-    skin_data = skin_plus_plus.get_skin_data("test_mesh_low")
-    with save_path.open("wb") as file:
-        pickle.dump(skin_data, file)
+    # skin_data = skin_plus_plus.get_skin_data("test_mesh_low")
+    # # skin_plus_plus.set_skin_weights("test_mesh_low", skin_data)
+    # # print(skin_data)
+    # with save_path.open("wb") as file:
+    #     pickle.dump(skin_data, file)
 
     with save_path.open("rb") as file:
         loaded_skin_data = pickle.load(file)
 
+    print(loaded_skin_data.bone_names)
     skin_plus_plus.set_skin_weights("test_mesh_low", loaded_skin_data)
     # print(skin_data.positions)
     # # assert False
     # save_path = pathlib.Path(r"D:\Code\Git\SkinPlusPlus\PYProjects\skin_plus_plus_test\dcc_test_files\skin_data\mesh_low.skin")
     # with save_path.open("wb") as file:
     #     pickle.dump(skin_data, file)
+
+
+    # import sys
+
+    # del skin_plus_plus
+    # modules_to_delete = []
+    # for module_name in sys.modules:
+    #     if module_name.startswith("skin_plus_plus"):
+    #         modules_to_delete.append(module_name)
+
+    # for module_to_delete in modules_to_delete:
+    #     del sys.modules[module_to_delete]
+
+    # import skin_plus_plus
+
+    # print(sys.getrefcount(skin_plus_plus))
