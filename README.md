@@ -30,7 +30,7 @@
   <a href="#performance">Performance</a> •
   <a href="#how-to-compile">How To Compile</a> •
   <a href="#roadmap">Roadmap</a> •
-  <a href="#personal-info">Personal Info</a> •
+  <a href="#personal-info">Personal Info</a>
 </p>
 
 
