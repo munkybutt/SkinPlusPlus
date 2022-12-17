@@ -157,7 +157,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='2022-Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <TargetExt>.pyd</TargetExt>
-    <IncludePath>$(ProjectDir);$(ProjectDir)..\skin_plus_plus_py\headers;C:\Program Files\Autodesk\Maya2022\devkit\devkitBase\include;C:\Program Files\Python37\include;$(ProjectDir)..\..\venv37\Lib\site-packages\pybind11\include;$(ProjectDir)..\..\3rdParty\eigen-3.4.0;$(ProjectDir)..\..\3rdParty\fmt-8.0.1\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)..\skin_plus_plus_py\headers;C:\Program Files\Autodesk\Maya2022\devkit\devkitBase\include;C:\Program Files\Python37\include;$(ProjectDir)..\..\.venvs\37\.venv\Lib\site-packages\pybind11\include;$(ProjectDir)..\..\3rdParty\eigen-3.4.0;$(ProjectDir)..\..\3rdParty\fmt-9.1.0\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Program Files\Autodesk\Maya2022\devkit\devkitBase\lib;C:\Program Files\Python37\libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)build\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
   </PropertyGroup>

@@ -299,50 +299,50 @@ class SkinPlusPlusTestMax(SkinPlusPlusTestBase):
 
         set_timer_dict: dict[str, tuple[float, Any, str]] = {}
 
-        def SetSkinWeights(_obj, _boneIDs, _weights) -> None:
+        def SetSkinWeights(_obj, _bone_ids, _weights) -> None:
             skinModifier = _obj.Modifiers[self.mxRt.Skin]
             vertexCount = self.skinOps_GetNumberVertices(skinModifier) + 1
             for vertex_index in range(1, vertexCount):
                 vertex_index_zero = vertex_index - 1
                 self.skinOps_ReplaceVertexWeights(
-                    skinModifier, vertex_index, _boneIDs[vertex_index_zero], _weights[vertex_index_zero]
+                    skinModifier, vertex_index, _bone_ids[vertex_index_zero], _weights[vertex_index_zero]
                 )
 
         @timer(set_timer_dict)
-        def set_skin_weights(_obj, _boneIDs, _weights):
+        def set_skin_weights(_obj, _bone_ids, _weights):
             skin_plus_plus.set_skin_weights(
                 _obj.Name,
-                _boneIDs,
+                _bone_ids,
                 _weights
             )
 
         @timer(set_timer_dict)
-        def mxs_SetSkinWeights(_obj, _boneIDs, _weights):
-            mxsBoneIDs = _as_mxs_array(_boneIDs, dtype=int)
+        def mxs_SetSkinWeights(_obj, _bone_ids, _weights):
+            mxsBoneIDs = _as_mxs_array(_bone_ids, dtype=int)
             mxsWeights = _as_mxs_array(_weights)
             return self.mxs_set_skin_weights(_obj, mxsBoneIDs, mxsWeights)
 
         @timer(set_timer_dict)
-        def pymxs_SetSkinWeights(_obj, _boneIDs, _weights):
-            mxsBoneIDs = _as_mxs_array(_boneIDs, dtype=int)
+        def pymxs_SetSkinWeights(_obj, _bone_ids, _weights):
+            mxsBoneIDs = _as_mxs_array(_bone_ids, dtype=int)
             mxsWeights = _as_mxs_array(_weights)
             return SetSkinWeights(_obj, mxsBoneIDs, mxsWeights)
 
         @timer(set_timer_dict)
-        def cppfp_SetSkinWeights(_obj, _boneIDs, _weights):
-            mxsBoneIDs = _as_mxs_array(_boneIDs, dtype=int)
+        def cppfp_SetSkinWeights(_obj, _bone_ids, _weights):
+            mxsBoneIDs = _as_mxs_array(_bone_ids, dtype=int)
             mxsWeights = _as_mxs_array(_weights)
             return self.SKINPP_SetSkinWeights(_obj, mxsBoneIDs, mxsWeights)
 
         @timer(set_timer_dict)
-        def cpppm_SetSkinWeights(_obj, _boneIDs, _weights):
-            mxsBoneIDs = _as_mxs_array(_boneIDs, dtype=int)
+        def cpppm_SetSkinWeights(_obj, _bone_ids, _weights):
+            mxsBoneIDs = _as_mxs_array(_bone_ids, dtype=int)
             mxsWeights = _as_mxs_array(_weights)
             return self.SKINPPOPS_SetSkinWeights(_obj, mxsBoneIDs, mxsWeights, [])
 
         @timer(set_timer_dict)
-        def cpppf_SetSkinWeights(_obj, _boneIDs, _weights):
-            mxsBoneIDs = _as_mxs_array(_boneIDs, dtype=int)
+        def cpppf_SetSkinWeights(_obj, _bone_ids, _weights):
+            mxsBoneIDs = _as_mxs_array(_bone_ids, dtype=int)
             mxsWeights = _as_mxs_array(_weights)
             return self.SPPSetSkinWeights(_obj, mxsBoneIDs, mxsWeights, [])
 
@@ -597,7 +597,7 @@ class SkinPlusPlusTestMaya(SkinPlusPlusTestBase):
         set_timer_dict: dict[str, tuple[float, Any, str]] = {}
 
         @timer(set_timer_dict)
-        def set_skin_weights_om(_obj: str):
+        def set_skin_weights_om(_obj: str, _bone_ids: tuple[tuple[int,...]], _weights: tuple[tuple[float,...]]):
             # Get API handles
             selection_list = self.om.MSelectionList()
             selection_list.add(_obj)
@@ -605,17 +605,20 @@ class SkinPlusPlusTestMaya(SkinPlusPlusTestBase):
             fn_skin = self.oman.MFnSkinCluster(selection_list.getDependNode(1))
             fn_mesh = self.om.MFnMesh(dag)
 
+            influences = [item for sublist in _bone_ids for item in sublist]
+            influences.sort()
+            influences_set = set(influences)
             # Set skin weights
             influences = self.om.MIntArray()
-            for i in range(3):
-                influences.append(i)
+            for influence in influences_set:
+                influences.append(influence)
 
             vertex_count = fn_mesh.numVertices
             array_count = len(influences * vertex_count)
             weights = self.om.MDoubleArray(array_count, 0)
 
             # Tried to match your for loop setup (first iterate vertices, then influences)
-            for vertex_index in range(fn_mesh.numVertices):
+            for vertex_index, vertex_weights in _weights:
                 for influence_index, influence in enumerate(influences):
                     weights_index = (len(influences) * vertex_index) + influence_index
                     weights[weights_index] = 0.2 # Set some random weight for now
@@ -623,10 +626,10 @@ class SkinPlusPlusTestMaya(SkinPlusPlusTestBase):
             fn_skin.setWeights(dag, components, influences, weights, normalize=True)
 
         @timer(set_timer_dict)
-        def set_skin_weights(_obj, _boneIDs, _weights):
+        def set_skin_weights(_obj, _bone_ids, _weights):
             skin_plus_plus.set_skin_weights(
                 _obj.Name,
-                _boneIDs,
+                _bone_ids,
                 _weights
             )
 
@@ -639,6 +642,14 @@ class SkinPlusPlusTestMaya(SkinPlusPlusTestBase):
         obj = self.cmds.GetNodeByName("test_mesh_high")
         self.run_functions(set_function_list, obj)
         self.process_results(set_timer_dict)
+
+
+def get_sorted_indicies(indicies: list[list[int]], old_names: list[str], new_names: list[str]):
+    name_mapping = {old_name: new_index for new_index, old_name in enumerate(new_names)}
+
+    sorted_bone_ids: list[list[int]] = []
+    for index, vert_bone_ids in enumerate(indicies):
+        sorted_bone_ids[index] = [name_mapping[old_names[bone_id]] for bone_id in vert_bone_ids]
 
 
 if __name__ == "__main__":

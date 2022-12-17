@@ -11,6 +11,7 @@ char convertWCharToChar(const wchar_t* text)
 	return storeTextBuffer[0];
 }
 
+
 std::string convertWCharToString(const wchar_t* text)
 {
 	size_t length = std::wcslen(text);
@@ -19,6 +20,7 @@ std::string convertWCharToString(const wchar_t* text)
 
 	return storeTextBuffer;
 }
+
 
 std::wstring convertStringToWString(const std::string& multi) {
 	std::wstring wide;
@@ -187,9 +189,9 @@ PySkinData* SkinManager::getData()
 	unsigned int vertexCount = this->iSkinContextData->GetNumPoints();
 	this->maximumVertexWeightCount = this->iSkinContextData->GetNumAssignedBones(0);
 	this->pySkinData = new PySkinData(vertexCount, this->maximumVertexWeightCount);
-	auto skinBonesCount = this->iSkin->GetNumBones();
-	this->pySkinData->boneNames = std::vector<std::string>(skinBonesCount);
-	for (auto boneIndex = 0; boneIndex < skinBonesCount; boneIndex++)
+	auto skinBoneCount = this->iSkin->GetNumBones();
+	this->pySkinData->boneNames = std::vector<std::string>(skinBoneCount);
+	for (auto boneIndex = 0; boneIndex < skinBoneCount; boneIndex++)
 	{
 		this->pySkinData->boneNames[boneIndex] = convertWCharToString(this->iSkin->GetBone(boneIndex)->GetName());
 	}
@@ -377,40 +379,63 @@ void SkinManager::addMissingBones(std::vector<std::string> missingBoneNames)
 	std::vector<INode*> missingBones(missingBoneNames.size());
 	for (size_t index = 0; index < missingBoneNames.size(); index++)
 	{
-		py::print(missingBoneNames[index]);
 		auto missingBoneName = convertStringToWString(missingBoneNames[index]);
 		auto missingBone = getChildByName(missingBoneName.c_str(), NULL);
 		if (!missingBone)
 		{
-			throw py::value_error("No node in scene with name: '" + convertWCharToString(missingBoneName.c_str()) + "'");
+			throw py::value_error(
+				"No node in scene with name: '" + convertWCharToString(missingBoneName.c_str()) + "'"
+			);
 		}
 		missingBones[index] = missingBone;
 	}
 	
-	std::vector<ULONG> skinnedBoneHandles = getSkinnedBoneHandles(this->iSkin);
+	//std::vector<ULONG> skinnedBoneHandles = getSkinnedBoneHandles(this->iSkin);
 	for (int index = 0; index < missingBones.size(); index++)
 	{
 		INode* bone = missingBones[index];
-		ULONG nodeHandle = bone->GetHandle();
-		ULONG nodeHandleIndex = getItemIndex(skinnedBoneHandles, nodeHandle);
-		if (nodeHandleIndex == NULL)
+		if (index == missingBones.size())
 		{
-			if (index == missingBones.size())
-			{
-				this->iSkinImportData->AddBoneEx(bone, true);
-			}
-			else
-			{
-				this->iSkinImportData->AddBoneEx(bone, false);
-			}
-			skinnedBoneHandles.push_back(nodeHandle);
+			this->iSkinImportData->AddBoneEx(bone, true);
+		}
+		else
+		{
+			this->iSkinImportData->AddBoneEx(bone, false);
 		}
 	}
+}
+
+struct BoneData
+{
+	std::vector<std::string> names;
+	Tab<INode*> nodes;
+	BoneData(int boneCount)
+	{
+		names = std::vector<std::string>(boneCount);
+		nodes = Tab<INode*>();
+		nodes.Resize(boneCount);
+	};
+	~BoneData() {}
+};
+
+BoneData getBoneData(ISkin* iSkin, int skinBoneCount)
+{
+	BoneData boneData(skinBoneCount);
+	for (auto boneIndex = 0; boneIndex < skinBoneCount; boneIndex++)
+	{
+		INode* bone = iSkin->GetBone(boneIndex);
+		auto wcharBoneName = bone->GetName();
+		auto stringBoneName = convertWCharToString(wcharBoneName);
+		boneData.nodes.Append(1, &bone);
+		boneData.names[boneIndex] = stringBoneName;
+	}
+	return boneData;
 }
 
 
 bool SkinManager::setSkinWeights(PySkinData& skinData)
 {
+	py::print("setSkinWeights");
 	auto boneIDsRows = skinData.boneIDs.rows();
 	auto vertexWeightsRows = skinData.weights.rows();
 	auto boneIDsCols = skinData.boneIDs.cols();
@@ -425,24 +450,25 @@ bool SkinManager::setSkinWeights(PySkinData& skinData)
 	if (boneIDsRows != vertexCount) throw std::length_error(
 		"skin vertex count does not match provided data count: " + convertWCharToChar(this->node->GetName())
 	);
-	Tab<INode*> skinBones;
-	skinBones.Resize(boneIDsCols);
-	auto skinBonesCount = this->iSkin->GetNumBones();
-	std::vector<std::string> skinBoneNames(skinBonesCount);
-	for (auto boneIndex = 0; boneIndex < skinBonesCount; boneIndex++)
+	auto skinBoneCount = this->iSkin->GetNumBones();
+	if (skinBoneCount == 0)
 	{
-		INode* bone = this->iSkin->GetBone(boneIndex);
-		auto wcharBoneName = bone->GetName();
-		auto stringBoneName = convertWCharToString(wcharBoneName);
-		skinBones.Append(1, &bone);
-		skinBoneNames[boneIndex] = stringBoneName;
+		this->addMissingBones(skinData.boneNames);
+		skinBoneCount = this->iSkin->GetNumBones();
 	}
-	SortedBoneNameData sortedBoneIDs = skinData.getSortedBoneIDs(skinBoneNames);
+
+	BoneData boneData = getBoneData(this->iSkin, skinBoneCount);
+	SortedBoneNameData sortedBoneIDs = skinData.getSortedBoneIDs(boneData.names);
+	Tab<INode*> skinBones = boneData.nodes;
 	if (sortedBoneIDs.unfoundBoneNames.size() > 0)
 	{
 		this->addMissingBones(sortedBoneIDs.unfoundBoneNames);
+		skinBoneCount = this->iSkin->GetNumBones();
+		boneData = getBoneData(this->iSkin, skinBoneCount);
+		sortedBoneIDs = skinData.getSortedBoneIDs(boneData.names);
+		skinBones = boneData.nodes;
 	}
-	sortedBoneIDs = skinData.getSortedBoneIDs(skinBoneNames);
+	auto size = skinBones.Count();
 	for (auto vertexIndex = 0; vertexIndex < boneIDsRows; vertexIndex++)
 	{
 		Tab<INode*> bones = Tab<INode*>();

@@ -8,6 +8,7 @@
 #include <cwchar>
 #include <locale>
 #include <string.h>
+#include <unordered_map>
 
 #define FMT_HEADER_ONLY
 #define FMT_DEPRECATED_INCLUDE_XCHAR
@@ -23,7 +24,7 @@ int getItemIndex(std::vector<T> vector, T item) {
 	auto index = std::distance(vector.begin(), find(vector.begin(), vector.end(), item));
 	if (index >= vector.size())
 	{
-		return NULL;
+		return -1;
 	}
 	return index;
 }
@@ -97,27 +98,59 @@ public:
 		for (size_t boneIndex = 0; boneIndex < cachedSize; boneIndex++)
 		{
 			std::string boneNameToFind = this->boneNames[boneIndex];
-			//auto index = getItemIndex(this->boneNames, boneNameToFind);
 			auto index = getItemIndex(currentSkinnedBoneNames, boneNameToFind);
-			py::print("boneNameToFind: ", boneNameToFind);
-			py::print("index: ", index);
-			if (index >= 0)
+			if (index != -1)
 			{
 				sortedBoneNameData.sortedBoneIDs[boneIndex] = index;
 				continue;
 			}
 			sortedBoneNameData.unfoundBoneNames.push_back(boneNameToFind);
 			py::print("Bone not found in current skin definition: ", boneNameToFind);
-			//auto index = std::distance(skinBoneNames.begin(), find(skinBoneNames.begin(), skinBoneNames.end(), boneNameToFind));
-			//if (index >= size)
-			//{
-			//	sortedBoneNameData.unfoundBoneNames.push_back(boneNameToFind);
-			//	continue;
-			//}
-			//sortedBoneNameData.sortedBoneIDs[boneIndex] = index;
 		}
 		return sortedBoneNameData;
 	}
+
+	//#include <algorithm>
+	//#include <unordered_map>
+	//#include <vector>
+	//SortedBoneNameData getSortedBoneIDs(
+	//	const std::vector<std::vector<int>>&indices,
+	//	const std::vector<std::string>&old_names,
+	//	const std::vector<std::string>&new_names
+	//)
+	//{
+
+	//	auto cachedSize = this->boneNames.size();
+	//	auto sortedBoneNameData = SortedBoneNameData(this->boneNames.size());
+
+
+	//	std::unordered_map<std::string, int> name_map;
+	//	for (size_t i = 0; i < new_names.size(); i++)
+	//	{
+	//		name_map[new_names[i]] = i;
+	//	}
+
+	//	std::vector<std::vector<int>> sorted_bone_ids;
+	//	for (const auto& vert_bone_ids : indices)
+	//	{
+	//		std::vector<int> sorted_ids;
+	//		//for (const auto bone_id : vert_bone_ids)
+	//		for (size_t bone_id = 0; bone_id < vert_bone_ids.size(); bone_id++)
+	//		{
+	//			try
+	//			{
+	//				sortedBoneNameData.sortedBoneIDs[bone_id] = name_map.at(old_names[bone_id]);
+	//				//sorted_ids.push_back(name_map.at(old_names[bone_id]));
+	//			}
+	//			catch (std::out_of_range&)
+	//			{
+	//				throw std::invalid_argument("Old bone name not found in new names");
+	//			}
+	//		}
+	//		sorted_bone_ids.push_back(sorted_ids);
+	//	}
+	//	return sortedBoneNameData;
+	//}
 };
 
 
