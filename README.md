@@ -46,6 +46,7 @@
     - 2023 - Python39
   	- 2021 and 2022 - Python37
   - Maya:
+    - 2023 - Python39
     - 2022 - Python37
 
 ## Usage
