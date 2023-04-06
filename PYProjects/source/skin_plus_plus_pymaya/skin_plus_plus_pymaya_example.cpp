@@ -68,7 +68,6 @@ bool SkinManagerMaya::initialise(const wchar_t* name)
 	return true;
 };
 
-
 void removeBonesFromBindPose(MPlug bindPoseMatrixArrayPlug, MPlug bindPoseMemberArrayPlug, MPlugArray connectedPlugs, MDGModifier& dgModifier)
 {
 	MStatus status;
@@ -93,104 +92,161 @@ void removeBonesFromBindPose(MPlug bindPoseMatrixArrayPlug, MPlug bindPoseMember
 }
 
 
-std::unordered_set<std::string> getBoneNamesSet(MDagPathArray skinnedBones)
+void SkinManagerMaya::addMissingBones(std::vector<std::string> missingBoneNames, long currentBoneCount)
 {
-	std::vector<std::string> skinnedBoneNames(skinnedBones.length());
-	for (size_t i = 0; i < skinnedBones.length(); i++)
-	{
-		skinnedBoneNames[i] = skinnedBones[i].partialPathName().asChar();
-	}
-	std::unordered_set<std::string> skinnedBoneNamesSet(skinnedBoneNames.begin(), skinnedBoneNames.end());
-	return skinnedBoneNamesSet;
-}
-
-
-void validateBindPose(MObject bindPoseNode, MDagPathArray skinnedBones)
-{
-	MPlug element;
+	long newBoneCount = currentBoneCount;
 	MStatus status;
-	MPlugArray connectedPlugs;
-
-	auto bindPose = MFnDependencyNode(bindPoseNode);
-	auto bindPoseMembersArray = bindPose.findPlug("members", false);
-
-	auto boneNames = getBoneNamesSet(skinnedBones);
-
-	for (size_t i = 0; i < bindPoseMembersArray.numElements(); i++)
-	{
-		element = bindPoseMembersArray.elementByPhysicalIndex(i);
-		auto elementName = element.partialName().asChar();
-		if (!boneNames.count(elementName))
-		{
-			break;
-		}
-		
-		//py::print(fmt::format("bind joint name: {}", joint.name().asChar()));
-		//MFnIkJoint(node);
-	}
-}
-
-
-MObject SkinManagerMaya::addMissingBones(std::vector<std::string> missingBoneNames, MDagPathArray skinnedBones)
-{
-	MStatus status;
-	MSelectionList selectionList;
-	MObject dependNode;
-
-	long newBoneIndex = skinnedBones.length();
-	auto bind_pose_plug = this->fnSkinCluster.findPlug("bindPose", false);
-	MPlugArray connectedPlugs;
-	bind_pose_plug.connectedTo(connectedPlugs, true, false, &status);
-	if (status != MS::kSuccess) throw std::exception("bindPose not connected to array");
-
-	auto bindPoseNode = connectedPlugs[0].node();
-	auto bindPose = MFnDependencyNode(bindPoseNode);
-	if (bindPose.typeName() != "dagPose") throw std::exception("Dependency node not dagPose");
-
-	auto skinClusterMatrixArray = this->fnSkinCluster.findPlug("matrix", false, &status);
-	auto skinClusterLockWeightsArray = this->fnSkinCluster.findPlug("lockWeights", false, &status);
-
-	auto bindPoseMembersArray = bindPose.findPlug("members", false);
-	auto bindPoseWorldMatrixArray = bindPose.findPlug("worldMatrix", false);
-	MDGModifier dagModifier;
+	MStringArray boneNames;
+	boneNames.setLength(missingBoneNames.size());
 	for (size_t i = 0; i < missingBoneNames.size(); i++)
 	{
-		newBoneIndex += i;
-		selectionList.add(missingBoneNames[i].c_str());
-		status = selectionList.getDependNode(i, dependNode);
-		if (status != MS::kSuccess) throw std::exception("Failed to get depend node!");
-		if (!dependNode.hasFn(MFn::kJoint))
+		boneNames[i] = MString(missingBoneNames[i].c_str());
+	}
+	auto missingBones = getNodesFromNames(boneNames);
+
+	MPlugArray connectedPlugs;
+
+	bool bindPoseExists = true;
+	MPlug bindPlug = this->fnSkinCluster.findPlug("bindPose", false, &status);
+	if (status == MStatus::kFailure)
+	{
+		bool bindPoseExists = false;
+		//auto errorMessage = fmt::format("Failed to find bind pose: {}!", this->fnSkinCluster.name());
+		//throw std::exception(errorMessage.c_str());
+	}
+	if (!bindPlug.connectedTo(connectedPlugs, true, false))
+	{
+		auto errorMessage = fmt::format("Failed to find bind pose: {}!", this->fnSkinCluster.name());
+		throw std::exception(errorMessage.c_str());
+	}
+	MFnDependencyNode fnBindPose(connectedPlugs[0].node());
+	if (fnBindPose.typeName() != "dagPose")
+	{
+		auto errorMessage = fmt::format("Invalid bindPose: {}!", fnBindPose.name());
+		throw std::exception(errorMessage.c_str());
+	}
+
+	MPlug bindPoseMatrixArrayPlug = fnBindPose.findPlug("worldMatrix", false, &status);
+	if (status == MStatus::kFailure)
+	{
+		auto errorMessage = fmt::format("Failed to get worldMatrix plug: {}!", fnBindPose.name());
+		throw std::exception(errorMessage.c_str());
+	}
+	MPlug bindPoseMemberArrayPlug = fnBindPose.findPlug("members", false, &status);
+	if (status == MStatus::kFailure)
+	{
+		auto errorMessage = fmt::format("Failed to get members plug: {}!", fnBindPose.name());
+		throw std::exception(errorMessage.c_str());
+	}
+
+	MDGModifier dgModifier;
+	MMatrixArray ignoredPreMatrices;
+	MPlug matrixArrayPlug = this->fnSkinCluster.findPlug("matrix", false, &status);
+	MPlug bindPreMatrixArrayPlug = this->fnSkinCluster.findPlug("bindPreMatrix", false, &status);
+
+	MSelectionList missingBoneSelectionList;
+	for (MDagPath bone : missingBones)
+	{
+		missingBoneSelectionList.add(bone);
+	}
+	MObject mObject;
+	MDagPath dagPath;
+	for (unsigned i = 0; i < matrixArrayPlug.numConnectedElements(); i++)
+	{
+		MPlug matrixPlug = matrixArrayPlug.connectionByPhysicalIndex(i, &status);
+		matrixPlug.connectedTo(connectedPlugs, true, false);
+		if (!connectedPlugs.length())
 		{
-			auto exceptionText = convertStringToChar(
-				fmt::format("Node is not a joint: {}", missingBoneNames[i])
-			);
-			throw std::exception(exceptionText);
+			continue;
+		}
+		
+		MFnIkJoint fnIkJoint(connectedPlugs[0].node());
+		fnIkJoint.getPath(dagPath);
+		
+		if (!missingBoneSelectionList.hasItem(dagPath))
+		{
+			MPlug preMatrixPlug = bindPreMatrixArrayPlug.elementByLogicalIndex(i);
+			preMatrixPlug.getValue(mObject);
+			MFnMatrixData fnMatrixData(mObject);
+			ignoredPreMatrices.append(fnMatrixData.matrix());
+			//ignoreInfluence.push_back(false);
+			//indexMap.push_back(missingBoneSelectionList.length());
+			missingBoneSelectionList.add(connectedPlugs[0].node());
+			newBoneCount++;
+		}
+		dgModifier.disconnect(connectedPlugs[0], matrixPlug);
+	}
+
+	MPlug lockWeightsArrayPlug = this->fnSkinCluster.findPlug("lockWeights", false, &status);
+	for (unsigned i = 0; i < lockWeightsArrayPlug.numConnectedElements(); i++)
+	{
+		MPlug lockWeightsPlug = lockWeightsArrayPlug.connectionByPhysicalIndex(i, &status);
+		lockWeightsPlug.connectedTo(connectedPlugs, true, false);
+		if (connectedPlugs.length())
+		{
+			dgModifier.disconnect(connectedPlugs[0], lockWeightsPlug);
+		}
+	}
+	MPlug paintPlug = this->fnSkinCluster.findPlug("paintTrans", false, &status);
+	paintPlug.connectedTo(connectedPlugs, true, false);
+	if (connectedPlugs.length())
+	{
+		dgModifier.disconnect(connectedPlugs[0], paintPlug);
+	}
+
+	if (bindPoseExists)
+	{
+		removeBonesFromBindPose(bindPoseMatrixArrayPlug, bindPoseMemberArrayPlug, connectedPlugs, dgModifier);
+	}
+
+	if (!dgModifier.doIt())
+	{
+		dgModifier.undoIt();
+		throw std::exception("Failed to reset bone connections!");
+	}
+
+
+	// make connections from influences to skinCluster and bindPose
+	for (size_t i = 0; i < missingBoneSelectionList.length(); i++)
+	{
+		//if (ignoreInfluence[i])
+		//{
+		//	continue;
+		//}
+
+		//int index = indexMap[i];
+		int newBoneIndex = currentBoneCount + i;
+		status = missingBoneSelectionList.getDependNode(i, mObject);
+		MFnIkJoint fnInfluence(mObject, &status);
+		MPlug influenceMatrixPlug = fnInfluence.findPlug("worldMatrix", false, &status).elementByLogicalIndex(0, &status);
+		MPlug influenceMessagePlug = fnInfluence.findPlug("message", false, &status);
+		MPlug influenceBindPosePlug = fnInfluence.findPlug("bindPose", false, &status);
+		MPlug influenceLockPlug = fnInfluence.findPlug("lockInfluenceWeights", false, &status);
+		if (!status)
+		{
+			// add the lockInfluenceWeights attribute if it doesn't exist
+			MFnNumericAttribute fnNumericAttribute;
+			MObject attribute = fnNumericAttribute.create("lockInfluenceWeights", "liw", MFnNumericData::kBoolean, false);
+			fnInfluence.addAttribute(attribute);
+			influenceLockPlug = fnInfluence.findPlug("lockInfluenceWeights", false, &status);
 		}
 
-		auto joint = MFnIkJoint(dependNode);
-		auto jointMessage = joint.findPlug("message", false);
-		auto jointBindPose = joint.findPlug("bindPose", false);
-		auto jointWorldMatrix = joint.findPlug("worldMatrix", false).elementByPhysicalIndex(0);
-		auto jointLockInfluenceWeightsArray = joint.findPlug("lockInfluenceWeights", false);
+		// connect influence to the skinCluster
+		MPlug matrixPlug = matrixArrayPlug.elementByLogicalIndex(newBoneIndex);
+		MPlug lockPlug = lockWeightsArrayPlug.elementByLogicalIndex(newBoneIndex);
+		dgModifier.connect(influenceMatrixPlug, matrixPlug);
+		dgModifier.connect(influenceLockPlug, lockPlug);
 
-		auto skinClusterMatrixNewElementIndex = skinClusterMatrixArray.elementByLogicalIndex(newBoneIndex);
-		auto skinClusterLockWeightsNewElementIndex = (skinClusterLockWeightsArray.elementByLogicalIndex(newBoneIndex));
-		auto bindPoseWorldMatrixNewElementIndex = bindPoseWorldMatrixArray.elementByLogicalIndex(newBoneIndex);
-		auto bindPoseMemberNewElementIndex = bindPoseMembersArray.elementByLogicalIndex(newBoneIndex);
-
-		dagModifier.connect(jointWorldMatrix, skinClusterMatrixNewElementIndex);
-		dagModifier.connect(jointLockInfluenceWeightsArray, skinClusterLockWeightsNewElementIndex);
-		dagModifier.connect(jointMessage, bindPoseWorldMatrixNewElementIndex);
-		dagModifier.connect(jointBindPose, bindPoseMemberNewElementIndex);
-
-		py::print("added missing bone: {}", missingBoneNames[i]);
+		// connect influence to the bindPose
+		if (!ignoreBindPose)
+		{
+			MPlug bindPoseMatrixPlug = bindPoseMatrixArrayPlug.elementByLogicalIndex(newBoneIndex);
+			MPlug memberPlug = bindPoseMemberArrayPlug.elementByLogicalIndex(newBoneIndex);
+			dgModifier.connect(influenceMessagePlug, bindPoseMatrixPlug);
+			dgModifier.connect(influenceBindPosePlug, memberPlug);
+		}
 	}
-	status = dagModifier.doIt();
-	if (status != MS::kSuccess)
-	{
-		throw std::exception("Failed to add missing bones!");
-	}
-	return bindPoseNode;
+
 }
 
 
@@ -255,7 +311,7 @@ bool SkinManagerMaya::setSkinWeights(PySkinData& skinData)
 	size_t vertexWeightsCols = skinData.weights.cols();
 	if (vertexCount != vertexWeightsRows)
 	{
-		auto exceptionText = convertStringToChar(
+		const char* exceptionText = convertStringToChar(
 			fmt::format(
 				"boneIDs row size: {} does not match vertexWeights row size: {}",
 				vertexCount,
@@ -281,7 +337,7 @@ bool SkinManagerMaya::setSkinWeights(PySkinData& skinData)
 	this->fnSkinCluster.influenceObjects(skinnedBones, &status);
 	if (status != MS::kSuccess)
 	{
-		throw std::exception("Error querying bones!");
+		throw std::exception("Failed to find any bones!");
 	}
 	auto skinBoneCount = skinnedBones.length();
 	auto currentBoneNames = std::vector<std::string>(skinBoneCount);
@@ -291,18 +347,15 @@ bool SkinManagerMaya::setSkinWeights(PySkinData& skinData)
 	}
 	if (skinBoneCount == 0)
 	{
-		this->addMissingBones(skinData.boneNames, skinnedBones);
+		this->addMissingBones(skinData.boneNames, skinBoneCount);
 		this->fnSkinCluster.influenceObjects(skinnedBones, &status);
 	}
 	auto sortedBoneIDs = skinData.getSortedBoneIDs(currentBoneNames);
 	if (sortedBoneIDs.unfoundBoneNames.size() != 0)
 	{
-		skinnedBones.clear();
-		this->addMissingBones(sortedBoneIDs.unfoundBoneNames, skinnedBones);
+		this->addMissingBones(sortedBoneIDs.unfoundBoneNames);
 		this->fnSkinCluster.influenceObjects(skinnedBones, &status);
 	}
-
-	validateBindPose(bindPoseMembersArray, skinnedBones);
 	size_t arraySize = vertexCount * influenceCount;
 	MIntArray mBoneIDs(influenceCount);
 	MDoubleArray mWeights(arraySize);

@@ -63,6 +63,7 @@ def move_pyd_files(
         source_file.rename(target_file)
 
 
+print("Moving pyd files into package")
 try:
     move_pyd_files(folder_map_py, skin_plus_plus_py_folder, suffix="py")
 except Exception:
@@ -70,6 +71,11 @@ except Exception:
 
 try:
     move_pyd_files(folder_map_max, skin_plus_plus_dccs_folder, suffix="pymxs", dcc="max")
+except Exception:
+    traceback.print_exc()
+
+try:
+    move_pyd_files(folder_map_max, skin_plus_plus_dccs_folder, suffix="pymaya", dcc="maya")
 except Exception:
     traceback.print_exc()
 

@@ -1,6 +1,7 @@
 #pragma once
 #include <skin_plus_plus_py.h>
 
+#include <maya/MDagModifier.h>
 #include <maya/MDoubleArray.h>
 #include <maya/MDagPath.h>
 #include <maya/MDagPathArray.h>
@@ -8,10 +9,15 @@
 //#include <maya/MItMeshVertex.h>
 //#include <maya/MItSurfaceCV.h>
 #include <maya/MFnDagNode.h>
+#include <maya/MFnIkJoint.h>
+#include <maya/MFnMatrixData.h>
 #include <maya/MFnMesh.h>
+#include <maya/MFnNumericAttribute.h>
+#include <maya/MFnSet.h>
 #include <maya/MFnSingleIndexedComponent.h>
 #include <maya/MFnSkinCluster.h>
 #include <maya/MItDependencyGraph.h>
+#include <maya/MMatrixArray.h>
 #include <maya/MPlug.h>
 #include <maya/MSelectionList.h>
 
@@ -23,7 +29,6 @@ const char* convertStringToChar(std::string text)
 	charArray = &text[0];
 	return charArray;
 }
-
 
 bool getDagPathAndComponent(MString name, MDagPath& dagPath, MObject& component)
 {
@@ -43,7 +48,7 @@ bool getDagPathAndComponent(MString name, MDagPath& dagPath, MObject& component)
 			selectionList.getDagPath(i, dagPath, component);
 			if (component.isNull())
 			{
-				//Try to get the skin from the sel;
+				//Try to get the skin from the sel:
 				MStatus status;
 				dagPath.extendToShape();
 
@@ -61,6 +66,64 @@ bool getDagPathAndComponent(MString name, MDagPath& dagPath, MObject& component)
 	throw std::exception("Given node is invalid or is not compatible with skin clusters");
 }
 
+bool getDagPathsAndComponents(MStringArray names, MDagPathArray& dagPaths, MObjectArray& components)
+{
+	auto nameLength = names.length();
+	dagPaths.setLength(nameLength);
+	components.setLength(nameLength);
+	for (size_t i = 0; i < nameLength; i++)
+	{
+		auto dagPath = MDagPath();
+		auto component = MObject();
+		getDagPathAndComponent(names[i], dagPath, component);
+		dagPaths[i] = dagPath;
+		components[i] = component;
+	}
+	return true;
+}
+
+
+MDagPathArray getNodesFromNames(MStringArray names)
+{
+	MStatus status;
+	MObject node;
+	MDagPathArray dagPaths;
+	MSelectionList selectionList;
+	selectionList.clear();
+	for (MString name: names)
+	{
+		selectionList.add(name, true);
+	}
+	if (selectionList.isEmpty())
+	{
+		return dagPaths;
+	}
+	for (size_t i = 0; i < selectionList.length(); i++)
+	{
+		status = selectionList.getDependNode(i, node);
+		if (status == MS::kSuccess) // && node.hasFn(MFn::kSkinClusterFilter))
+		{
+			MDagPath dagPath;
+			MObject component;
+			selectionList.getDagPath(i, dagPath, component);
+			if (component.isNull())
+			{
+				//Try to get the skin from the sel:
+				dagPath.extendToShape();
+				MFnSingleIndexedComponent singleIndexComponent;
+				singleIndexComponent.setComplete(true);
+				component = singleIndexComponent.create(MFn::kMeshVertComponent, &status);
+				if (status != MS::kSuccess || component.isNull()) py::print("Component not defined!");
+			}
+
+			if (dagPath.isValid())
+			{
+				dagPaths.append(dagPath);
+			}
+		}
+	}
+	return dagPaths;
+}
 
 bool getDagPathAndComponent(const wchar_t* name, MDagPath& dagPath, MObject& component)
 {
@@ -135,10 +198,11 @@ public:
 
 	// Get the skin weights from the given node's skin modifier
 	//std::vector<std::vector<std::vector <float>>> getSkinWeights();
+	MObject addMissingBones(std::vector<std::string> missingBoneNames, MDagPathArray skinnedBones);
 
 	// Get the vertex weights, bone ids and positions from the given node
 	PySkinData getData();
 
 	// Set the skin weights to the given node's skin modifier
-	bool setSkinWeights(eg::MatrixXi& boneIDs, eg::MatrixXf& vertexWeights);
+	bool setSkinWeights(PySkinData& skinData);
 };

@@ -14,6 +14,7 @@
 #include <iepoly.h>
 #include <Max.h>
 #include <matrix3.h>
+#include <maxscript/maxwrapper/mxsobjects.h>
 
 
 class SkinManager

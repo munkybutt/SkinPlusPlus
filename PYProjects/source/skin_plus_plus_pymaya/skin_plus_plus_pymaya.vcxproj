@@ -148,10 +148,10 @@
     <OutDir>$(SolutionDir)build\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='2023-Debug|x64'">
-    <LinkIncremental>true</LinkIncremental>
+    <LinkIncremental>false</LinkIncremental>
     <TargetExt>.pyd</TargetExt>
-    <IncludePath>$(ProjectDir);$(ProjectDir)..\skin_plus_plus_py\headers;C:\Program Files\Autodesk\Maya2022\devkit\devkitBase\include;C:\Program Files\Python37\include;$(ProjectDir)..\..\venv37\Lib\site-packages\pybind11\include;$(ProjectDir)..\..\3rdParty\eigen-3.4.0;$(ProjectDir)..\..\3rdParty\fmt-8.0.1\include;</IncludePath>
-    <LibraryPath>C:\Program Files\Autodesk\Maya2022\devkit\devkitBase\lib;C:\Program Files\Python37\libs</LibraryPath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)..\skin_plus_plus_py\headers;C:\Program Files\Autodesk\Maya2023\devkit\devkitBase\include;C:\Program Files\Python39\include;$(ProjectDir)..\..\.venvs\39\.venv\Lib\site-packages\pybind11\include;$(ProjectDir)..\..\3rdParty\eigen-3.4.0;$(ProjectDir)..\..\3rdParty\fmt-9.1.0\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Program Files\Autodesk\Maya2023\devkit\devkitBase\lib;C:\Program Files\Python39\libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)build\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='2022-Release|x64'">
@@ -164,8 +164,8 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='2023-Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <TargetExt>.pyd</TargetExt>
-    <IncludePath>$(ProjectDir);$(ProjectDir)..\skin_plus_plus_py\headers;C:\Program Files\Autodesk\Maya2022\devkit\devkitBase\include;C:\Program Files\Python37\include;$(ProjectDir)..\..\venv37\Lib\site-packages\pybind11\include;$(ProjectDir)..\..\3rdParty\eigen-3.4.0;$(ProjectDir)..\..\3rdParty\fmt-8.0.1\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Program Files\Autodesk\Maya2022\devkit\devkitBase\lib;C:\Program Files\Python37\libs;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)..\skin_plus_plus_py\headers;C:\Program Files\Autodesk\Maya2023\devkit\devkitBase\include;C:\Program Files\Python39\include;$(ProjectDir)..\..\.venvs\39\.venv\Lib\site-packages\pybind11\include;$(ProjectDir)..\..\3rdParty\eigen-3.4.0;$(ProjectDir)..\..\3rdParty\fmt-9.1.0\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Program Files\Autodesk\Maya2023\devkit\devkitBase\lib;C:\Program Files\Python39\libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)build\$(Platform)\$(Configuration)\$(ProjectName)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='2022-Debug|Win32'">
@@ -252,7 +252,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Foundation.lib;OpenMaya.lib;OpenMayaUI.lib;OpenMayaAnim.lib;OpenMayaFX.lib;OpenMayaRender.lib;Image.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>OpenMaya.lib;OpenMayaAnim.lib;Foundation.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/export:initializePlugin /export:uninitializePlugin</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
@@ -274,6 +274,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>OpenMaya.lib;OpenMayaAnim.lib;Foundation.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>py D:\Code\Git\SkinPlusPlus\PYProjects\source\post_build.py</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='2023-Release|x64'">
     <ClCompile>
@@ -293,6 +296,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>OpenMaya.lib;OpenMayaAnim.lib;Foundation.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>py D:\Code\Git\SkinPlusPlus\PYProjects\source\post_build.py</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="skin_plus_plus_pymaya.cpp" />

@@ -12,6 +12,7 @@ set_skin_weights = None
 def __get_environmet_core(python_version: str):
     import importlib
     import pathlib
+
     current_directory = pathlib.Path(__file__).parent
     sub_module_path = current_directory / f"py/{python_version}"
 
@@ -23,7 +24,7 @@ def __get_environmet_core(python_version: str):
     return core
 
 
-def __get_dcc_backend(dcc:str, version: str, api:str):
+def __get_dcc_backend(dcc: str, version: str, api: str):
     current_directory = pathlib.Path(__file__).parent
     sub_module_name = f"skin_plus_plus_{api}_{version}"
     sub_module_path = current_directory / f"dccs/{dcc}" / sub_module_name
@@ -44,6 +45,7 @@ def __get_dcc_backend(dcc:str, version: str, api:str):
 
     return backend
 
+
 # DO NOT REMOVE - Required for access to SkinData class:
 __version = f"{sys.version_info.major}{sys.version_info.minor}"
 __get_environmet_core(__version)
@@ -59,7 +61,7 @@ if "3ds max" in executable:
 
 
 elif "maya" in executable:
-    from pymel import versions
+    from pymel import versions  # type: ignore
 
     version = str(versions.current())[:4]
     __get_dcc_backend("maya", version, "pymaya")
@@ -76,10 +78,11 @@ __all__ = (
     "get_skin_data",
     # "get_vertex_positions",
     "import_skin_data",
-    "set_skin_weights"
+    "set_skin_weights",
 )
 
 
 if __name__ == "__main__":
     import skin_plus_plus
+
     importlib.reload(skin_plus_plus)

@@ -29,7 +29,7 @@ import skin_plus_plus
 
 if __name__ == "__main__":
     from importlib import reload
-    # reload(skin_plus_plus)
+    reload(skin_plus_plus)
 
 _typing = False
 if _typing:
@@ -39,6 +39,8 @@ del _typing
 
 
 _loops = 1
+
+
 def set_loops(value: int):
     global _loops
     _loops = value
@@ -633,7 +635,6 @@ class SkinPlusPlusTestMaya(SkinPlusPlusTestBase):
                 _weights
             )
 
-
         set_function_list = (
             set_skin_weights_om,
             set_skin_weights,
@@ -652,8 +653,26 @@ def get_sorted_indicies(indicies: list[list[int]], old_names: list[str], new_nam
         sorted_bone_ids[index] = [name_mapping[old_names[bone_id]] for bone_id in vert_bone_ids]
 
 
+def add_bones():
+
+    from maya import cmds
+    from maya import mel
+
+    import maya.OpenMaya as om
+    import maya.OpenMayaAnim as oman
+    import pymel.core as pm
+
+    selection_list = om.MSelectionList()
+    # status = om.MStatus()
+    mobject = om.MObject()
+    print(mobject)
+    fnInfluence = oman.MFnIkJoint(mobject);
+
+
 if __name__ == "__main__":
 
+
+    # add_bones()
     # cmds_get_skin_weights("test_mesh_low")
 
     # from pymxs import runtime as mxRt
@@ -675,15 +694,13 @@ if __name__ == "__main__":
 
     save_path = pathlib.Path(r"D:\Code\Git\SkinPlusPlus\PYProjects\skin_plus_plus_test\dcc_test_files\skin_data\mesh_low.skin")
     # skin_data = skin_plus_plus.get_skin_data("test_mesh_low")
-    # # skin_plus_plus.set_skin_weights("test_mesh_low", skin_data)
-    # # print(skin_data)
     # with save_path.open("wb") as file:
     #     pickle.dump(skin_data, file)
 
     with save_path.open("rb") as file:
         loaded_skin_data = pickle.load(file)
 
-    print(loaded_skin_data.bone_names)
+    # print(loaded_skin_data.bone_names)
     skin_plus_plus.set_skin_weights("test_mesh_low", loaded_skin_data)
     # print(skin_data.positions)
     # # assert False

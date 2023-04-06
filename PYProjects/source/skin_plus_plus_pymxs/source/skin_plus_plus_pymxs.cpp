@@ -435,7 +435,6 @@ BoneData getBoneData(ISkin* iSkin, int skinBoneCount)
 
 bool SkinManager::setSkinWeights(PySkinData& skinData)
 {
-	py::print("setSkinWeights");
 	auto boneIDsRows = skinData.boneIDs.rows();
 	auto vertexWeightsRows = skinData.weights.rows();
 	auto boneIDsCols = skinData.boneIDs.cols();
@@ -505,14 +504,13 @@ bool setSkinWeights(wchar_t* name, PySkinData& skinData)
 
 PYBIND11_MODULE(skin_plus_plus_pymxs, m) {
 	// This makes the base SkinData class available to the module:
-	#include <skin_plus_plus_py.h>
+#include <skin_plus_plus_py.h>
 
 	m.def("get_skin_data", [&](wchar_t* name)
 		{
 			SkinManager skinData(name);
 			PySkinData* pySkinData = skinData.getData();
 			return pySkinData;
-			
 		},
 		"Get Skin Data",
 		py::arg("name")
@@ -522,7 +520,6 @@ PYBIND11_MODULE(skin_plus_plus_pymxs, m) {
 			SkinManager skinData(name);
 			PySkinData* pySkinData = skinData.getData();
 			return pySkinData->positions;
-
 		},
 		"Get Skin Data",
 		py::arg("name")
@@ -537,8 +534,7 @@ PYBIND11_MODULE(skin_plus_plus_pymxs, m) {
 		py::arg("skin_data")
 	);
 
-	//m.def("__repr__", [](const PySkinData& pySkinData) {
-	//	return "PySkinData<size:" + pySkinData.boneIDs.size() + "asdf>";
-	//	}
-	//);
+	/*py::class_<MAXNode>(m, "MaxNode")
+		.def(py::init<INode*>(), py::arg("node"))
+		.def("get_name", &MAXNode::SvGetName);*/
 }
