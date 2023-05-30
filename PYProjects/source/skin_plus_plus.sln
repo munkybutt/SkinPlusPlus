@@ -4,10 +4,16 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.0.31912.275
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "skin_plus_plus_pymxs", "skin_plus_plus_pymxs\skin_plus_plus_pymxs.vcxproj", "{7BF5EA8D-2105-425A-967C-590AD47EC6CB}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6A977F79-6449-4D2F-8B5F-9363A19F5046} = {6A977F79-6449-4D2F-8B5F-9363A19F5046}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "skin_plus_plus_py", "skin_plus_plus_py\skin_plus_plus_py.vcxproj", "{6A977F79-6449-4D2F-8B5F-9363A19F5046}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "skin_plus_plus_pymaya", "skin_plus_plus_pymaya\skin_plus_plus_pymaya.vcxproj", "{1A82B795-46D9-40C8-9AE2-4C4D2D71BBFD}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6A977F79-6449-4D2F-8B5F-9363A19F5046} = {6A977F79-6449-4D2F-8B5F-9363A19F5046}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

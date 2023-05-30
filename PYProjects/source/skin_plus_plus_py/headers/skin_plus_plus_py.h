@@ -15,142 +15,165 @@
 #include <fmt/format.h>
 //#include <fmt/xchar.h>
 
-
 namespace py = pybind11;
 namespace eg = Eigen;
 
+
+typedef std::vector<std::string> BoneNamesVector;
+typedef eg::MatrixXi BoneIDsMatrix;
+typedef eg::MatrixXd WeightsMatrix;
+typedef eg::MatrixXd PositionMatrix;
+typedef unsigned int UINT;
+
 template <typename T>
-int getItemIndex(std::vector<T> vector, T item) {
-	auto index = std::distance(vector.begin(), find(vector.begin(), vector.end(), item));
-	if (index >= vector.size())
-	{
-		return -1;
-	}
-	return index;
+UINT getItemIndex(std::vector<T> vector, T item) {
+    UINT index = std::distance(vector.begin(), find(vector.begin(), vector.end(), item));
+    if (index >= vector.size())
+    {
+        return UINT(-1);
+    }
+    return index;
+}
+
+
+char convertWCharToChar(const wchar_t* text)
+{
+    size_t length = std::wcslen(text);
+    std::wstring_convert<std::codecvt<wchar_t, char, std::mbstate_t>> conv;
+    std::string storeTextBuffer = conv.to_bytes(text, text + length);
+
+    return storeTextBuffer[0];
+}
+
+
+std::string convertWCharToString(const wchar_t* text)
+{
+    size_t length = std::wcslen(text);
+    std::wstring_convert<std::codecvt<wchar_t, char, std::mbstate_t>> conv;
+    std::string storeTextBuffer = conv.to_bytes(text, text + length);
+
+    return storeTextBuffer;
+}
+
+
+std::wstring convertStringToWString(const std::string& multi) {
+    std::wstring wide;
+    wchar_t w;
+    mbstate_t mb{};
+    size_t n = 0, len = multi.length() + 1;
+    while (auto res = mbrtowc(&w, multi.c_str() + n, len - n, &mb)) {
+        if (res == size_t(-1) || res == size_t(-2))
+            throw "invalid encoding";
+
+        n += res;
+        wide += w;
+    }
+    return wide;
+}
+
+
+const char* convertStringToChar(std::string text)
+{
+    const char* charArray;
+    charArray = &text[0];
+    return charArray;
 }
 
 
 struct SortedBoneNameData
 {
-	std::vector<int> sortedBoneIDs;
-	std::vector<std::string> unfoundBoneNames;
-	SortedBoneNameData(int boneCount)
-	{
-		sortedBoneIDs = std::vector<int>(boneCount);
-		unfoundBoneNames = std::vector<std::string>();
-	};
-	~SortedBoneNameData() {}
+    std::vector<UINT> sortedBoneIDs;
+    std::vector<std::string> unfoundBoneNames;
+    SortedBoneNameData(UINT boneCount)
+    {
+        sortedBoneIDs = std::vector<UINT>(boneCount);
+        unfoundBoneNames = std::vector<std::string>();
+    };
+    ~SortedBoneNameData() {}
 };
 
 
 struct PySkinData final
 {
 public:
-	eg::MatrixXi boneIDs;
-	eg::MatrixXf weights;
-	eg::MatrixXf positions;
-	std::vector<std::string> boneNames;
+    BoneNamesVector boneNames;
+    BoneIDsMatrix boneIDs;
+    WeightsMatrix weights;
+    PositionMatrix positions;
 
-	PySkinData() {}
+    PySkinData() {}
 
-	PySkinData(int vertexCount, int maxInfluenceCount)
+    PySkinData(UINT vertexCount, UINT maxInfluenceCount)
+    {
+        this->boneIDs = BoneIDsMatrix(vertexCount, maxInfluenceCount);
+        this->weights = WeightsMatrix(vertexCount, maxInfluenceCount);
+        this->positions = PositionMatrix(vertexCount, 3);
+    }
+
+    PySkinData(BoneNamesVector boneNames, BoneIDsMatrix boneIDs, WeightsMatrix weights, PositionMatrix positions)
+    {
+        this->boneNames = boneNames;
+        this->boneIDs = boneIDs;
+        this->weights = weights;
+        this->positions = positions;
+    }
+
+    PySkinData(py::tuple data)
+    {
+        this->setInternalState(data);
+    }
+
+
+    ~PySkinData() {}
+
+    // Set the internal state of the object, replacing all data.
+    // The tuple structure is: (boneNames, boneIDs, weights, positions).
+    void setInternalState(py::tuple data)
+    {
+        if (data.size() != 4)
+            throw std::runtime_error("Invalid state - The tuple structure is: (bone_names, bone_ids, weights, positions)");
+
+        this->boneNames = py::cast<BoneNamesVector>(data[0]);
+        this->boneIDs = py::cast<BoneIDsMatrix>(data[1]);
+        this->weights = py::cast<WeightsMatrix>(data[2]);
+        this->positions = py::cast<PositionMatrix>(data[3]);
+    }
+
+    // Set a new maximum influence count
+    void setMaximumVertexWeightCount(int influenceCount)
+    {
+        this->boneIDs.resize(eg::NoChange, influenceCount);
+        this->weights.resize(eg::NoChange, influenceCount);
+    }
+
+    // Get the bone ids in their correct order as well as any missing bones
+    // for the current skin modifier.
+    SortedBoneNameData getSortedBoneIDs(BoneNamesVector currentSkinnedBoneNames)
 	{
-		this->boneIDs = eg::MatrixXi(vertexCount, maxInfluenceCount);
-		this->weights = eg::MatrixXf(vertexCount, maxInfluenceCount);
-		this->positions = eg::MatrixXf(vertexCount, 3);
-	}
+        UINT cachedBoneCount = this->boneNames.size();
+		auto sortedBoneNameData = SortedBoneNameData(cachedBoneCount);
+        std::unordered_map<std::string, size_t> nameMap;
+        for (size_t index = 0; index < currentSkinnedBoneNames.size(); index++)
+        {
+            nameMap[currentSkinnedBoneNames[index]] = index;
+        }
 
-	PySkinData(py::tuple data)
-	{
-		if (data.size() != 4)
-			throw std::runtime_error("Invalid state!");
-
-		this->setInternalState(data);
-	}
-
-
-	~PySkinData() {}
-
-	// Set the internal state of the object, replacing all data.
-	// The tuple structure is: (boneNames, boneIDs, weights, positions).
-	void setInternalState(py::tuple data)
-	{
-		this->boneNames = py::cast<std::vector<std::string>>(data[0]);
-		this->boneIDs = py::cast<eg::MatrixXi>(data[1]);
-		this->weights = py::cast<eg::MatrixXf>(data[2]);
-		this->positions = py::cast<eg::MatrixXf>(data[3]);
-	}
-
-	// Set a new maximum influence count
-	void setMaximumVertexWeightCount(int influenceCount)
-	{
-		this->boneIDs.resize(eg::NoChange, influenceCount);
-		this->weights.resize(eg::NoChange, influenceCount);
-	}
-
-	// Get the bone ids in their correct order as well as any missing bones
-	// for the current skin modifier.
-	SortedBoneNameData getSortedBoneIDs(std::vector<std::string> currentSkinnedBoneNames)
-	{
-		auto cachedSize = this->boneNames.size();
-		auto size = currentSkinnedBoneNames.size();
-		auto sortedBoneNameData = SortedBoneNameData(cachedSize);
-		for (size_t boneIndex = 0; boneIndex < cachedSize; boneIndex++)
+		for (size_t boneIndex = 0; boneIndex < cachedBoneCount; boneIndex++)
 		{
-			std::string boneNameToFind = this->boneNames[boneIndex];
-			auto index = getItemIndex(currentSkinnedBoneNames, boneNameToFind);
-			if (index != -1)
-			{
-				sortedBoneNameData.sortedBoneIDs[boneIndex] = index;
-				continue;
-			}
-			sortedBoneNameData.unfoundBoneNames.push_back(boneNameToFind);
-			py::print("Bone not found in current skin definition: ", boneNameToFind);
+			std::string nameToFind = this->boneNames[boneIndex];
+            auto lookup = nameMap.find(nameToFind);
+            if (lookup != nameMap.end())
+            {
+                sortedBoneNameData.sortedBoneIDs[boneIndex] = lookup->second;
+            }
+            else
+            {
+                sortedBoneNameData.unfoundBoneNames.push_back(nameToFind);
+                py::print("Bone not found in current skin definition: ", nameToFind);
+            }
 		}
 		return sortedBoneNameData;
 	}
-
-	//#include <algorithm>
-	//#include <unordered_map>
-	//#include <vector>
-	//SortedBoneNameData getSortedBoneIDs(
-	//	const std::vector<std::vector<int>>&indices,
-	//	const std::vector<std::string>&old_names,
-	//	const std::vector<std::string>&new_names
-	//)
-	//{
-
-	//	auto cachedSize = this->boneNames.size();
-	//	auto sortedBoneNameData = SortedBoneNameData(this->boneNames.size());
-
-
-	//	std::unordered_map<std::string, int> name_map;
-	//	for (size_t i = 0; i < new_names.size(); i++)
-	//	{
-	//		name_map[new_names[i]] = i;
-	//	}
-
-	//	std::vector<std::vector<int>> sorted_bone_ids;
-	//	for (const auto& vert_bone_ids : indices)
-	//	{
-	//		std::vector<int> sorted_ids;
-	//		//for (const auto bone_id : vert_bone_ids)
-	//		for (size_t bone_id = 0; bone_id < vert_bone_ids.size(); bone_id++)
-	//		{
-	//			try
-	//			{
-	//				sortedBoneNameData.sortedBoneIDs[bone_id] = name_map.at(old_names[bone_id]);
-	//				//sorted_ids.push_back(name_map.at(old_names[bone_id]));
-	//			}
-	//			catch (std::out_of_range&)
-	//			{
-	//				throw std::invalid_argument("Old bone name not found in new names");
-	//			}
-	//		}
-	//		sorted_bone_ids.push_back(sorted_ids);
-	//	}
-	//	return sortedBoneNameData;
-	//}
 };
 
 

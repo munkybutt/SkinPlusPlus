@@ -5,9 +5,6 @@
 #include <maya/MDoubleArray.h>
 #include <maya/MDagPath.h>
 #include <maya/MDagPathArray.h>
-//#include <maya/MItCurveCV.h>
-//#include <maya/MItMeshVertex.h>
-//#include <maya/MItSurfaceCV.h>
 #include <maya/MFnDagNode.h>
 #include <maya/MFnIkJoint.h>
 #include <maya/MFnMatrixData.h>
@@ -22,14 +19,6 @@
 #include <maya/MSelectionList.h>
 
 
-
-const char* convertStringToChar(std::string text)
-{
-	const char* charArray;
-	charArray = &text[0];
-	return charArray;
-}
-
 bool getDagPathAndComponent(MString name, MDagPath& dagPath, MObject& component)
 {
 	MObject node;
@@ -40,38 +29,39 @@ bool getDagPathAndComponent(MString name, MDagPath& dagPath, MObject& component)
 	{
 		return false;
 	}
-	for (size_t i = 0; i < selectionList.length(); i++)
-	{
-		MStatus status = selectionList.getDependNode(i, node);
-		if (status == MS::kSuccess) // && node.hasFn(MFn::kSkinClusterFilter))
-		{
-			selectionList.getDagPath(i, dagPath, component);
-			if (component.isNull())
-			{
-				//Try to get the skin from the sel:
-				MStatus status;
-				dagPath.extendToShape();
+	for (UINT i = 0; i < selectionList.length(); i++)
+    {
+        MStatus status = selectionList.getDependNode(i, node);
+        if (status == MS::kSuccess) // && node.hasFn(MFn::kSkinClusterFilter))
+        {
+            selectionList.getDagPath(i, dagPath, component);
+            if (component.isNull())
+            {
+                //Try to get the skin from the sel:
+                MStatus status;
+                dagPath.extendToShape();
 
-				MFnSingleIndexedComponent singleIndexComponent;
-				singleIndexComponent.setComplete(true);
-				component = singleIndexComponent.create(MFn::kMeshVertComponent, &status);
-				if (status != MS::kSuccess || component.isNull()) py::print("Component not defined!");
-			}
-		}
+                MFnSingleIndexedComponent singleIndexComponent;
+                singleIndexComponent.setComplete(true);
+                component = singleIndexComponent.create(MFn::kMeshVertComponent, &status);
+                if (status != MS::kSuccess || component.isNull()) py::print("Component not defined!");
+            }
+        }
 
 
-		return dagPath.isValid();
+        return dagPath.isValid();
 
-	}
-	throw std::exception("Given node is invalid or is not compatible with skin clusters");
+    }
+    throw std::exception("Given node is invalid or is not compatible with skin clusters");
 }
+
 
 bool getDagPathsAndComponents(MStringArray names, MDagPathArray& dagPaths, MObjectArray& components)
 {
-	auto nameLength = names.length();
-	dagPaths.setLength(nameLength);
-	components.setLength(nameLength);
-	for (size_t i = 0; i < nameLength; i++)
+    auto nameLength = names.length();
+    dagPaths.setLength(nameLength);
+    components.setLength(nameLength);
+    for (UINT i = 0; i < nameLength; i++)
 	{
 		auto dagPath = MDagPath();
 		auto component = MObject();
@@ -98,7 +88,7 @@ MDagPathArray getNodesFromNames(MStringArray names)
 	{
 		return dagPaths;
 	}
-	for (size_t i = 0; i < selectionList.length(); i++)
+	for (UINT i = 0; i < selectionList.length(); i++)
 	{
 		status = selectionList.getDependNode(i, node);
 		if (status == MS::kSuccess) // && node.hasFn(MFn::kSkinClusterFilter))
@@ -125,6 +115,7 @@ MDagPathArray getNodesFromNames(MStringArray names)
 	return dagPaths;
 }
 
+
 bool getDagPathAndComponent(const wchar_t* name, MDagPath& dagPath, MObject& component)
 {
 	MString mName(name);
@@ -132,7 +123,46 @@ bool getDagPathAndComponent(const wchar_t* name, MDagPath& dagPath, MObject& com
 }
 
 
-MStatus getMeshAndSkinFns(MFnMesh& fnMesh, MFnSkinCluster& fnSkinCluster)
+bool isSkinClusterValid(MObject& meshNode, bool throwExceptions = true)
+{
+    MStatus status;
+    MFnDependencyNode meshDepNode(meshNode);
+    MPlug skinClusterPlug = meshDepNode.findPlug("inMesh", false, &status);
+
+    if (!status)
+    {
+        auto message = fmt::format("The node: '{}' is not connected to a skin cluster!", meshDepNode.name().asChar());
+        if (throwExceptions)
+        {
+            throw std::exception(message.c_str());
+        }
+        return false;
+    }
+
+    MPlugArray skinClusterConnections;
+    skinClusterPlug.connectedTo(skinClusterConnections, true, false, &status);
+    if (!status || skinClusterConnections.length() > 1)
+    {
+        auto message = fmt::format("The node: '{}' is connected to multiple skin clusters: ", meshDepNode.name().asChar());
+        std::vector<MString> skinClusterNames;
+        for (UINT i = 0; i < skinClusterConnections.length(); ++i)
+        {
+            MObject skinClusterNode = skinClusterConnections[i].node();
+            MFnSkinCluster skinClusterFn(skinClusterNode);
+            skinClusterNames.push_back(skinClusterFn.name());
+            message += fmt::format("{}{}", skinClusterNames[i].asChar(), (i < skinClusterNames.size() - 1) ? ", " : ".");
+        }
+        if (throwExceptions)
+        {
+            throw std::exception(message.c_str());
+        }
+        return false;
+    }
+    return true;
+}
+
+
+MStatus getMeshAndSkinFns(MFnMesh& fnMesh, MFnSkinCluster& fnSkinCluster, MString name)
 {
 	MStatus status;
 	MObject meshObj = fnMesh.object(&status);
@@ -154,10 +184,18 @@ MStatus getMeshAndSkinFns(MFnMesh& fnMesh, MFnSkinCluster& fnSkinCluster)
 	}
 	if (itDependencyGraph.isDone())
 	{
-		throw std::exception("Given node is invalid or is not compatible with skin clusters");
+        auto message = fmt::format("Given node: '{}' is invalid or is not compatible with skin clusters!", name.asChar());
+		throw std::exception(message.c_str());
 	}
+    //return fnSkinCluster.setObject(itDependencyGraph.currentItem());
+    
+    auto isSkinClusterValidResult = isSkinClusterValid(meshObj, true);
+    if (isSkinClusterValidResult)
+    {
+        return fnSkinCluster.setObject(itDependencyGraph.currentItem());
+    }
 
-	return fnSkinCluster.setObject(itDependencyGraph.currentItem());
+    return MS::kFailure;
 }
 
 

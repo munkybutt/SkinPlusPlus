@@ -4,7 +4,6 @@ import functools
 import inspect
 import numpy as np
 import pathlib
-import pickle
 import random
 import site
 import sys
@@ -27,8 +26,12 @@ if __name__ == "__main__":
 
 import skin_plus_plus
 
+# skin_plus_plus.set_debug(False)
+
 if __name__ == "__main__":
     from importlib import reload
+    reload(skin_plus_plus.core)
+    reload(skin_plus_plus.io)
     reload(skin_plus_plus)
 
 _typing = False
@@ -670,56 +673,11 @@ def add_bones():
 
 
 if __name__ == "__main__":
-
-
-    # add_bones()
-    # cmds_get_skin_weights("test_mesh_low")
-
-    # from pymxs import runtime as mxRt
-
-    # # sel = tuple(mxRt.Selection)
-    # # unittest.main()
-    # mxRt.Delete(list(mxRt.Selection))
-
-    # suite = unittest.TestSuite()
-    # suite.addTest(SkinPlusPlusTestMax("test_get_skin_data"))
-    # # suite.addTest(SkinPlusPlusTestMax("test_get_performance"))
-    # # suite.addTest(SkinPlusPlusTestMaya("test_get_performance"))
-    # runner = unittest.TextTestRunner()
-    # runner.run(suite)
-
-    # runner = unittest.TextTestRunner()
-    # suite = unittest.makeSuite(SkinPlusPlusTestMax)
-    # runner.run(suite)
-
-    save_path = pathlib.Path(r"D:\Code\Git\SkinPlusPlus\PYProjects\skin_plus_plus_test\dcc_test_files\skin_data\mesh_low.skin")
-    # skin_data = skin_plus_plus.get_skin_data("test_mesh_low")
-    # with save_path.open("wb") as file:
-    #     pickle.dump(skin_data, file)
-
-    with save_path.open("rb") as file:
-        loaded_skin_data = pickle.load(file)
-
-    # print(loaded_skin_data.bone_names)
-    skin_plus_plus.set_skin_weights("test_mesh_low", loaded_skin_data)
-    # print(skin_data.positions)
-    # # assert False
-    # save_path = pathlib.Path(r"D:\Code\Git\SkinPlusPlus\PYProjects\skin_plus_plus_test\dcc_test_files\skin_data\mesh_low.skin")
-    # with save_path.open("wb") as file:
-    #     pickle.dump(skin_data, file)
-
-
-    # import sys
-
-    # del skin_plus_plus
-    # modules_to_delete = []
-    # for module_name in sys.modules:
-    #     if module_name.startswith("skin_plus_plus"):
-    #         modules_to_delete.append(module_name)
-
-    # for module_to_delete in modules_to_delete:
-    #     del sys.modules[module_to_delete]
-
-    # import skin_plus_plus
-
-    # print(sys.getrefcount(skin_plus_plus))
+    skin_plus_plus.io.max_to_maya(file_type=skin_plus_plus.FileType.pickle)
+    # skin_plus_plus.io.save(file_type=skin_plus_plus.FileType.json)
+    skin_plus_plus.io.load(file_type=skin_plus_plus.FileType.json)
+    # skin_data = skin_plus_plus.get_skin_data("Weapon_Shield_1H_001_Model_Main_01_:Shield_GEO")
+    # print(skin_data)
+    # skin_plus_plus.set_skin_weights("SM_EliteEnemy_Axe_GEO", skin_data)
+    # print(skin_data.weights[2])
+    # print(skin_data.bone_ids[0])

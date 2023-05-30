@@ -41,18 +41,18 @@ private:
 	ISkinImportData* iSkinImportData;
 
 	// Used to track the maximum number of vertex weights, allowing data to be resized only when needed
-	int maximumVertexWeightCount;
+	UINT maximumVertexWeightCount;
 
 	PySkinData* pySkinData;
 
 	// Get the vertex weights and bone ids and add them to the given PySkinData
-	void collectWeightsAndBoneIDs(unsigned int vertexIndex);
+	void collectWeightsAndBoneIDs(UINT vertexIndex);
 
 	// Get the vertex weights, bone ids and positions - on an editable mesh:
-	PySkinData* getDataMesh(int vertexCount);
+	PySkinData* getDataMesh(UINT vertexCount);
 
-	// Get the vertex weights, bone ids and positions - on an editable poly:
-	PySkinData* getDataPoly(int vertexCount);
+    // Get the vertex weights, bone ids and positions - on an editable poly:
+    PySkinData* getDataPoly(UINT vertexCount);
 	
 	// Add missing bones to the skin modifier based on the given vector of missing bone names
 	void addMissingBones(std::vector<std::string> missingBoneNames);
