@@ -1,0 +1,10 @@
+{
+    "pythonPlatform": "Windows",
+    "pythonVersion": "3.7",
+    "ignore": ["./*.pyi"],
+    "executionEnvironments": [
+        {
+            "root": "./PYProjects"
+        }
+    ]
+}
