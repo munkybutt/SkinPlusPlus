@@ -159,7 +159,21 @@ PySkinData* SkinManager::getData()
     pySkinData->boneNames = std::vector<std::string>(skinBoneCount);
     for (auto boneIndex = 0; boneIndex < skinBoneCount; boneIndex++)
     {
-        pySkinData->boneNames[boneIndex] = convertWCharToString(iSkin->GetBoneName(boneIndex));
+        auto boneName = iSkin->GetBoneName(boneIndex);
+        if (boneName == NULL)
+        {
+            auto bone = iSkin->GetBone(boneIndex);
+            boneName = bone->GetActualINode()->GetName();
+            if (boneName == NULL)
+            {
+                auto handle = bone->GetHandle();
+                auto exceptionText = convertStringToChar(
+                    fmt::format("Name is NULL on skinned bone at index: {} with handle: {}", boneIndex + 1, handle)
+                );
+                throw std::exception(exceptionText);
+            }
+        }
+        pySkinData->boneNames[boneIndex] = convertWCharToString(boneName);
     }
     auto meshType = getMeshType(node);
     if (meshType == 0)
