@@ -1,14 +1,9 @@
 from __future__ import annotations
 
-import functools
+
 import inspect
-import numpy as np
 import pathlib
-import random
 import site
-import sys
-import time
-import unittest
 
 if __name__ == "__main__":
 
@@ -23,6 +18,14 @@ if __name__ == "__main__":
         site.addsitedir(str(current_directory.parent))
 
     __setup__()
+
+import functools
+import numpy as np
+import random
+import sys
+import time
+import unittest
+
 
 import skin_plus_plus
 
@@ -673,9 +676,10 @@ def add_bones():
 
 
 if __name__ == "__main__":
+    pass
     skin_plus_plus.io.max_to_maya(file_type=skin_plus_plus.FileType.pickle)
     # skin_plus_plus.io.save(file_type=skin_plus_plus.FileType.json)
-    skin_plus_plus.io.load(file_type=skin_plus_plus.FileType.json)
+    # skin_plus_plus.io.load(file_type=skin_plus_plus.FileType.json)
     # skin_data = skin_plus_plus.get_skin_data("Weapon_Shield_1H_001_Model_Main_01_:Shield_GEO")
     # print(skin_data)
     # skin_plus_plus.set_skin_weights("SM_EliteEnemy_Axe_GEO", skin_data)

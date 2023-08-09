@@ -12,6 +12,12 @@ set_skin_weights = None
 skin_plus_plus_py = None
 # get_vertex_positions = None
 
+try:
+    is_reloading  # type: ignore
+    is_reloading = True
+except NameError:
+    is_reloading = False
+
 __py_version__ = f"{sys.version_info.major}{sys.version_info.minor}"
 
 
@@ -34,6 +40,9 @@ def __get_skin_plus_plus_py(python_version: str, debug: bool = False):
         del sys.modules["skin_plus_plus_py"]
 
     skin_plus_plus_py = importlib.import_module(import_path)
+    if is_reloading:
+        importlib.reload(skin_plus_plus_py)
+
     return skin_plus_plus_py
 
 
@@ -47,6 +56,8 @@ def __get_dcc_backend(dcc:str, version: str, api:str):
 
     import_path = f"{__name__}.dccs.{dcc}.{sub_module_name}.skin_plus_plus_{api}"
     backend = importlib.import_module(import_path)
+    if is_reloading:
+        importlib.reload(backend)
 
     global get_skin_data
     global set_skin_weights
