@@ -52,9 +52,9 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='2023-Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <UseDebugLibraries>false</UseDebugLibraries>
+    <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <PreferredToolArchitecture>x64</PreferredToolArchitecture>
   </PropertyGroup>
@@ -83,13 +83,13 @@
     <TargetExt>.pyd</TargetExt>
     <IncludePath>$(THIRD_PARTY_EIGEN);$(THIRD_PARTY_FMT)\include;$(ProjectDir);$(ProjectDir)..\skin_plus_plus_py\headers;$(ADSK_MAYA_SDK_2022)\include;$(PYTHON_37)\include;</IncludePath>
     <LibraryPath>$(ADSK_MAYA_SDK_2022)\lib;$(PYTHON_37)\libs</LibraryPath>
-    <OutDir>$(SolutionDir)..\..\PYProjects\skin_plus_plus\dccs\maya\$(ProjectName)_debug_2022</OutDir>
+    <OutDir>$(SolutionDir)..\..\PYProjects\skin_plus_plus\dccs\maya\$(ProjectName)_debug_2023\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='2023-Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <TargetExt>.pyd</TargetExt>
-    <IncludePath>$(THIRD_PARTY_EIGEN);$(THIRD_PARTY_FMT)\include;$(ProjectDir);$(ProjectDir)..\skin_plus_plus_py\headers;$(ADSK_MAYA_SDK_2023)\include;</IncludePath>
-    <LibraryPath>$(ADSK_MAYA_SDK_2023)\lib;C:\Program Files\Python39\libs</LibraryPath>
+    <IncludePath>$(THIRD_PARTY_EIGEN);$(THIRD_PARTY_FMT)\include;$(ProjectDir);$(ProjectDir)..\skin_plus_plus_py\headers;$(ADSK_MAYA_SDK_2023)\include;$(PYTHON_39)\include;$(PYBIND11_39)\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ADSK_MAYA_SDK_2023)\lib;$(PYTHON_39)\libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)..\..\PYProjects\skin_plus_plus\dccs\maya\$(ProjectName)_debug_2023</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='2022-Release|x64'">
@@ -104,7 +104,7 @@
     <TargetExt>.pyd</TargetExt>
     <IncludePath>$(THIRD_PARTY_EIGEN);$(THIRD_PARTY_FMT)\include;$(ProjectDir);$(ProjectDir)..\skin_plus_plus_py\headers;$(ADSK_MAYA_SDK_2023)\include;$(PYTHON_39)\include;$(PYBIND11_39)\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(ADSK_MAYA_SDK_2023)\lib;$(PYTHON_39)\libs;$(LibraryPath)</LibraryPath>
-    <OutDir>$(SolutionDir)..\..\PYProjects\skin_plus_plus\dccs\maya\$(ProjectName)_2023</OutDir>
+    <OutDir>$(SolutionDir)..\..\PYProjects\skin_plus_plus\dccs\maya\$(ProjectName)_2023\</OutDir>
   </PropertyGroup>
   <PropertyGroup Label="Vcpkg">
     <VcpkgEnableManifest>true</VcpkgEnableManifest>
@@ -132,8 +132,8 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp20</LanguageStandard>
-      <LanguageStandard_C>stdc17</LanguageStandard_C>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <LanguageStandard_C>Default</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
