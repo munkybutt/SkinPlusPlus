@@ -248,6 +248,63 @@ PySkinData SkinManagerMaya::getData()
 }
 
 
+
+void sortBoneIDs(BoneIDsMatrix& boneIDs, std::vector<UINT> newIDOrder, const int vertexCount, const int influenceCount)
+{
+    BoneIDsMatrix sortedBoneIDs = BoneIDsMatrix(boneIDs);
+    for (size_t vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
+    {
+        for (size_t influenceIndex = 0; influenceIndex < influenceCount; influenceIndex++)
+        {
+            const int boneID = boneIDs(vertexIndex, influenceIndex);
+            if (boneID == -1)
+            {
+                continue;
+            }
+            const int newIndex = newIDOrder[boneID];
+            boneIDs(vertexIndex, influenceIndex) = newIndex;
+        }
+    }
+}
+
+/// <summary>
+/// Convert an eigen::MatrixXd weights matrix to a MDoubleArray.
+/// This array is flat, so the weights which are passed in as a vertex count x influence count matrix, need to be
+/// structured so they are flat but each number of elements in the array still represents vertex count x influence count.
+/// 
+/// For example:
+/// matrix[0][3] == MDoubleArray[3]
+/// matrix[3][3] == MDoubleArray[9]
+/// 
+/// </summary>
+/// <param name="boneIDs"></param>
+/// <param name="weights"></param>
+/// <param name="vertexCount"></param>
+/// <param name="influenceCount"></param>
+/// <returns></returns>
+MDoubleArray getWeightsAsMDoubleArray(BoneIDsMatrix boneIDs, WeightsMatrix weights, const int vertexCount, const int influenceCount)
+{
+    const UINT arraySize = vertexCount * influenceCount;
+    MDoubleArray mWeights(arraySize);
+    for (size_t vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
+    {
+        const int baseIndex = vertexIndex * influenceCount;
+        for (size_t influenceIndex = 0; influenceIndex < influenceCount; influenceIndex++)
+        {
+            const int boneID = boneIDs(vertexIndex, influenceIndex);
+            if (boneID == -1)
+            {
+                continue;
+            }
+            double weight = weights(vertexIndex, influenceIndex);
+            const UINT mWeightsIndex = baseIndex + boneID;
+            mWeights[mWeightsIndex] = weight;
+        }
+    }
+    return mWeights;
+}
+
+
 bool SkinManagerMaya::setSkinWeights(PySkinData& skinData)
 {
     auto vertexCount = skinData.boneIDs.rows();
@@ -284,13 +341,13 @@ bool SkinManagerMaya::setSkinWeights(PySkinData& skinData)
     {
         throw std::exception("Error querying bones!");
     }
-    auto skinBoneCount = skinnedBones.length();
-    auto currentBoneNames = std::vector<std::string>(skinBoneCount);
-    for (UINT boneIndex = 0; boneIndex < skinBoneCount; boneIndex++)
+    auto skinnedBoneCount = skinnedBones.length();
+    auto currentBoneNames = std::vector<std::string>(skinnedBoneCount);
+    for (UINT boneIndex = 0; boneIndex < skinnedBoneCount; boneIndex++)
     {
         currentBoneNames[boneIndex] = fmt::format("{}", skinnedBones[boneIndex].partialPathName().asChar());
     }
-    if (skinBoneCount == 0)
+    if (skinnedBoneCount == 0)
     {
         this->addMissingBones(skinData.boneNames, skinnedBones);
         this->fnSkinCluster.influenceObjects(skinnedBones, &status);
@@ -301,36 +358,31 @@ bool SkinManagerMaya::setSkinWeights(PySkinData& skinData)
         skinnedBones.clear();
         this->addMissingBones(sortedBoneIDs.unfoundBoneNames, skinnedBones);
         this->fnSkinCluster.influenceObjects(skinnedBones, &status);
+        auto sortedBoneIDs = skinData.getSortedBoneIDs(currentBoneNames);
     }
 
     //validateBindPose(bindPoseMembersArray, skinnedBones);
-    auto arraySize = vertexCount * influenceCount;
-    MIntArray mBoneIDs(influenceCount);
-    MDoubleArray mWeights(arraySize);
-    for (UINT influenceIndex = 0; influenceIndex < influenceCount; influenceIndex++)
+
+    MIntArray mBoneIDs(skinnedBoneCount);
+    auto sortedBoneSize = sortedBoneIDs.sortedBoneIDs.size();
+    //if (skinnedBoneCount != sortedBoneSize)
+    //{
+    //    auto exceptionText = convertStringToChar(
+    //        fmt::format(
+    //            "Skinned bone count {} does not match sorted bone count {}",
+    //            skinnedBoneCount,
+    //            sortedBoneSize
+    //        )
+    //    );
+    //    throw std::length_error(exceptionText);
+    //}
+    for (UINT index = 0; index < skinnedBoneCount; index++)
     {
-        mBoneIDs[influenceIndex] = sortedBoneIDs.sortedBoneIDs[influenceIndex];
-    }
-    // Unpack nested arrays like so: [[0, 1], [2, 3]] -> [0, 1, 2, 3]
-    for (UINT vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
-    {
-        UINT arrayIndex = vertexIndex * influenceCount;
-        for (UINT influenceIndex = 0; influenceIndex < influenceCount; influenceIndex++)
-        {
-            arrayIndex += influenceIndex;
-            auto boneID = skinData.boneIDs(vertexIndex, influenceIndex);
-            auto vertexWeight = skinData.weights(vertexIndex, influenceIndex);
-            mWeights[arrayIndex] = vertexWeight;
-        }
-    }
-    py::print("mWeights length: ", mWeights.length());
-    for (UINT i = 0; i < mWeights.length(); i++)
-    {
-        py::print(mWeights[i]);
-        py::print(mBoneIDs[i]);
-        py::print("---");
+        mBoneIDs[index] = index;
     }
 
+    sortBoneIDs(skinData.boneIDs, sortedBoneIDs.sortedBoneIDs, vertexCount, influenceCount);
+    MDoubleArray mWeights = getWeightsAsMDoubleArray(skinData.boneIDs, skinData.weights, vertexCount, influenceCount);
 	status = this->fnSkinCluster.setWeights(
 		this->dagPath,
 		this->component,

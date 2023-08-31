@@ -1,5 +1,6 @@
 import numpy as np
 import numpy.typing as np_typing
+import typing
 
 from .core import FileType as _FileType
 from .core import export_skin_data as _export_skin_data
@@ -45,11 +46,30 @@ class SkinData:
     - `weights`: The weights of each influence assigned to each vertext.
     - `positions`: The positions of each vertex.
     """
+
     bone_names: list[str]
     bone_ids: np_typing.NDArray[np.int64]
     weights: np_typing.NDArray[np.float32]
     positions: np_typing.NDArray[np.float32]
 
+    @typing.overload
+    def __init__(self):
+        ...
 
-def get_skin_data(mesh_name: str) -> SkinData: ...
-def set_skin_weights(mesh_name: str, skin_data: SkinData) -> bool: ...
+    @typing.overload
+    def __init__(
+        self,
+        names: tuple[str, ...],
+        bone_ids: tuple[tuple[int, ...], ...],
+        weights: tuple[tuple[float, ...], ...],
+        positions: tuple[tuple[float, float, float], ...],
+    ):
+        ...
+
+
+def get_skin_data(mesh_name: str) -> SkinData:
+    ...
+
+
+def set_skin_weights(mesh_name: str, skin_data: SkinData) -> bool:
+    ...

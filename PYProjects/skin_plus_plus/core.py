@@ -115,6 +115,8 @@ def import_skin_data(
                 tuple(data["positions"])
             )
 
+        print(f"skin_data.bone_ids: {skin_data.bone_ids}")
+
     return set_skin_weights(mesh_name, skin_data)
 
     # if import_type == ImportType.nearest:

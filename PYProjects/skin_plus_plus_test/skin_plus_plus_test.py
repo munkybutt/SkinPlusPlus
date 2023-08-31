@@ -33,9 +33,9 @@ import skin_plus_plus
 
 if __name__ == "__main__":
     from importlib import reload
-    reload(skin_plus_plus.core)
-    reload(skin_plus_plus.io)
-    reload(skin_plus_plus)
+    # reload(skin_plus_plus.core)
+    # reload(skin_plus_plus.io)
+    # reload(skin_plus_plus)
 
 _typing = False
 if _typing:
@@ -677,9 +677,38 @@ def add_bones():
 
 if __name__ == "__main__":
     pass
-    skin_plus_plus.io.max_to_maya(file_type=skin_plus_plus.FileType.pickle)
+    # skin_plus_plus.io.max_to_maya(file_type=skin_plus_plus.FileType.pickle)
+    # skin_plus_plus
+    # bones = ["one", "two"]
+    # ids = np.array([[0, 1], [1, 0]], dtype=np.float64)
+    # weights = np.array([[0.25, 0.75], [0.25, 0.75]], dtype=np.float64)
+    # pos = np.array([[0.1, 0.75, 2.0], [0.25, 0.75, 30]], dtype=np.float64)
+    # sd = skin_plus_plus.skin_plus_plus_py.SkinData(bones, ids, weights, pos)
+    # print(sd)
+
+    # print(sd.bone_ids)
     # skin_plus_plus.io.save(file_type=skin_plus_plus.FileType.json)
     # skin_plus_plus.io.load(file_type=skin_plus_plus.FileType.json)
+    import json
+    import pickle
+
+    path = r""
+
+    with open(path, "r") as file:
+        data = json.load(file)
+        skin_data = skin_plus_plus.SkinData(
+            tuple(data["bone_names"]),
+            tuple(data["bone_ids"]),
+            tuple(data["weights"]),
+            tuple(data["positions"])
+        )
+    # with open(path, "rb") as file:
+    #     skin_data = pickle.load(file)
+
+    print(skin_data)
+    # for ids in skin_data.bone_ids:
+    #     print(ids)
+    skin_plus_plus.set_skin_weights("Skeleton", skin_data)
     # skin_data = skin_plus_plus.get_skin_data("Weapon_Shield_1H_001_Model_Main_01_:Shield_GEO")
     # print(skin_data)
     # skin_plus_plus.set_skin_weights("SM_EliteEnemy_Axe_GEO", skin_data)

@@ -2,7 +2,13 @@
 	"folders":
 	[
 		{
-			"path": "../../../SkinPlusPlus",
-		}
+			"path": "C:\\p4ws\\sharkmob\\Tools\\tech_art\\base\\_standalone\\c++\\SkinPlusPlus",
+		},
+		{
+			"path": "C:\\p4ws\\sharkmob\\Tools\\tech_art\\base\\_standalone\\python\\_third_party"
+		},
+	],
+	"debugger_configurations":
+	[
 	],
 }

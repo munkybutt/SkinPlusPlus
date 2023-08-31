@@ -10,6 +10,7 @@ current_dcc = None
 get_skin_data = None
 set_skin_weights = None
 skin_plus_plus_py = None
+SkinData = None
 # get_vertex_positions = None
 
 try:
@@ -23,6 +24,7 @@ __py_version__ = f"{sys.version_info.major}{sys.version_info.minor}"
 
 def __get_skin_plus_plus_py(python_version: str, debug: bool = False):
     global skin_plus_plus_py
+    global SkinData
 
     debug = bool(os.environ.get("SKIN_PLUS_PLUS_DEBUG", False)) or debug
     if debug:
@@ -42,6 +44,8 @@ def __get_skin_plus_plus_py(python_version: str, debug: bool = False):
     skin_plus_plus_py = importlib.import_module(import_path)
     if is_reloading:
         importlib.reload(skin_plus_plus_py)
+
+    SkinData = skin_plus_plus_py.SkinData
 
     return skin_plus_plus_py
 
@@ -182,3 +186,6 @@ __all__ = (
     "max_to_maya",
     "maya_to_max"
 )
+
+def __dir__():
+    return __all__
