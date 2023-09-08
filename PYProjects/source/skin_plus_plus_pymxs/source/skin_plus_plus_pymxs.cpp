@@ -141,6 +141,12 @@ void SkinManager::collectWeightsAndBoneIDs(UINT vertexIndex)
         int influenceBoneID = this->iSkinContextData->GetAssignedBone(vertexIndex, influenceIndex);
         this->pySkinData->weights(vertexIndex, influenceIndex) = infuenceWeight;
         this->pySkinData->boneIDs(vertexIndex, influenceIndex) = influenceBoneID;
+  /*      if (vertexIndex == 0 && influenceIndex == 0)
+        {
+            py::print("infuenceWeight: ", infuenceWeight);
+            py::print("influenceBoneID: ", influenceBoneID);
+            py::print("this->pySkinData->boneID: ", this->pySkinData->boneIDs(vertexIndex, influenceIndex));
+        }*/
     }
 }
 
@@ -154,12 +160,34 @@ PySkinData* SkinManager::getData()
 
     unsigned int vertexCount = iSkinContextData->GetNumPoints();
     maximumVertexWeightCount = iSkinContextData->GetNumAssignedBones(0);
+    for (UINT i = 1; i < vertexCount; i++)
+    {
+        auto influenceCount = iSkinContextData->GetNumAssignedBones(i);
+        if (influenceCount > maximumVertexWeightCount)
+        {
+            maximumVertexWeightCount = influenceCount;
+        }
+    }
     pySkinData = new PySkinData(vertexCount, maximumVertexWeightCount);
     auto skinBoneCount = iSkin->GetNumBones();
     pySkinData->boneNames = std::vector<std::string>(skinBoneCount);
     for (auto boneIndex = 0; boneIndex < skinBoneCount; boneIndex++)
     {
-        pySkinData->boneNames[boneIndex] = convertWCharToString(iSkin->GetBoneName(boneIndex));
+        auto boneName = iSkin->GetBoneName(boneIndex);
+        if (boneName == NULL)
+        {
+            auto bone = iSkin->GetBone(boneIndex);
+            boneName = bone->GetActualINode()->GetName();
+            if (boneName == NULL)
+            {
+                auto handle = bone->GetHandle();
+                auto exceptionText = convertStringToChar(
+                    fmt::format("Name is NULL on skinned bone at index: {} with handle: {}", boneIndex + 1, handle)
+                );
+                throw std::exception(exceptionText);
+            }
+        }
+        pySkinData->boneNames[boneIndex] = convertWCharToString(boneName);
     }
     auto meshType = getMeshType(node);
     if (meshType == 0)
@@ -301,6 +329,7 @@ bool SkinManager::setSkinWeights(PySkinData& skinData)
 	BoneData boneData = getBoneData(this->iSkin, skinBoneCount);
 	SortedBoneNameData sortedBoneIDs = skinData.getSortedBoneIDs(boneData.names);
 	Tab<INode*> skinBones = boneData.nodes;
+    size_t sortedBoneIDCount = sortedBoneIDs.sortedBoneIDs.size();
 	if (sortedBoneIDs.unfoundBoneNames.size() > 0)
 	{
 		this->addMissingBones(sortedBoneIDs.unfoundBoneNames);
@@ -317,10 +346,30 @@ bool SkinManager::setSkinWeights(PySkinData& skinData)
 		weights.Resize(boneIDsCols);
 		for (auto influenceIndex = 0; influenceIndex < boneIDsCols; influenceIndex++)
 		{
-			auto sortedBoneID = sortedBoneIDs.sortedBoneIDs[influenceIndex];
-			auto boneID = skinData.boneIDs(vertexIndex, sortedBoneID);
-            float influenceWeight = skinData.weights(vertexIndex, sortedBoneID);
-			bones.Append(1, &skinBones[boneID]);
+			const int boneID = skinData.boneIDs(vertexIndex, influenceIndex);
+            if (boneID == -1)
+            {
+                // If boneID is -1, then there are no more influence weights for this vertex so break out of the loop.
+                break;
+            }
+            if (boneID > skinBoneCount)
+            {
+                continue;
+            }
+            if (boneID > sortedBoneIDCount)
+            {
+                auto exceptionText = convertStringToChar(
+                    fmt::format(
+                        "Influence ID {} is out of range of sorted bone count {}!",
+                        boneID,
+                        sortedBoneIDCount
+                    )
+                );
+                throw std::length_error(exceptionText);
+            }
+            float influenceWeight = skinData.weights(vertexIndex, influenceIndex);
+			const UINT sortedBoneID = sortedBoneIDs.sortedBoneIDs[boneID];
+			bones.Append(1, &skinBones[sortedBoneID]);
 			weights.Append(1, &influenceWeight);
 		}
 

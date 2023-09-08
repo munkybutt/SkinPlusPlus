@@ -105,8 +105,8 @@ public:
 
     PySkinData(UINT vertexCount, UINT maxInfluenceCount)
     {
-        this->boneIDs = BoneIDsMatrix(vertexCount, maxInfluenceCount);
-        this->weights = WeightsMatrix(vertexCount, maxInfluenceCount);
+        this->boneIDs = BoneIDsMatrix::Constant(vertexCount, maxInfluenceCount, -1);
+        this->weights = WeightsMatrix::Zero(vertexCount, maxInfluenceCount);
         this->positions = PositionMatrix(vertexCount, 3);
     }
 
@@ -142,8 +142,8 @@ public:
     // Set a new maximum influence count
     void setMaximumVertexWeightCount(int influenceCount)
     {
-        this->boneIDs.resize(eg::NoChange, influenceCount);
-        this->weights.resize(eg::NoChange, influenceCount);
+        this->boneIDs.conservativeResize(eg::NoChange, influenceCount);
+        this->weights.conservativeResize(eg::NoChange, influenceCount);
     }
 
     // Get the bone ids in their correct order as well as any missing bones
