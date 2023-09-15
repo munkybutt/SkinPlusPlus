@@ -16,12 +16,15 @@ def get_flat_weights(bone_ids: list[list[int]], weights: list[list[float]], max_
 
     return m_weights
 
-names = ["one", "two", "three"]
-new_names = ["FART", "three", "one", "two", "RANDOM"]
-bone_ids = [[0, 1, -1], [1, 2, -1], [0, 1, 2]]
-weights = [[0.25, 0.75, None], [0.5, 0.5, None], [0.25, 0.25, 0.5]]
 
-m_weights = get_flat_weights(bone_ids, weights)
+# names = ["one", "two", "three"]
+# new_names = ["FART", "three", "one", "two", "RANDOM"]
+names = ["Point005", "Point002", "Point003", "Point004"]
+new_names = ["Point001", "Point002", "Point003", "Point004", "Point005", "Point006"]
+bone_ids = [[0, 1, 2, -1], [1, 2, 3, -1], [0, 1, 3, 2]]
+weights = [[0.25, 0.25, 0.5, None], [0.333, 0.333, 0.333, None], [0.25, 0.25, 0.25, 0.25]]
+
+m_weights = get_flat_weights(bone_ids, weights, max_influence_count=len(names))
 
 # print(m_weights)
 # print(m_weights == [0.25, 0.75, 0.0, 0.5, 0.5, 0.0, 0.25, 0.25, 0.5])
@@ -33,10 +36,12 @@ for index, name in enumerate(new_names):
 
 new_bone_ids = []
 for name in names:
+    if name not in name_map:
+        continue
     new_index = name_map[name]
     new_bone_ids.append(new_index)
 
-# print(new_bone_ids)
+
 def get_sorted_bone_ids(bone_ids: list[list[int]], new_bone_id_order: list[int]):
     for vertex in bone_ids:
         for i, bone_id in enumerate(vertex):
@@ -49,6 +54,7 @@ def get_sorted_bone_ids(bone_ids: list[list[int]], new_bone_id_order: list[int])
     return bone_ids
 
 
+print(f"new_bone_ids: {new_bone_ids}")
 sorted_bone_ids = get_sorted_bone_ids(bone_ids, new_bone_ids)
 # print(f"sorted_bone_ids: {sorted_bone_ids}")
 

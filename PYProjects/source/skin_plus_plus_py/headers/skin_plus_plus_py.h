@@ -148,22 +148,25 @@ public:
 
     // Get the bone ids in their correct order as well as any missing bones
     // for the current skin modifier.
-    SortedBoneNameData getSortedBoneIDs(BoneNamesVector currentSkinnedBoneNames)
+    SortedBoneNameData getSortedBoneIDs(BoneNamesVector currentBoneNames)
 	{
-        UINT cachedBoneCount = this->boneNames.size();
+        const size_t cachedBoneCount = this->boneNames.size();
 		auto sortedBoneNameData = SortedBoneNameData(cachedBoneCount);
         std::unordered_map<std::string, size_t> nameMap;
-        for (size_t index = 0; index < currentSkinnedBoneNames.size(); index++)
+        for (size_t index = 0; index < currentBoneNames.size(); index++)
         {
-            nameMap[currentSkinnedBoneNames[index]] = index;
+            nameMap[currentBoneNames[index]] = index;
         }
 
 		for (size_t boneIndex = 0; boneIndex < cachedBoneCount; boneIndex++)
 		{
-			std::string nameToFind = this->boneNames[boneIndex];
-            auto lookup = nameMap.find(nameToFind);
+			const std::string nameToFind = this->boneNames[boneIndex];
+            const auto lookup = nameMap.find(nameToFind);
             if (lookup != nameMap.end())
             {
+                //py::print(lookup->first);
+                //py::print(lookup->second);
+                //py::print("-------------");
                 sortedBoneNameData.sortedBoneIDs[boneIndex] = lookup->second;
             }
             else

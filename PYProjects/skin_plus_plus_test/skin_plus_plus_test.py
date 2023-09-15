@@ -677,7 +677,7 @@ def add_bones():
 
 if __name__ == "__main__":
     pass
-    # skin_plus_plus.io.max_to_maya(file_type=skin_plus_plus.FileType.pickle)
+    # skin_plus_plus.io.max_to_maya(file_type=skin_plus_plus.FileType.json)
     # skin_plus_plus
     # bones = ["one", "two"]
     # ids = np.array([[0, 1], [1, 0]], dtype=np.float64)
@@ -690,9 +690,9 @@ if __name__ == "__main__":
     # skin_plus_plus.io.save(file_type=skin_plus_plus.FileType.json)
     # skin_plus_plus.io.load(file_type=skin_plus_plus.FileType.json)
     import json
-    import pickle
+    # import pickle
 
-    path = r""
+    path = r"C:\Users\Sheaky\Documents\3ds Max 2023\scenes\_Data\Sphere001_GEO.skpp-json"
 
     with open(path, "r") as file:
         data = json.load(file)
@@ -702,15 +702,19 @@ if __name__ == "__main__":
             tuple(data["weights"]),
             tuple(data["positions"])
         )
-    # with open(path, "rb") as file:
-    #     skin_data = pickle.load(file)
+    # # with open(path, "rb") as file:
+    # #     skin_data = pickle.load(file)
 
-    print(skin_data)
-    # for ids in skin_data.bone_ids:
-    #     print(ids)
-    skin_plus_plus.set_skin_weights("Skeleton", skin_data)
-    # skin_data = skin_plus_plus.get_skin_data("Weapon_Shield_1H_001_Model_Main_01_:Shield_GEO")
     # print(skin_data)
-    # skin_plus_plus.set_skin_weights("SM_EliteEnemy_Axe_GEO", skin_data)
-    # print(skin_data.weights[2])
-    # print(skin_data.bone_ids[0])
+    # # for ids in skin_data.bone_ids:
+    # #     print(ids)
+    skin_plus_plus.set_skin_weights("Sphere001", skin_data)
+    # sd = skin_plus_plus.get_skin_data("Sphere001")
+    # print(sd.weights)
+    # for index, weights in enumerate(sd.weights):
+    #     print(f"{index}: {weights}")
+    # # skin_data = skin_plus_plus.get_skin_data("Weapon_Shield_1H_001_Model_Main_01_:Shield_GEO")
+    # # print(skin_data)
+    # # skin_plus_plus.set_skin_weights("SM_EliteEnemy_Axe_GEO", skin_data)
+    # # print(skin_data.weights[2])
+    # # print(skin_data.bone_ids[0])
