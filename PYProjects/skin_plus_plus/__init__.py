@@ -50,7 +50,7 @@ def __get_skin_plus_plus_py(python_version: str, debug: bool = False):
     return skin_plus_plus_py
 
 
-def __get_dcc_backend(dcc:str, version: str, api:str):
+def __get_dcc_backend(dcc: str, version: str, api: str):
     current_directory = pathlib.Path(__file__).parent
     sub_module_name = f"skin_plus_plus_{api}_{version}"
     sub_module_path = current_directory / f"dccs/{dcc}" / sub_module_name
