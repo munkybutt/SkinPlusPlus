@@ -43,8 +43,10 @@
 
 * Currently supported DCCs:
   - 3DsMax:
+    - 2024 - Python310
     - 2023 - Python39
-  	- 2021 and 2022 - Python37
+    - 2022 - Python37
+  	- 2021 - Python37
   - Maya:
     - 2023 - Python39
     - 2022 - Python37
@@ -58,8 +60,13 @@ There are three types of data that are of interest when working with skin data:
 PySkinData is a c++ struct containing the above data, exposed to python as the SkinData class.  
 This struct allows the data to be typed correctly rather than all typed as floats.  
 On the c++ side, the data is stored in Eigen matrices.  
-On the Python side, the data is exposed via Pybind11 as numpy arrays.  
-It also provides a friendly interface to the raw data in the form of the following properties:
+On the Python side, the data is exposed via Pybind11 as numpy arrays.
+
+Due to the relationship between Eigen and Pybind11, there is no performance hit when passing arrays to and from c++.
+
+🔥 It is fast 🔥
+
+It also provides a simple interface to the raw data in the form of the following properties:
 - SkinData.weights
 - SkinData.bone_ids
 - SkinData.positions
