@@ -282,13 +282,13 @@ void sortBoneIDs(BoneIDsMatrix& boneIDs, std::vector<UINT> newIDOrder, const eg:
 /// <param name="vertexCount"></param>
 /// <param name="influenceCount"></param>
 /// <returns></returns>
-MDoubleArray getWeightsAsMDoubleArray(BoneIDsMatrix boneIDs, WeightsMatrix weights, const eg::Index vertexCount, const eg::Index influenceCount)
+MDoubleArray getWeightsAsMDoubleArray(BoneIDsMatrix boneIDs, WeightsMatrix weights, const eg::Index vertexCount, const eg::Index influenceCount, const eg::Index maxInfluenceCount)
 {
-    const UINT arraySize = vertexCount * influenceCount;
-    MDoubleArray mWeights(arraySize);
+    const UINT arraySize = vertexCount * maxInfluenceCount;
+    MDoubleArray mWeights(arraySize, 0.0);
     for (eg::Index vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
     {
-        const UINT baseIndex = vertexIndex * influenceCount;
+        const UINT baseIndex = vertexIndex * maxInfluenceCount;
         for (eg::Index influenceIndex = 0; influenceIndex < influenceCount; influenceIndex++)
         {
             const int boneID = boneIDs(vertexIndex, influenceIndex);
@@ -303,14 +303,15 @@ MDoubleArray getWeightsAsMDoubleArray(BoneIDsMatrix boneIDs, WeightsMatrix weigh
     }
     //for (eg::Index i = 0; i < vertexCount; i++)
     //{
-    //    auto message = fmt::format("Vertex: {}", i);
+    //    auto message = fmt::format("Vertex: {} - ", i);
     //    for (UINT j = 0; j < influenceCount; j++)
     //    {
     //        if (j == 0)
     //        {
     //            message += "[";
     //        }
-    //        message += fmt::format("{}", mWeights[j]);
+    //        auto mIndex = i * influenceCount + j;
+    //        message += fmt::format("{}: {}", mIndex, mWeights[mIndex]);
     //        if (j < influenceCount - 1)
     //        {
     //            message += ", ";
@@ -318,6 +319,10 @@ MDoubleArray getWeightsAsMDoubleArray(BoneIDsMatrix boneIDs, WeightsMatrix weigh
     //    }
     //    message += "]";
     //    py::print(message);
+    //}
+    //for (size_t i = 0; i < mWeights.length(); i++)
+    //{
+    //    py::print(mWeights[i]);
     //}
     return mWeights;
 }
@@ -386,20 +391,20 @@ bool SkinManagerMaya::setSkinWeights(PySkinData& skinData)
     MIntArray mBoneIDs(sortedBoneSize);
 
     //auto message = fmt::format("Influences: [");
-    //for (size_t index = 0; index < sortedBoneSize; index++)
-    //{
-    //    mBoneIDs[index] = sortedBoneIDs.sortedBoneIDs[index];
-    //    message += fmt::format("{}", mBoneIDs[index]);
-    //    if (index < sortedBoneSize - 1)
-    //    {
-    //        message += ", ";
-    //    }
-    //}
+    for (size_t index = 0; index < sortedBoneSize; index++)
+    {
+        mBoneIDs[index] = sortedBoneIDs.sortedBoneIDs[index];
+        //message += fmt::format("{}", mBoneIDs[index]);
+        //if (index < sortedBoneSize - 1)
+        //{
+        //    message += ", ";
+        //}
+    }
     //message += "]";
     //py::print(message);
 
-    sortBoneIDs(skinData.boneIDs, sortedBoneIDs.sortedBoneIDs, vertexCount, influenceCount);
-    MDoubleArray mWeights = getWeightsAsMDoubleArray(skinData.boneIDs, skinData.weights, vertexCount, influenceCount);
+    //sortBoneIDs(skinData.boneIDs, sortedBoneIDs.sortedBoneIDs, vertexCount, influenceCount);
+    MDoubleArray mWeights = getWeightsAsMDoubleArray(skinData.boneIDs, skinData.weights, vertexCount, influenceCount, sortedBoneSize);
 	status = this->fnSkinCluster.setWeights(
 		this->dagPath,
 		this->component,

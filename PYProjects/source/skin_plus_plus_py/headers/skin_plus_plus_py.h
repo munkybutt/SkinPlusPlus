@@ -116,6 +116,25 @@ public:
         this->boneIDs = boneIDs;
         this->weights = weights;
         this->positions = positions;
+        //for (eg::Index i = 0; i < this->boneIDs.rows(); i++)
+        //{
+        //    auto message = fmt::format("Vertex: {} - ", i);
+        //    for (UINT j = 0; j < this->boneIDs.cols(); j++)
+        //    {
+        //        if (j == 0)
+        //        {
+        //            message += "[";
+        //        }
+        //        auto value = this->boneIDs(i, j);
+        //        message += fmt::format("{}", value);
+        //        if (j < this->boneIDs.cols() - 1)
+        //        {
+        //            message += ", ";
+        //        }
+        //    }
+        //    message += "]";
+        //    py::print(message);
+        //}
     }
 
     PySkinData(py::tuple data)

@@ -674,10 +674,9 @@ def add_bones():
     print(mobject)
     fnInfluence = oman.MFnIkJoint(mobject);
 
-
 if __name__ == "__main__":
     pass
-    # skin_plus_plus.io.max_to_maya(file_type=skin_plus_plus.FileType.json)
+    skin_plus_plus.io.max_to_maya(file_type=skin_plus_plus.FileType.json)
     # skin_plus_plus
     # bones = ["one", "two"]
     # ids = np.array([[0, 1], [1, 0]], dtype=np.float64)
@@ -689,26 +688,26 @@ if __name__ == "__main__":
     # print(sd.bone_ids)
     # skin_plus_plus.io.save(file_type=skin_plus_plus.FileType.json)
     # skin_plus_plus.io.load(file_type=skin_plus_plus.FileType.json)
-    import json
+    # import json
     # import pickle
 
-    path = r"C:\Users\Sheaky\Documents\3ds Max 2023\scenes\_Data\Sphere001_GEO.skpp-json"
+    # path = r"C:\Users\Sheaky\Documents\3ds Max 2023\scenes\_Data\Sphere001_GEO.skpp-json"
 
-    with open(path, "r") as file:
-        data = json.load(file)
-        skin_data = skin_plus_plus.SkinData(
-            tuple(data["bone_names"]),
-            tuple(data["bone_ids"]),
-            tuple(data["weights"]),
-            tuple(data["positions"])
-        )
-    # # with open(path, "rb") as file:
-    # #     skin_data = pickle.load(file)
+    # with open(path, "r") as file:
+    #     data = json.load(file)
+    #     skin_data = skin_plus_plus.SkinData(
+    #         tuple(data["bone_names"]),
+    #         tuple(data["bone_ids"]),
+    #         tuple(data["weights"]),
+    #         tuple(data["positions"])
+    #     )
+    # with open(path, "rb") as file:
+    #     skin_data = pickle.load(file)
 
-    # print(skin_data)
-    # # for ids in skin_data.bone_ids:
-    # #     print(ids)
-    skin_plus_plus.set_skin_weights("Sphere001", skin_data)
+    # # print(skin_data)
+    # # # for ids in skin_data.bone_ids:
+    # # #     print(ids)
+    # skin_plus_plus.set_skin_weights("Sphere001", skin_data)
     # sd = skin_plus_plus.get_skin_data("Sphere001")
     # print(sd.weights)
     # for index, weights in enumerate(sd.weights):
