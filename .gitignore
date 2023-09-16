@@ -446,5 +446,6 @@ PyProjects/venv37/
 PyProjects/venv39/
 PyProjects/.venvs/
 temp.cpp
+*.exp
 *.max
 *.mb

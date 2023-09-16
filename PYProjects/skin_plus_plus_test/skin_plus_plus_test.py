@@ -672,7 +672,8 @@ def add_bones():
     # status = om.MStatus()
     mobject = om.MObject()
     print(mobject)
-    fnInfluence = oman.MFnIkJoint(mobject);
+    fnInfluence = oman.MFnIkJoint(mobject)
+
 
 if __name__ == "__main__":
     pass
