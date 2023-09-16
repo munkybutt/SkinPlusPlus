@@ -25,6 +25,7 @@
 </p>
 
 <p align="center">
+  <a href="#disclaimer">Disclaimer</a> •
   <a href="#key-features">Key Features</a> •
   <a href="#usage">Usage</a> •
   <a href="#performance">Performance</a> •
@@ -32,6 +33,11 @@
   <a href="#roadmap">Roadmap</a> •
   <a href="#personal-info">Personal Info</a>
 </p>
+
+
+## Disclaimer
+
+This software (SkinPlusPlus) is provided "as is", without any warranty. The authors or copyright holders will not be liable for any damages or claims related to the software or its use.
 
 
 ## Key Features
