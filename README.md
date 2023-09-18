@@ -54,6 +54,7 @@ This software (SkinPlusPlus) is provided "as is", without any warranty. The auth
     - 2022 - Python37
   	- 2021 - Python37
   - Maya:
+    - 2024 - Python310
     - 2023 - Python39
     - 2022 - Python37
 
