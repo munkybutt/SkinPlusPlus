@@ -12,7 +12,7 @@
   <a href="https://github.com/munkybutt/SkinPlusPlus/blob/main/LICENSE">
     <img src="https://img.shields.io/github/license/munkybutt/SkinPlusPlus?style=for-the-badge"
   </a>
-  <a href="https://github.com/munkybutt/SkinPlusPlus/releases/tag/v0.3.0">
+  <a href="https://github.com/munkybutt/SkinPlusPlus/releases/latest">
     <!-- <img src="https://badge.fury.io/gh/munkybutt%2FSkinPlusPlus.svg?style=for-the-badge"> -->
     <img src="https://img.shields.io/github/release/munkybutt/SkinPlusPlus?style=for-the-badge&include_prereleases">
   </a>
@@ -25,6 +25,7 @@
 </p>
 
 <p align="center">
+  <a href="#disclaimer">Disclaimer</a> •
   <a href="#key-features">Key Features</a> •
   <a href="#usage">Usage</a> •
   <a href="#performance">Performance</a> •
@@ -32,6 +33,11 @@
   <a href="#roadmap">Roadmap</a> •
   <a href="#personal-info">Personal Info</a>
 </p>
+
+
+## Disclaimer
+
+This software (SkinPlusPlus) is provided "as is", without any warranty. The authors or copyright holders will not be liable for any damages or claims related to the software or its use.
 
 
 ## Key Features
@@ -43,8 +49,10 @@
 
 * Currently supported DCCs:
   - 3DsMax:
+    - 2024 - Python310
     - 2023 - Python39
-  	- 2021 and 2022 - Python37
+    - 2022 - Python37
+  	- 2021 - Python37
   - Maya:
     - 2023 - Python39
     - 2022 - Python37
@@ -58,8 +66,13 @@ There are three types of data that are of interest when working with skin data:
 PySkinData is a c++ struct containing the above data, exposed to python as the SkinData class.  
 This struct allows the data to be typed correctly rather than all typed as floats.  
 On the c++ side, the data is stored in Eigen matrices.  
-On the Python side, the data is exposed via Pybind11 as numpy arrays.  
-It also provides a friendly interface to the raw data in the form of the following properties:
+On the Python side, the data is exposed via Pybind11 as numpy arrays.
+
+Due to the relationship between Eigen and Pybind11, there is no performance hit when passing arrays to and from c++.
+
+🔥 It is fast 🔥
+
+It also provides a simple interface to the raw data in the form of the following properties:
 - SkinData.weights
 - SkinData.bone_ids
 - SkinData.positions
