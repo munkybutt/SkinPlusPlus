@@ -37,16 +37,6 @@ UINT getItemIndex(std::vector<T> vector, T item) {
 }
 
 
-//char convertWCharToChar(const wchar_t* text)
-//{
-//    size_t length = std::wcslen(text);
-//    std::wstring_convert<std::codecvt<wchar_t, char, std::mbstate_t>> conv;
-//    std::string storeTextBuffer = conv.to_bytes(text, text + length);
-//
-//    return storeTextBuffer[0];
-//}
-
-
 char convertWCharToChar(const wchar_t* text)
 {
     std::wstring ws(text);
@@ -54,16 +44,6 @@ char convertWCharToChar(const wchar_t* text)
 
     return str[0];
 }
-
-
-//std::string convertWCharToString(const wchar_t* text)
-//{
-//    size_t length = std::wcslen(text);
-//    std::wstring_convert<std::codecvt<wchar_t, char, std::mbstate_t>> conv;
-//    std::string storeTextBuffer = conv.to_bytes(text, text + length);
-//
-//    return storeTextBuffer;
-//}
 
 
 std::string convertWCharToString(const wchar_t* text)
@@ -216,8 +196,6 @@ public:
 		return sortedBoneNameData;
 	}
 };
-
-
 
 
 

@@ -77,7 +77,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='2024-Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>false</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <PreferredToolArchitecture>x64</PreferredToolArchitecture>
@@ -139,8 +139,8 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='2024-Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <TargetExt>.pyd</TargetExt>
-    <IncludePath>$(THIRD_PARTY_EIGEN);$(THIRD_PARTY_FMT)\include;$(ProjectDir);$(ProjectDir)..\skin_plus_plus_py\headers;$(ADSK_MAYA_SDK_2023)\include;$(PYTHON_39)\include;$(PYBIND11_39)\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ADSK_MAYA_SDK_2023)\lib;$(PYTHON_39)\libs;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(THIRD_PARTY_EIGEN);$(THIRD_PARTY_FMT)\include;$(ProjectDir);$(ProjectDir)..\skin_plus_plus_py\headers;$(ADSK_MAYA_SDK_2024)\include;$(PYTHON_310)\include;$(PYBIND11_310)\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ADSK_MAYA_SDK_2024)\lib;$(PYTHON_310)\libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)..\..\PYProjects\skin_plus_plus\dccs\maya\$(ProjectName)_2024\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='2023-Debug|x64'">
@@ -154,6 +154,38 @@
     <VcpkgEnableManifest>true</VcpkgEnableManifest>
     <VcpkgEnabled>false</VcpkgEnabled>
   </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='2022-Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard_C>stdc17</LanguageStandard_C>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>Foundation.lib;OpenMaya.lib;OpenMayaUI.lib;OpenMayaAnim.lib;OpenMayaFX.lib;OpenMayaRender.lib;Image.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>/export:initializePlugin /export:uninitializePlugin</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='2023-Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <LanguageStandard_C>Default</LanguageStandard_C>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>OpenMaya.lib;OpenMayaAnim.lib;Foundation.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>/export:initializePlugin /export:uninitializePlugin</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='2021-Release|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -192,22 +224,6 @@
       <AdditionalDependencies>OpenMaya.lib;OpenMayaAnim.lib;Foundation.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='2022-Debug|x64'">
-    <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp20</LanguageStandard>
-      <LanguageStandard_C>stdc17</LanguageStandard_C>
-    </ClCompile>
-    <Link>
-      <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Foundation.lib;OpenMaya.lib;OpenMayaUI.lib;OpenMayaAnim.lib;OpenMayaFX.lib;OpenMayaRender.lib;Image.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalOptions>/export:initializePlugin /export:uninitializePlugin</AdditionalOptions>
-    </Link>
-  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='2023-Release|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -233,6 +249,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -240,22 +257,6 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>OpenMaya.lib;OpenMayaAnim.lib;Foundation.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='2023-Debug|x64'">
-    <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp14</LanguageStandard>
-      <LanguageStandard_C>Default</LanguageStandard_C>
-    </ClCompile>
-    <Link>
-      <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>OpenMaya.lib;OpenMayaAnim.lib;Foundation.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalOptions>/export:initializePlugin /export:uninitializePlugin</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
