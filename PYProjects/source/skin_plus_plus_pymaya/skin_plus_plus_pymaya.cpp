@@ -202,16 +202,15 @@ PySkinData SkinManagerMaya::getData()
     {
         throw std::exception("SkinData object is invalid. Cannot get skin weights.");
     }
-    UINT vertexCount = this->fnMesh.numVertices();
+    const UINT vertexCount = this->fnMesh.numVertices();
     if (vertexCount == 0)
     {
         throw std::exception("Mesh has no vertices!");
     }
     MDoubleArray weights;
-    unsigned boneCount;
+    UINT boneCount;
     this->fnSkinCluster.getWeights(this->dagPath, this->component, weights, boneCount);
     PySkinData pySkinData = PySkinData(vertexCount, this->maximumVertexWeightCount);
-
     MDagPathArray skinnedBones;
     MStatus status;
     this->fnSkinCluster.influenceObjects(skinnedBones, &status);
@@ -229,10 +228,10 @@ PySkinData SkinManagerMaya::getData()
     for (UINT vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
     {
         UINT influenceIndex = 0;
-        UINT weightIndex = vertexIndex * boneCount;
+        UINT weightIndexBase = vertexIndex * boneCount;
         for (UINT boneIndex = 0; boneIndex < boneCount; boneIndex++)
         {
-            weightIndex += boneIndex;
+            UINT weightIndex = weightIndexBase + boneIndex;
             double influenceWeight = weights[weightIndex];
             pySkinData.weights(vertexIndex, influenceIndex) = influenceWeight;
             pySkinData.boneIDs(vertexIndex, influenceIndex) = boneIndex;
@@ -326,7 +325,6 @@ MDoubleArray getWeightsAsMDoubleArray(BoneIDsMatrix boneIDs, WeightsMatrix weigh
     //}
     return mWeights;
 }
-
 
 
 bool SkinManagerMaya::setSkinWeights(PySkinData& skinData)

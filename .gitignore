@@ -445,7 +445,8 @@ PyProjects/source/vcpkg_installed/
 PyProjects/venv37/
 PyProjects/venv39/
 PyProjects/.venvs/
-/pypi/*
+build/
+pypi/
 temp.cpp
 *.exp
 *.max

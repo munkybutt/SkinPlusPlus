@@ -677,7 +677,7 @@ def add_bones():
 
 if __name__ == "__main__":
     pass
-    skin_plus_plus.io.max_to_maya(file_type=skin_plus_plus.FileType.json)
+    skin_plus_plus.io.maya_to_max(file_type=skin_plus_plus.FileType.json)
     # skin_plus_plus
     # bones = ["one", "two"]
     # ids = np.array([[0, 1], [1, 0]], dtype=np.float64)
