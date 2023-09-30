@@ -131,16 +131,15 @@ std::unordered_set<std::string> getBoneNamesSet(MDagPathArray skinnedBones)
 //}
 
 
-MObject SkinManagerMaya::addMissingBones(std::vector<std::string> missingBoneNames, MDagPathArray skinnedBones)
+MObject SkinManagerMaya::addMissingBones(std::vector<std::string> missingBoneNames, const UINT skinnedBoneCount)
 {
     MStatus status;
     MSelectionList selectionList;
     MObject dependNode;
 
-    long newBoneIndex = skinnedBones.length();
-    auto bind_pose_plug = this->fnSkinCluster.findPlug("bindPose", false);
+    auto bindPosePlug = this->fnSkinCluster.findPlug("bindPose", false);
     MPlugArray connectedPlugs;
-    bind_pose_plug.connectedTo(connectedPlugs, true, false, &status);
+    bindPosePlug.connectedTo(connectedPlugs, true, false, &status);
     if (status != MS::kSuccess) throw std::exception("bindPose not connected to array");
 
     auto bindPoseNode = connectedPlugs[0].node();
@@ -153,10 +152,11 @@ MObject SkinManagerMaya::addMissingBones(std::vector<std::string> missingBoneNam
 
     auto bindPoseMembersArray = bindPose.findPlug("members", false);
     auto bindPoseWorldMatrixArray = bindPose.findPlug("worldMatrix", false);
+    auto bindPoseParentsArray = bindPose.findPlug("parents", false);
     MDGModifier dagModifier;
     for (UINT i = 0; i < missingBoneNames.size(); i++)
     {
-        newBoneIndex += i;
+        const auto newBoneIndex = skinnedBoneCount + i;
         selectionList.add(missingBoneNames[i].c_str());
         status = selectionList.getDependNode(i, dependNode);
         if (status != MS::kSuccess) throw std::exception("Failed to get depend node!");
@@ -172,20 +172,22 @@ MObject SkinManagerMaya::addMissingBones(std::vector<std::string> missingBoneNam
         joint.setObject(dependNode);
         auto jointMessage = joint.findPlug("message", false);
         auto jointBindPose = joint.findPlug("bindPose", false);
-        auto jointWorldMatrix = joint.findPlug("worldMatrix", false).elementByPhysicalIndex(0);
+        auto jointWorldMatrix = joint.findPlug("worldMatrix", false).elementByLogicalIndex(0);
         auto jointLockInfluenceWeightsArray = joint.findPlug("lockInfluenceWeights", false);
 
         auto skinClusterMatrixNewElementIndex = skinClusterMatrixArray.elementByLogicalIndex(newBoneIndex);
-        auto skinClusterLockWeightsNewElementIndex = (skinClusterLockWeightsArray.elementByLogicalIndex(newBoneIndex));
+        auto skinClusterLockWeightsNewElementIndex = skinClusterLockWeightsArray.elementByLogicalIndex(newBoneIndex);
         auto bindPoseWorldMatrixNewElementIndex = bindPoseWorldMatrixArray.elementByLogicalIndex(newBoneIndex);
         auto bindPoseMemberNewElementIndex = bindPoseMembersArray.elementByLogicalIndex(newBoneIndex);
+        auto bindPoseParentNewElementIndex = bindPoseParentsArray.elementByLogicalIndex(newBoneIndex + 1);
 
+        dagModifier.connect(jointMessage, bindPoseMemberNewElementIndex);
+        dagModifier.connect(jointBindPose, bindPoseWorldMatrixNewElementIndex);
         dagModifier.connect(jointWorldMatrix, skinClusterMatrixNewElementIndex);
         dagModifier.connect(jointLockInfluenceWeightsArray, skinClusterLockWeightsNewElementIndex);
-        dagModifier.connect(jointMessage, bindPoseWorldMatrixNewElementIndex);
-        dagModifier.connect(jointBindPose, bindPoseMemberNewElementIndex);
+        dagModifier.connect(bindPoseMemberNewElementIndex, bindPoseParentNewElementIndex);
 
-        py::print("added missing bone: {}", missingBoneNames[i]);
+        py::print("added missing bone: ", missingBoneNames[i]);
     }
     status = dagModifier.doIt();
     if (status != MS::kSuccess)
@@ -300,29 +302,29 @@ MDoubleArray getWeightsAsMDoubleArray(BoneIDsMatrix boneIDs, WeightsMatrix weigh
             mWeights[mWeightsIndex] = weight;
         }
     }
-    //for (eg::Index i = 0; i < vertexCount; i++)
-    //{
-    //    auto message = fmt::format("Vertex: {} - ", i);
-    //    for (UINT j = 0; j < influenceCount; j++)
-    //    {
-    //        if (j == 0)
-    //        {
-    //            message += "[";
-    //        }
-    //        auto mIndex = i * influenceCount + j;
-    //        message += fmt::format("{}: {}", mIndex, mWeights[mIndex]);
-    //        if (j < influenceCount - 1)
-    //        {
-    //            message += ", ";
-    //        }
-    //    }
-    //    message += "]";
-    //    py::print(message);
-    //}
-    //for (size_t i = 0; i < mWeights.length(); i++)
-    //{
-    //    py::print(mWeights[i]);
-    //}
+    for (eg::Index i = 0; i < vertexCount; i++)
+    {
+        auto message = fmt::format("Vertex: {} - ", i);
+        for (UINT j = 0; j < influenceCount; j++)
+        {
+            if (j == 0)
+            {
+                message += "[";
+            }
+            auto mIndex = i * influenceCount + j;
+            message += fmt::format("{}: {}", mIndex, mWeights[mIndex]);
+            if (j < influenceCount - 1)
+            {
+                message += ", ";
+            }
+        }
+        message += "]";
+        py::print(message);
+    }
+    for (size_t i = 0; i < mWeights.length(); i++)
+    {
+        py::print(mWeights[i]);
+    }
     return mWeights;
 }
 
@@ -364,44 +366,47 @@ bool SkinManagerMaya::setSkinWeights(PySkinData& skinData)
         throw std::exception("Error querying bones!");
     }
     auto skinnedBoneCount = skinnedBones.length();
+    py::print("skinnedBoneCount: ", skinnedBoneCount);
     auto currentBoneNames = std::vector<std::string>(skinnedBoneCount);
     for (UINT boneIndex = 0; boneIndex < skinnedBoneCount; boneIndex++)
     {
         currentBoneNames[boneIndex] = fmt::format("{}", skinnedBones[boneIndex].partialPathName().asChar());
     }
+    bool bonesAdded = false;
     if (skinnedBoneCount == 0)
     {
-        this->addMissingBones(skinData.boneNames, skinnedBones);
-        this->fnSkinCluster.influenceObjects(skinnedBones, &status);
+        this->addMissingBones(skinData.boneNames, skinnedBoneCount);
+        bonesAdded = true;
     }
     auto sortedBoneIDs = skinData.getSortedBoneIDs(currentBoneNames);
     if (sortedBoneIDs.unfoundBoneNames.size() != 0)
     {
         skinnedBones.clear();
-        this->addMissingBones(sortedBoneIDs.unfoundBoneNames, skinnedBones);
+        this->addMissingBones(sortedBoneIDs.unfoundBoneNames, skinnedBoneCount);
+        bonesAdded = true;
+    }
+    if (bonesAdded)
+    {
+        this->initialise(this->name.asWChar());
+        //getMeshAndSkinFns(this->fnMesh, this->fnSkinCluster, this->name);
         this->fnSkinCluster.influenceObjects(skinnedBones, &status);
-        auto sortedBoneIDs = skinData.getSortedBoneIDs(currentBoneNames);
+        if (status != MS::kSuccess)
+        {
+            throw std::exception("Error querying bones!");
+        }
+        sortedBoneIDs = skinData.getSortedBoneIDs(currentBoneNames);
+        skinnedBoneCount = skinnedBones.length();
     }
 
-    //validateBindPose(bindPoseMembersArray, skinnedBones);
-
+    py::print("updated skinnedBoneCount: ", skinnedBoneCount);
     const auto sortedBoneSize = sortedBoneIDs.sortedBoneIDs.size();
+    py::print("sortedBoneSize: ", sortedBoneSize);
     MIntArray mBoneIDs(sortedBoneSize);
-
-    //auto message = fmt::format("Influences: [");
     for (size_t index = 0; index < sortedBoneSize; index++)
     {
         mBoneIDs[index] = sortedBoneIDs.sortedBoneIDs[index];
-        //message += fmt::format("{}", mBoneIDs[index]);
-        //if (index < sortedBoneSize - 1)
-        //{
-        //    message += ", ";
-        //}
     }
-    //message += "]";
-    //py::print(message);
 
-    //sortBoneIDs(skinData.boneIDs, sortedBoneIDs.sortedBoneIDs, vertexCount, influenceCount);
     MDoubleArray mWeights = getWeightsAsMDoubleArray(skinData.boneIDs, skinData.weights, vertexCount, influenceCount, sortedBoneSize);
 	status = this->fnSkinCluster.setWeights(
 		this->dagPath,
