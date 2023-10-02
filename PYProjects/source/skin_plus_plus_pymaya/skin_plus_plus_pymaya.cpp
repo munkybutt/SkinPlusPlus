@@ -1,33 +1,4 @@
 #include <skin_plus_plus_pymaya.h>
-
-
-//bool getMeshPositions(const MDagPath& dagPath, Array<Vector3>* pointArray)
-//{
-//	nvDebugCheck(pointArray != NULL);
-//
-//	MStatus status;
-//	MFnMesh fnMesh(dagPath, &status);
-//
-//	MItMeshPolygon polyIt(dagPath, MObject::kNullObj, &status);
-//	if (MS::kSuccess != status) return false;
-//
-//	// Add positions.
-//	MPointArray positionArray;
-//	status = fnMesh.getPoints(positionArray, MSpace::kObject);
-//	if (MS::kSuccess != status) return false;
-//
-//	const uint positionCount = positionArray.length();
-//	pointArray->reserve(positionCount);
-//
-//	for (uint i = 0; i < positionCount; i++)
-//	{
-//		MPoint point = positionArray[i];
-//		pointArray->append(Vector3(point.x, point.y, point.z));
-//	}
-//
-//	return true;
-//}
-
 #include <maya/MGlobal.h>
 #include <maya/MSelectionList.h>
 #include <maya/MObject.h>
@@ -62,7 +33,7 @@ bool SkinManagerMaya::initialise(const wchar_t* name)
 		this->isValid = false;
 		return false;
 	}
-	py::print("success!");
+	py::print("Initialised successfully!");
 
 	this->isValid = true;
 	return true;
@@ -131,7 +102,7 @@ std::unordered_set<std::string> getBoneNamesSet(MDagPathArray skinnedBones)
 //}
 
 
-MObject SkinManagerMaya::addMissingBones(std::vector<std::string> missingBoneNames, const UINT skinnedBoneCount)
+MObject SkinManagerMaya::addMissingBones(BoneNamesVector& missingBoneNames, const UINT& skinnedBoneCount)
 {
     MStatus status;
     MSelectionList selectionList;
@@ -186,10 +157,14 @@ MObject SkinManagerMaya::addMissingBones(std::vector<std::string> missingBoneNam
         dagModifier.connect(jointWorldMatrix, skinClusterMatrixNewElementIndex);
         dagModifier.connect(jointLockInfluenceWeightsArray, skinClusterLockWeightsNewElementIndex);
         dagModifier.connect(bindPoseMemberNewElementIndex, bindPoseParentNewElementIndex);
-
-        py::print("added missing bone: ", missingBoneNames[i]);
     }
     status = dagModifier.doIt();
+    std::string message = "Successfully added missing bones:";
+    for (const std::string& name : missingBoneNames)
+    {
+        message += fmt::format("\n- {}", name);
+    }
+    py::print(message);
     if (status != MS::kSuccess)
     {
         throw std::exception("Failed to add missing bones!");
@@ -249,25 +224,6 @@ PySkinData SkinManagerMaya::getData()
 }
 
 
-void sortBoneIDs(BoneIDsMatrix& boneIDs, std::vector<UINT> newIDOrder, const eg::Index vertexCount, const eg::Index influenceCount)
-{
-    BoneIDsMatrix sortedBoneIDs = BoneIDsMatrix(boneIDs);
-    for (eg::Index vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
-    {
-        for (eg::Index influenceIndex = 0; influenceIndex < influenceCount; influenceIndex++)
-        {
-            const int boneID = boneIDs(vertexIndex, influenceIndex);
-            if (boneID == -1)
-            {
-                continue;
-            }
-            const int newIndex = newIDOrder[boneID];
-            boneIDs(vertexIndex, influenceIndex) = newIndex;
-        }
-    }
-}
-
-
 /// <summary>
 /// Convert an eigen::MatrixXd weights matrix to a MDoubleArray.
 /// This array is flat, so the weights which are passed in as a vertex count x influence count matrix, need to be
@@ -283,7 +239,7 @@ void sortBoneIDs(BoneIDsMatrix& boneIDs, std::vector<UINT> newIDOrder, const eg:
 /// <param name="vertexCount"></param>
 /// <param name="influenceCount"></param>
 /// <returns></returns>
-MDoubleArray getWeightsAsMDoubleArray(BoneIDsMatrix boneIDs, WeightsMatrix weights, const eg::Index vertexCount, const eg::Index influenceCount, const eg::Index maxInfluenceCount)
+MDoubleArray getWeightsAsMDoubleArray(BoneIDsMatrix& boneIDs, WeightsMatrix& weights, const eg::Index& vertexCount, const eg::Index& influenceCount, const eg::Index& maxInfluenceCount)
 {
     const UINT arraySize = vertexCount * maxInfluenceCount;
     MDoubleArray mWeights(arraySize, 0.0);
@@ -302,30 +258,41 @@ MDoubleArray getWeightsAsMDoubleArray(BoneIDsMatrix boneIDs, WeightsMatrix weigh
             mWeights[mWeightsIndex] = weight;
         }
     }
-    for (eg::Index i = 0; i < vertexCount; i++)
-    {
-        auto message = fmt::format("Vertex: {} - ", i);
-        for (UINT j = 0; j < influenceCount; j++)
-        {
-            if (j == 0)
-            {
-                message += "[";
-            }
-            auto mIndex = i * influenceCount + j;
-            message += fmt::format("{}: {}", mIndex, mWeights[mIndex]);
-            if (j < influenceCount - 1)
-            {
-                message += ", ";
-            }
-        }
-        message += "]";
-        py::print(message);
-    }
-    for (size_t i = 0; i < mWeights.length(); i++)
-    {
-        py::print(mWeights[i]);
-    }
+    //for (eg::Index i = 0; i < vertexCount; i++)
+    //{
+    //    auto message = fmt::format("Vertex: {} - ", i);
+    //    for (UINT j = 0; j < influenceCount; j++)
+    //    {
+    //        if (j == 0)
+    //        {
+    //            message += "[";
+    //        }
+    //        auto mIndex = i * influenceCount + j;
+    //        message += fmt::format("{}: {}", mIndex, mWeights[mIndex]);
+    //        if (j < influenceCount - 1)
+    //        {
+    //            message += ", ";
+    //        }
+    //    }
+    //    message += "]";
+    //    py::print(message);
+    //}
+    //for (size_t i = 0; i < mWeights.length(); i++)
+    //{
+    //    py::print(mWeights[i]);
+    //}
     return mWeights;
+}
+
+
+void getBoneNames(std::vector<std::string>& currentBoneNames, const MDagPathArray& skinnedBones, const UINT& skinnedBoneCount)
+{
+    currentBoneNames.clear();
+    currentBoneNames.resize(skinnedBoneCount);
+    for (UINT boneIndex = 0; boneIndex < skinnedBoneCount; boneIndex++)
+    {
+        currentBoneNames[boneIndex] = fmt::format("{}", skinnedBones[boneIndex].partialPathName().asChar());
+    }
 }
 
 
@@ -357,7 +324,6 @@ bool SkinManagerMaya::setSkinWeights(PySkinData& skinData)
         );
         throw std::length_error(exceptionText);
     }
-
     MDagPathArray skinnedBones;
     MStatus status;
     this->fnSkinCluster.influenceObjects(skinnedBones, &status);
@@ -366,12 +332,8 @@ bool SkinManagerMaya::setSkinWeights(PySkinData& skinData)
         throw std::exception("Error querying bones!");
     }
     auto skinnedBoneCount = skinnedBones.length();
-    py::print("skinnedBoneCount: ", skinnedBoneCount);
     auto currentBoneNames = std::vector<std::string>(skinnedBoneCount);
-    for (UINT boneIndex = 0; boneIndex < skinnedBoneCount; boneIndex++)
-    {
-        currentBoneNames[boneIndex] = fmt::format("{}", skinnedBones[boneIndex].partialPathName().asChar());
-    }
+    getBoneNames(currentBoneNames, skinnedBones, skinnedBoneCount);
     bool bonesAdded = false;
     if (skinnedBoneCount == 0)
     {
@@ -379,28 +341,28 @@ bool SkinManagerMaya::setSkinWeights(PySkinData& skinData)
         bonesAdded = true;
     }
     auto sortedBoneIDs = skinData.getSortedBoneIDs(currentBoneNames);
-    if (sortedBoneIDs.unfoundBoneNames.size() != 0)
+    if (!sortedBoneIDs.unfoundBoneNames.empty())
     {
-        skinnedBones.clear();
         this->addMissingBones(sortedBoneIDs.unfoundBoneNames, skinnedBoneCount);
         bonesAdded = true;
     }
     if (bonesAdded)
     {
-        this->initialise(this->name.asWChar());
-        //getMeshAndSkinFns(this->fnMesh, this->fnSkinCluster, this->name);
+        skinnedBones.clear();
         this->fnSkinCluster.influenceObjects(skinnedBones, &status);
+        skinnedBoneCount = skinnedBones.length();
+        getBoneNames(currentBoneNames, skinnedBones, skinnedBoneCount);
         if (status != MS::kSuccess)
         {
             throw std::exception("Error querying bones!");
         }
         sortedBoneIDs = skinData.getSortedBoneIDs(currentBoneNames);
-        skinnedBoneCount = skinnedBones.length();
+        if (sortedBoneIDs.unfoundBoneNames.size() != 0)
+        {
+            throw std::exception("Could not find all bones required!");
+        }
     }
-
-    py::print("updated skinnedBoneCount: ", skinnedBoneCount);
     const auto sortedBoneSize = sortedBoneIDs.sortedBoneIDs.size();
-    py::print("sortedBoneSize: ", sortedBoneSize);
     MIntArray mBoneIDs(sortedBoneSize);
     for (size_t index = 0; index < sortedBoneSize; index++)
     {

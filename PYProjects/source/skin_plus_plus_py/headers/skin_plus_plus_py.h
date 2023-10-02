@@ -27,7 +27,7 @@ typedef unsigned int UINT;
 
 
 template <typename T>
-UINT getItemIndex(std::vector<T> vector, T item) {
+UINT getItemIndex(std::vector<T>& vector, T item) {
     UINT index = std::distance(vector.begin(), find(vector.begin(), vector.end(), item));
     if (index >= vector.size())
     {
@@ -115,32 +115,12 @@ public:
         this->boneIDs = boneIDs;
         this->weights = weights;
         this->positions = positions;
-        //for (eg::Index i = 0; i < this->boneIDs.rows(); i++)
-        //{
-        //    auto message = fmt::format("Vertex: {} - ", i);
-        //    for (UINT j = 0; j < this->boneIDs.cols(); j++)
-        //    {
-        //        if (j == 0)
-        //        {
-        //            message += "[";
-        //        }
-        //        auto value = this->boneIDs(i, j);
-        //        message += fmt::format("{}", value);
-        //        if (j < this->boneIDs.cols() - 1)
-        //        {
-        //            message += ", ";
-        //        }
-        //    }
-        //    message += "]";
-        //    py::print(message);
-        //}
     }
 
     PySkinData(py::tuple data)
     {
         this->setInternalState(data);
     }
-
 
     ~PySkinData() {}
 
@@ -166,7 +146,7 @@ public:
 
     // Get the bone ids in their correct order as well as any missing bones
     // for the current skin modifier.
-    SortedBoneNameData getSortedBoneIDs(BoneNamesVector currentBoneNames)
+    SortedBoneNameData getSortedBoneIDs(BoneNamesVector& currentBoneNames)
 	{
         const size_t cachedBoneCount = this->boneNames.size();
 		auto sortedBoneNameData = SortedBoneNameData(cachedBoneCount);
@@ -182,17 +162,23 @@ public:
             const auto lookup = nameMap.find(nameToFind);
             if (lookup != nameMap.end())
             {
-                //py::print(lookup->first);
-                //py::print(lookup->second);
-                //py::print("-------------");
                 sortedBoneNameData.sortedBoneIDs[boneIndex] = lookup->second;
             }
             else
             {
                 sortedBoneNameData.unfoundBoneNames.push_back(nameToFind);
-                py::print("Bone not found in current skin definition: ", nameToFind);
             }
 		}
+        if (!sortedBoneNameData.unfoundBoneNames.empty())
+        {
+            std::string message = "The following bones are not in the skin definition:";
+            for (const std::string& name : sortedBoneNameData.unfoundBoneNames)
+            {
+                message += fmt::format("\n- {}", name);
+            }
+            py::print(message);
+
+        }
 		return sortedBoneNameData;
 	}
 };
