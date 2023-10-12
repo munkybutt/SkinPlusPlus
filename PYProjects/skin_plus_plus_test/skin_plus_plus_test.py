@@ -2,6 +2,7 @@ from __future__ import annotations
 
 
 import inspect
+import json
 import pathlib
 import site
 
@@ -33,6 +34,7 @@ import skin_plus_plus
 
 if __name__ == "__main__":
     from importlib import reload
+
     # reload(skin_plus_plus.core)
     # reload(skin_plus_plus.io)
     # reload(skin_plus_plus)
@@ -66,14 +68,19 @@ def timer(data_dict: dict[str, tuple[float, Any, str]]) -> Callable:
             for _ in range(get_loops()):
                 value = function(*args, **kwargs)
             run_time = time.perf_counter() - start_time
-            data_dict[f"{repr(function.__name__)}"] = (run_time, value, function.__name__)
+            data_dict[f"{repr(function.__name__)}"] = (
+                run_time,
+                value,
+                function.__name__,
+            )
             return value
+
         return wrapper_timer
+
     return wrapper
 
 
 class SkinPlusPlusTestBase(unittest.TestCase):
-
     nodes_to_delete = []
 
     @classmethod
@@ -113,13 +120,15 @@ class SkinPlusPlusTestBase(unittest.TestCase):
         max_time = data[-1][0]
         data.reverse()
         for time, _, function_name in data:
-            percentage_ratio = (max_time / time)
+            percentage_ratio = max_time / time
             message = f"{function_name}: {time} -"
             if percentage_ratio == 1.0:
                 message = f"{message} base line"
             else:
-                percentage_increase = (percentage_ratio * 100.0)
-                message = f"{message} {percentage_ratio}x / {percentage_increase}% faster"
+                percentage_increase = percentage_ratio * 100.0
+                message = (
+                    f"{message} {percentage_ratio}x / {percentage_increase}% faster"
+                )
             print(message)
 
     def test_export_skin_data(self):
@@ -130,7 +139,6 @@ class SkinPlusPlusTestBase(unittest.TestCase):
 
 
 class SkinPlusPlusTestMax(SkinPlusPlusTestBase):
-
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -190,7 +198,9 @@ class SkinPlusPlusTestMax(SkinPlusPlusTestBase):
             weights_total = sum(weights)
             weights = [float(i) / weights_total for i in weights]
             cls.weights[index] = np.array(weights, dtype=float)
-            cls.skinOps_ReplaceVertexWeights(cls.skin_modifier, index + 1, [1, 2, 3, 4], weights)
+            cls.skinOps_ReplaceVertexWeights(
+                cls.skin_modifier, index + 1, [1, 2, 3, 4], weights
+            )
 
     @classmethod
     def get_mxs_functions(cls):
@@ -199,7 +209,6 @@ class SkinPlusPlusTestMax(SkinPlusPlusTestBase):
         return cls.mxRt.mxsGetSkinWeights, cls.mxRt.mxsSetSkinWeights
 
     def test_get_performance(self):
-
         return
         get_timer_dict: dict[str, tuple[float, Any, str]] = {}
 
@@ -207,44 +216,58 @@ class SkinPlusPlusTestMax(SkinPlusPlusTestBase):
         def mxs_get_skin_weights(_obj):
             data = self.mxs_get_skin_weights(_obj)
             weights = np.array(
-                [np.array(list(weights), dtype=float) for weights in data[0]], dtype=float
+                [np.array(list(weights), dtype=float) for weights in data[0]],
+                dtype=float,
             )
             boneIDs = np.array(
-                [np.array(list(boneIDs), dtype=float) for boneIDs in data[1]], dtype=float
+                [np.array(list(boneIDs), dtype=float) for boneIDs in data[1]],
+                dtype=float,
             )
             positions = np.array(
-                [np.array(list(positions), dtype=float) for positions in data[2]], dtype=float
+                [np.array(list(positions), dtype=float) for positions in data[2]],
+                dtype=float,
             )
 
             return weights, boneIDs, positions
 
-
         @timer(get_timer_dict)
-        def pymxs_get_skin_weights(_obj) -> tuple[np.ndarray[float, Any], np.ndarray[int, Any], np.ndarray[float, Any]]:
+        def pymxs_get_skin_weights(
+            _obj,
+        ) -> tuple[
+            np.ndarray[float, Any], np.ndarray[int, Any], np.ndarray[float, Any]
+        ]:
             skinModifier = _obj.Modifiers[self.mxRt.Skin]
             vertexCount = self.skinOps_GetNumberVertices(skinModifier)
             getVertPosition = self.polyOp_GetVert
             if self.mxRt.ClassOf(_obj) == self.mxRt.Editable_Mesh:
                 getVertPosition = self.meshOp_GetVert
 
-            skinWeights: np.ndarray[float, Any] = np.empty((vertexCount, 6), dtype=float)
+            skinWeights: np.ndarray[float, Any] = np.empty(
+                (vertexCount, 6), dtype=float
+            )
             skinBoneIDs: np.ndarray[float, Any] = np.empty((vertexCount, 6), dtype=int)
             positions: np.ndarray[float, Any] = np.empty((vertexCount, 3), dtype=float)
             for vertexIndex in range(1, vertexCount + 1):
-                influenceCount = self.skinOps_GetVertexWeightCount(skinModifier, vertexIndex)
+                influenceCount = self.skinOps_GetVertexWeightCount(
+                    skinModifier, vertexIndex
+                )
                 vertexWeights = np.array(
                     [
-                        self.skinOps_GetVertexWeight(skinModifier, vertexIndex, influenceIndex)
+                        self.skinOps_GetVertexWeight(
+                            skinModifier, vertexIndex, influenceIndex
+                        )
                         for influenceIndex in range(1, influenceCount + 1)
                     ],
-                    dtype=float
+                    dtype=float,
                 )
                 vertexBoneIDs = np.array(
                     [
-                        self.skinOps_GetVertexWeightBoneID(skinModifier, vertexIndex, influenceIndex)
+                        self.skinOps_GetVertexWeightBoneID(
+                            skinModifier, vertexIndex, influenceIndex
+                        )
                         for influenceIndex in range(1, influenceCount + 1)
                     ],
-                    dtype=float
+                    dtype=float,
                 )
                 mxs_position = list(getVertPosition(_obj, vertexIndex))
                 position = np.array(mxs_position, dtype=float)
@@ -255,22 +278,23 @@ class SkinPlusPlusTestMax(SkinPlusPlusTestBase):
 
             return skinWeights, skinBoneIDs, positions
 
-
         @timer(get_timer_dict)
         def sdk_primative_method_get_skin_weights(_obj):
-            weights, boneIDs, positions = self.sdk_primative_method_get_skin_weights(_obj)
+            weights, boneIDs, positions = self.sdk_primative_method_get_skin_weights(
+                _obj
+            )
 
             weights = np.array([list(weights) for weights in weights], dtype=float)
             boneIDs = np.array([list(boneIDs) for boneIDs in boneIDs], dtype=int)
-            positions = np.array([list(position) for position in positions], dtype=float)
+            positions = np.array(
+                [list(position) for position in positions], dtype=float
+            )
 
             return weights, boneIDs, positions
-
 
         @timer(get_timer_dict)
         def skin_plus_plus_get_skin_data(_obj):
             return skin_plus_plus.get_skin_data(_obj.Name)
-
 
         get_function_list = (
             mxs_get_skin_weights,
@@ -292,6 +316,7 @@ class SkinPlusPlusTestMax(SkinPlusPlusTestBase):
 
     def test_set_performance(self):
         return
+
         def _as_mxs_array(value, dtype=float):
             mxsArray = self.mxRt.Array()
             array_length = len(value)
@@ -313,16 +338,15 @@ class SkinPlusPlusTestMax(SkinPlusPlusTestBase):
             for vertex_index in range(1, vertexCount):
                 vertex_index_zero = vertex_index - 1
                 self.skinOps_ReplaceVertexWeights(
-                    skinModifier, vertex_index, _bone_ids[vertex_index_zero], _weights[vertex_index_zero]
+                    skinModifier,
+                    vertex_index,
+                    _bone_ids[vertex_index_zero],
+                    _weights[vertex_index_zero],
                 )
 
         @timer(set_timer_dict)
         def set_skin_weights(_obj, _bone_ids, _weights):
-            skin_plus_plus.set_skin_weights(
-                _obj.Name,
-                _bone_ids,
-                _weights
-            )
+            skin_plus_plus.set_skin_weights(_obj.Name, _bone_ids, _weights)
 
         @timer(set_timer_dict)
         def mxs_SetSkinWeights(_obj, _bone_ids, _weights):
@@ -361,7 +385,7 @@ class SkinPlusPlusTestMax(SkinPlusPlusTestBase):
             pymxs_SetSkinWeights,
             cppfp_SetSkinWeights,
             cpppm_SetSkinWeights,
-            cpppf_SetSkinWeights
+            cpppf_SetSkinWeights,
         )
 
         obj = self.mxRt.GetNodeByName("test_mesh_high")
@@ -370,7 +394,6 @@ class SkinPlusPlusTestMax(SkinPlusPlusTestBase):
 
 
 class SkinPlusPlusTestMaya(SkinPlusPlusTestBase):
-
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -415,12 +438,16 @@ class SkinPlusPlusTestMaya(SkinPlusPlusTestBase):
                 raise Exception(f"Object {geometry} does not exist!")
 
             if self.cmds.objectType(geometry) == "transform":
-                try: geometry = self.cmds.listRelatives(geometry, s=True, ni=True, pa=True)[0]
-                except: raise Exception(f"Object {geometry} has no deformable geometry!")
+                try:
+                    geometry = self.cmds.listRelatives(
+                        geometry, s=True, ni=True, pa=True
+                    )[0]
+                except:
+                    raise Exception(f"Object {geometry} has no deformable geometry!")
 
             skin = self.mel.eval(f"findRelatedSkinCluster '{geometry}'")
             if not skin:
-                skin = self.cmds.ls(self.cmds.listHistory(geometry),type='skinCluster')
+                skin = self.cmds.ls(self.cmds.listHistory(geometry), type="skinCluster")
                 skin = skin[0] if skin else None
 
             if not skin:
@@ -443,25 +470,22 @@ class SkinPlusPlusTestMaya(SkinPlusPlusTestBase):
                         vertex_index_str,
                         query=True,
                         value=True,
-                        ib=0.00001
+                        ib=0.00001,
                     ),
-                    dtype=float
+                    dtype=float,
                 )
                 bone_names = self.cmds.skinPercent(
                     skin_cluster,
                     vertex_index_str,
                     transform=None,
                     query=True,
-                    ib=0.00001
+                    ib=0.00001,
                 )
                 positions[vertex_index] = np.array(
                     self.cmds.xform(
-                        vertex_index_str,
-                        query=True,
-                        translation=True,
-                        worldSpace=False
+                        vertex_index_str, query=True, translation=True, worldSpace=False
                     ),
-                    dtype=float
+                    dtype=float,
                 )
                 skin_weights[vertex_index] = vertex_weights
                 skin_bone_names[vertex_index] = bone_names
@@ -470,7 +494,6 @@ class SkinPlusPlusTestMaya(SkinPlusPlusTestBase):
 
         @timer(get_timer_dict)
         def pymel_get_skin_weights(_obj: str):
-
             def get_skin_cluster(__obj):
                 """Get the skincluster of a given object
                 Arguments:
@@ -483,11 +506,17 @@ class SkinPlusPlusTestMaya(SkinPlusPlusTestBase):
                 if isinstance(__obj, str):
                     __obj = self.pm.PyNode(__obj)
                 try:
-                    if self.pm.nodeType(__obj.getShape()) not in ("mesh", "nurbsSurface", "nurbsCurve"):
+                    if self.pm.nodeType(__obj.getShape()) not in (
+                        "mesh",
+                        "nurbsSurface",
+                        "nurbsCurve",
+                    ):
                         return
                     for shape in __obj.getShapes():
                         try:
-                            for _skin_cluster in self.pm.listHistory(shape, type="skinCluster"):
+                            for _skin_cluster in self.pm.listHistory(
+                                shape, type="skinCluster"
+                            ):
                                 try:
                                     if _skin_cluster.getGeometry()[0] == shape:
                                         skin_cluster = _skin_cluster
@@ -570,13 +599,19 @@ class SkinPlusPlusTestMaya(SkinPlusPlusTestBase):
                 dag_path, _, fn_mesh = get_geometry_components(skin_cls)
                 space = self.om.MSpace.kObject
                 vertex_count = fn_mesh.numVertices
-                positions: np.ndarray[float, Any] = np.empty((vertex_count, 3), dtype=float)
+                positions: np.ndarray[float, Any] = np.empty(
+                    (vertex_count, 3), dtype=float
+                )
                 for index in range(vertex_count):
                     position = fn_mesh.getPoint(index, space)
-                    positions[index] = np.array([position.x, position.y, position.z], dtype=float)
+                    positions[index] = np.array(
+                        [position.x, position.y, position.z], dtype=float
+                    )
 
                 weights = skin_cls.getWeights(dag_path)
-                weights = np.array([np.array(weight, dtype=float) for weight in weights], dtype=float)
+                weights = np.array(
+                    [np.array(weight, dtype=float) for weight in weights], dtype=float
+                )
                 return weights, positions
 
             skin_cluster = get_skin_cluster(_obj)
@@ -589,7 +624,6 @@ class SkinPlusPlusTestMaya(SkinPlusPlusTestBase):
         def skin_plus_plus_get_skin_data(_obj: str):
             return skin_plus_plus.get_skin_data(_obj)
 
-
         get_function_list = (
             cmds_get_skin_weights,
             pymel_get_skin_weights,
@@ -601,11 +635,14 @@ class SkinPlusPlusTestMaya(SkinPlusPlusTestBase):
         self.process_results(get_timer_dict)
 
     def test_set_performance(self):
-
         set_timer_dict: dict[str, tuple[float, Any, str]] = {}
 
         @timer(set_timer_dict)
-        def set_skin_weights_om(_obj: str, _bone_ids: tuple[tuple[int,...]], _weights: tuple[tuple[float,...]]):
+        def set_skin_weights_om(
+            _obj: str,
+            _bone_ids: tuple[tuple[int, ...]],
+            _weights: tuple[tuple[float, ...]],
+        ):
             # Get API handles
             selection_list = self.om.MSelectionList()
             selection_list.add(_obj)
@@ -629,17 +666,13 @@ class SkinPlusPlusTestMaya(SkinPlusPlusTestBase):
             for vertex_index, vertex_weights in _weights:
                 for influence_index, influence in enumerate(influences):
                     weights_index = (len(influences) * vertex_index) + influence_index
-                    weights[weights_index] = 0.2 # Set some random weight for now
+                    weights[weights_index] = 0.2  # Set some random weight for now
 
             fn_skin.setWeights(dag, components, influences, weights, normalize=True)
 
         @timer(set_timer_dict)
         def set_skin_weights(_obj, _bone_ids, _weights):
-            skin_plus_plus.set_skin_weights(
-                _obj.Name,
-                _bone_ids,
-                _weights
-            )
+            skin_plus_plus.set_skin_weights(_obj.Name, _bone_ids, _weights)
 
         set_function_list = (
             set_skin_weights_om,
@@ -651,16 +684,19 @@ class SkinPlusPlusTestMaya(SkinPlusPlusTestBase):
         self.process_results(set_timer_dict)
 
 
-def get_sorted_indicies(indicies: list[list[int]], old_names: list[str], new_names: list[str]):
+def get_sorted_indicies(
+    indicies: list[list[int]], old_names: list[str], new_names: list[str]
+):
     name_mapping = {old_name: new_index for new_index, old_name in enumerate(new_names)}
 
     sorted_bone_ids: list[list[int]] = []
     for index, vert_bone_ids in enumerate(indicies):
-        sorted_bone_ids[index] = [name_mapping[old_names[bone_id]] for bone_id in vert_bone_ids]
+        sorted_bone_ids[index] = [
+            name_mapping[old_names[bone_id]] for bone_id in vert_bone_ids
+        ]
 
 
 def add_bones():
-
     from maya import cmds
     from maya import mel
 
@@ -678,6 +714,15 @@ def add_bones():
 if __name__ == "__main__":
     pass
     skin_plus_plus.io.max_to_maya(file_type=skin_plus_plus.FileType.json)
+    # skin_plus_plus.io.save(file_type=skin_plus_plus.FileType.json)
+
+    # path = pathlib.Path("C:/Users/Sheaky/Downloads/_Data/BaseBody_GEO.skpp-json")
+    # with open(path, "r") as file:
+    #     data = json.load(file)
+
+    # print(len(data["bone_names"]))
+    # print(len(set(data["bone_names"])))
+    # skin_plus_plus.io.max_to_maya(file_type=skin_plus_plus.FileType.json)
     # skin_plus_plus
     # bones = ["one", "two"]
     # ids = np.array([[0, 1], [1, 0]], dtype=np.float64)
