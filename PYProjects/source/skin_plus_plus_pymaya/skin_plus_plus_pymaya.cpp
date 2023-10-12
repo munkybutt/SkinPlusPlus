@@ -4,6 +4,35 @@
 #include <maya/MObject.h>
 
 
+
+//bool getMeshPositions(const MDagPath& dagPath, Array<Vector3>* pointArray)
+//{
+//	nvDebugCheck(pointArray != NULL);
+//
+//	MStatus status;
+//	MFnMesh fnMesh(dagPath, &status);
+//
+//	MItMeshPolygon polyIt(dagPath, MObject::kNullObj, &status);
+//	if (MS::kSuccess != status) return false;
+//
+//	// Add positions.
+//	MPointArray positionArray;
+//	status = fnMesh.getPoints(positionArray, MSpace::kObject);
+//	if (MS::kSuccess != status) return false;
+//
+//	const uint positionCount = positionArray.length();
+//	pointArray->reserve(positionCount);
+//
+//	for (uint i = 0; i < positionCount; i++)
+//	{
+//		MPoint point = positionArray[i];
+//		pointArray->append(Vector3(point.x, point.y, point.z));
+//	}
+//
+//	return true;
+//}
+
+
 //MStatus getNodesByName(const MStringArray& nodeNames, MObject& node)
 //{
 //	MSelectionList selectionList;
@@ -101,6 +130,26 @@ std::unordered_set<std::string> getBoneNamesSet(MDagPathArray skinnedBones)
 //    }
 //}
 
+static bool isNodeValid(MObject* node)
+{
+    if (node->hasFn(MFn::kJoint)) return true;
+    if (node->hasFn(MFn::kTransform)) return true;
+    return false;
+}
+
+
+static MPlug getFreeIndex(MPlug* arrayPlug)
+{
+    unsigned int freeIndex = arrayPlug->numElements();
+    static MPlug elementIndex = arrayPlug->elementByLogicalIndex(freeIndex);
+    while (elementIndex.isConnected())
+    {
+        freeIndex += 1;
+        elementIndex = arrayPlug->elementByLogicalIndex(freeIndex);
+    }
+    return elementIndex;
+}
+
 
 MObject SkinManagerMaya::addMissingBones(BoneNamesVector& missingBoneNames, const UINT& skinnedBoneCount)
 {
@@ -131,10 +180,11 @@ MObject SkinManagerMaya::addMissingBones(BoneNamesVector& missingBoneNames, cons
         selectionList.add(missingBoneNames[i].c_str());
         status = selectionList.getDependNode(i, dependNode);
         if (status != MS::kSuccess) throw std::exception("Failed to get depend node!");
-        if (!dependNode.hasFn(MFn::kJoint))
+          
+        if (!isNodeValid(&dependNode))
         {
             auto exceptionText = convertStringToChar(
-                fmt::format("Node is not a joint: {}", missingBoneNames[i])
+                fmt::format("Node is not a joint or transform: {}", missingBoneNames[i])
             );
             throw std::exception(exceptionText);
         }
@@ -146,11 +196,17 @@ MObject SkinManagerMaya::addMissingBones(BoneNamesVector& missingBoneNames, cons
         auto jointWorldMatrix = joint.findPlug("worldMatrix", false).elementByLogicalIndex(0);
         auto jointLockInfluenceWeightsArray = joint.findPlug("lockInfluenceWeights", false);
 
-        auto skinClusterMatrixNewElementIndex = skinClusterMatrixArray.elementByLogicalIndex(newBoneIndex);
-        auto skinClusterLockWeightsNewElementIndex = skinClusterLockWeightsArray.elementByLogicalIndex(newBoneIndex);
-        auto bindPoseWorldMatrixNewElementIndex = bindPoseWorldMatrixArray.elementByLogicalIndex(newBoneIndex);
-        auto bindPoseMemberNewElementIndex = bindPoseMembersArray.elementByLogicalIndex(newBoneIndex);
-        auto bindPoseParentNewElementIndex = bindPoseParentsArray.elementByLogicalIndex(newBoneIndex + 1);
+        //auto skinClusterMatrixNewElementIndex = skinClusterMatrixArray.elementByLogicalIndex(skinClusterMatrixArray.numElements());
+        //auto skinClusterLockWeightsNewElementIndex = skinClusterLockWeightsArray.elementByLogicalIndex(skinClusterLockWeightsArray.numElements());
+        //auto bindPoseWorldMatrixNewElementIndex = bindPoseWorldMatrixArray.elementByLogicalIndex(bindPoseWorldMatrixArray.numElements());
+        //auto bindPoseMemberNewElementIndex = bindPoseMembersArray.elementByLogicalIndex(bindPoseMembersArray.numElements());
+        //auto bindPoseParentNewElementIndex = bindPoseParentsArray.elementByLogicalIndex(bindPoseParentsArray.numElements());
+
+        auto skinClusterMatrixNewElementIndex = getFreeIndex(&skinClusterMatrixArray);
+        auto skinClusterLockWeightsNewElementIndex = getFreeIndex(&skinClusterLockWeightsArray);
+        auto bindPoseWorldMatrixNewElementIndex = getFreeIndex(&bindPoseWorldMatrixArray);
+        auto bindPoseMemberNewElementIndex = getFreeIndex(&bindPoseMembersArray);
+        auto bindPoseParentNewElementIndex = getFreeIndex(&bindPoseParentsArray);
 
         dagModifier.connect(jointMessage, bindPoseMemberNewElementIndex);
         dagModifier.connect(jointBindPose, bindPoseWorldMatrixNewElementIndex);
@@ -159,16 +215,16 @@ MObject SkinManagerMaya::addMissingBones(BoneNamesVector& missingBoneNames, cons
         dagModifier.connect(bindPoseMemberNewElementIndex, bindPoseParentNewElementIndex);
     }
     status = dagModifier.doIt();
-    std::string message = "Successfully added missing bones:";
-    for (const std::string& name : missingBoneNames)
-    {
-        message += fmt::format("\n- {}", name);
-    }
-    py::print(message);
     if (status != MS::kSuccess)
     {
         throw std::exception("Failed to add missing bones!");
     }
+    std::string message = "Successfully added missing bones:";
+    for (std::string& name : missingBoneNames)
+    {
+        message += fmt::format(" - ", name);
+    }
+    py::print(message);
     return bindPoseNode;
 }
 
@@ -219,8 +275,28 @@ PySkinData SkinManagerMaya::getData()
         pySkinData.positions(vertexIndex, 1) = mPoint.y;
         pySkinData.positions(vertexIndex, 2) = mPoint.z;
     }
+    //pySkinData.weights.hasNaN();
 
     return pySkinData;
+}
+
+
+void sortBoneIDs(BoneIDsMatrix& boneIDs, std::vector<UINT> newIDOrder, const eg::Index vertexCount, const eg::Index influenceCount)
+{
+    BoneIDsMatrix sortedBoneIDs = BoneIDsMatrix(boneIDs);
+    for (eg::Index vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
+    {
+        for (eg::Index influenceIndex = 0; influenceIndex < influenceCount; influenceIndex++)
+        {
+            const int boneID = boneIDs(vertexIndex, influenceIndex);
+            if (boneID == -1)
+            {
+                continue;
+            }
+            const int newIndex = newIDOrder[boneID];
+            boneIDs(vertexIndex, influenceIndex) = newIndex;
+        }
+    }
 }
 
 
@@ -341,7 +417,7 @@ bool SkinManagerMaya::setSkinWeights(PySkinData& skinData)
         bonesAdded = true;
     }
     auto sortedBoneIDs = skinData.getSortedBoneIDs(currentBoneNames);
-    if (!sortedBoneIDs.unfoundBoneNames.empty())
+    if (sortedBoneIDs.unfoundBoneNames.size() != 0)
     {
         this->addMissingBones(sortedBoneIDs.unfoundBoneNames, skinnedBoneCount);
         bonesAdded = true;
