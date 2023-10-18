@@ -16,7 +16,11 @@
 #include <maya/MItDependencyGraph.h>
 #include <maya/MMatrixArray.h>
 #include <maya/MPlug.h>
+#include <maya/MQuaternion.h>
 #include <maya/MSelectionList.h>
+
+#include <maya/MFnCompoundAttribute.h>
+#include <maya/MFnMatrixAttribute.h>
 
 
 bool getDagPathAndComponent(MString name, MDagPath& dagPath, MObject& component)
@@ -239,7 +243,7 @@ public:
 	MObject addMissingBones(std::vector<std::string>& missingBoneNames, const UINT& skinnedBoneCount);
 
 	// Get the vertex weights, bone ids and positions from the given node
-	PySkinData getData();
+	PySkinData getData(const bool safeMode = true);
 
 	// Set the skin weights to the given node's skin modifier
 	bool setSkinWeights(PySkinData& skinData);
