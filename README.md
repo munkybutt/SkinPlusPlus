@@ -114,7 +114,7 @@ Performance benchmarks are done on a mesh with 507,906 vertices, each with 6 inf
 
 #### Set Skin Data
 
-<\i>Note that this was done on a much lower poly mesh as cmds is too slow for 500k vertices<\i>
+_Note that set data in Maya is done on a much lower poly mesh as cmds is too slow for 500k vertices_
 
 | Method                          | Time-secs | x Faster | % Faster |
 |:--------------------------------|-----------|----------|----------|
