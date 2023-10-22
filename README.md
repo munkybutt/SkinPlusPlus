@@ -109,18 +109,18 @@ Performance benchmarks are done on a mesh with 507,906 vertices, each with 6 inf
 |:------------------------------|-----------|-----------|-----------|
 | maya.cmds -> numpy array      | 81.572    | base      | base      |
 | pymel -> numpy array          | 04.647    | 017.550x  | 01755.08% |
-| skin_plus_plus -> numpy array | 0.5235    | 155.810x  | 15580.99% |
+| skin_plus_plus -> numpy array | 00.524    | 155.810x  | 15580.99% |
 
 
 #### Set Skin Data
 
-_Note that set data in Maya is done on a much lower poly mesh as cmds is too slow for 500k vertices_
+_Note that set data in Maya is done on a mesh with 7938 vertices as cmds is too slow for 500k vertices_
 
-| Method                          | Time-secs | x Faster | % Faster |
-|:--------------------------------|-----------|----------|----------|
-| maya.cmds <- np.ndarray         | 0.19240   | base     | base     |
-| OpenMaya (api2) <- np.ndarray   | 0.00590   | 32.595x  | 3259.47% |
-| skin_plus_plus <- np.ndarray    | 0.00224   | 86.011x  | 8601.05% |
+| Method                          | Time-secs | x Faster | % Faster  |
+|:--------------------------------|-----------|----------|-----------|
+| maya.cmds <- np.ndarray         | 11.458    | base     | base      |
+| OpenMaya (api2) <- np.ndarray   | 00.103    | 110.968x | 11096.80% |
+| skin_plus_plus <- np.ndarray    | 00.025    | 466.319x | 46631.94% |
 
 ## How To Compile
 ### Dependencies
