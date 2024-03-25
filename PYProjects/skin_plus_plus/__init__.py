@@ -7,8 +7,8 @@ import sys
 
 current_dcc = None
 
-get_skin_data = None
-set_skin_weights = None
+extract_skin_data = None
+apply_skin_data = None
 skin_plus_plus_py = None
 SkinData = None
 # get_vertex_positions = None
@@ -56,19 +56,19 @@ def __get_dcc_backend(dcc: str, version: str, api: str):
     sub_module_path = current_directory / f"dccs/{dcc}" / sub_module_name
 
     if not sub_module_path.exists():
-        raise FileNotFoundError(f"Unsupported DCC version!")
+        raise FileNotFoundError("Unsupported DCC version!")
 
     import_path = f"{__name__}.dccs.{dcc}.{sub_module_name}.skin_plus_plus_{api}"
     backend = importlib.import_module(import_path)
     if is_reloading:
         importlib.reload(backend)
 
-    global get_skin_data
-    global set_skin_weights
+    global extract_skin_data
+    global apply_skin_data
     # global get_vertex_positions
 
-    get_skin_data = backend.get_skin_data
-    set_skin_weights = backend.set_skin_weights
+    extract_skin_data = backend.extract_skin_data
+    apply_skin_data = backend.apply_skin_data
     # get_vertex_positions = skin_plus_plus_pymxs.get_vertex_positions
 
     return backend
@@ -173,8 +173,8 @@ __all__ = (
 
     "current_dcc",
 
-    "get_skin_data",
-    "set_skin_weights",
+    "extract_skin_data",
+    "apply_skin_data",
     "set_debug",
 
     "export_skin_data",

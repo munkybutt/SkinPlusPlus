@@ -243,8 +243,8 @@ public:
 	MObject addMissingBones(std::vector<std::string>& missingBoneNames, const UINT& skinnedBoneCount);
 
 	// Get the vertex weights, bone ids and positions from the given node
-	PySkinData getData(const bool safeMode = true);
+	PySkinData extractSkinData(const bool safeMode = true);
 
 	// Set the skin weights to the given node's skin modifier
-	bool setSkinWeights(PySkinData& skinData);
+	bool applySkinData(PySkinData& skinData);
 };

@@ -69,7 +69,12 @@ bool SkinManagerMaya::initialise(const wchar_t* name)
 };
 
 
-void removeBonesFromBindPose(MPlug bindPoseMatrixArrayPlug, MPlug bindPoseMemberArrayPlug, MPlugArray connectedPlugs, MDGModifier& dgModifier)
+void removeBonesFromBindPose(
+    MPlug bindPoseMatrixArrayPlug,
+    MPlug bindPoseMemberArrayPlug,
+    MPlugArray connectedPlugs,
+    MDGModifier& dgModifier
+)
 {
 	MStatus status;
 	for (unsigned i = 0; i < bindPoseMatrixArrayPlug.numConnectedElements(); i++)
@@ -258,7 +263,7 @@ MObject SkinManagerMaya::addMissingBones(BoneNamesVector& missingBoneNames, cons
 //}
 
 
-PySkinData SkinManagerMaya::getData(const bool safeMode)
+PySkinData SkinManagerMaya::extractSkinData(const bool safeMode)
 {
     if (!this->isValid)
     {
@@ -418,7 +423,7 @@ void getBoneNames(std::vector<std::string>& currentBoneNames, const MDagPathArra
 }
 
 
-bool SkinManagerMaya::setSkinWeights(PySkinData& skinData)
+bool SkinManagerMaya::applySkinData(PySkinData& skinData)
 {
     auto vertexCount = skinData.boneIDs.rows();
     auto vertexWeightsRows = skinData.weights.rows();
@@ -510,34 +515,34 @@ PYBIND11_MODULE(skin_plus_plus_pymaya, m) {
 	// This makes the base SkinData class available to the module:
 	#include <skin_plus_plus_py.h>
 
-	m.def("get_skin_data", [&](wchar_t* name, bool* safeMode)
+	m.def("extract_skin_data", [&](wchar_t* name, bool* safeMode)
 		{
-			SkinManagerMaya skinData(name);
-			PySkinData pySkinData = skinData.getData(safeMode=safeMode);
+			SkinManagerMaya skinManager(name);
+            PySkinData pySkinData = skinManager.extractSkinData(safeMode=safeMode);
 			return pySkinData;
 
 		},
-		"Get Skin Data",
+		"Extract SkinData from the mesh with the given name",
         py::arg("name"),
         py::arg("safeMode") = true
 	);
-	m.def("get_vertex_positions", [&](wchar_t* name)
+    m.def("apply_skin_data", [&](wchar_t* name, PySkinData& skinData)
+        {
+            SkinManagerMaya skinManager(name);
+            return skinManager.applySkinData(skinData);
+        },
+        "Apply SkinData to the mesh with the given name",
+        py::arg("name"),
+        py::arg("skin_data")
+    );
+	m.def("get_vertex_positions", [&](wchar_t* name, bool* safeMode)
 		{
 			SkinManagerMaya skinData(name);
-			PySkinData pySkinData = skinData.getData();
+			PySkinData pySkinData = skinData.extractSkinData(safeMode = safeMode);
 			return pySkinData.positions;
 
 		},
 		"Get Vertex Positions",
 		py::arg("name")
-	);
-	m.def("set_skin_weights", [&](wchar_t* name, PySkinData& skinData)
-		{
-			SkinManagerMaya skinManager(name);
-			return skinManager.setSkinWeights(skinData);
-		},
-		"Set Skin Weights",
-		py::arg("name"),
-		py::arg("skin_data")
 	);
 }

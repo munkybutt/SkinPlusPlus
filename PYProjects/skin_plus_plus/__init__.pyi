@@ -25,9 +25,9 @@ The name of the current DCC.
 """
 
 
-def get_skin_data(mesh_name: str) -> skin_plus_plus_py.SkinData:
+def extract_skin_data(mesh_name: str) -> skin_plus_plus_py.SkinData:
     ...
 
 
-def set_skin_weights(mesh_name: str, skin_data: skin_plus_plus_py.SkinData) -> bool:
+def apply_skin_data(mesh_name: str, skin_data: skin_plus_plus_py.SkinData) -> bool:
     ...

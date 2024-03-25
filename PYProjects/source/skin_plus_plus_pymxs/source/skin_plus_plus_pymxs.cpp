@@ -151,7 +151,7 @@ void SkinManager::collectWeightsAndBoneIDs(UINT vertexIndex)
 }
 
 
-PySkinData* SkinManager::getData()
+PySkinData* SkinManager::extractSkinData()
 {
     if (!isValid)
     {
@@ -304,7 +304,7 @@ BoneData getBoneData(ISkin* iSkin, int skinBoneCount)
 }
 
 
-bool SkinManager::setSkinWeights(PySkinData& skinData)
+bool SkinManager::applySkinData(PySkinData& skinData)
 {
 	auto boneIDsRows = skinData.boneIDs.rows();
 	auto vertexWeightsRows = skinData.weights.rows();
@@ -389,7 +389,7 @@ bool SkinManager::setSkinWeights(PySkinData& skinData)
 bool setSkinWeights(wchar_t* name, PySkinData& skinData)
 {
 	SkinManager skinData_(name);
-	return skinData_.setSkinWeights(skinData);
+	return skinData_.applySkinData(skinData);
 }
 
 
@@ -397,35 +397,31 @@ PYBIND11_MODULE(skin_plus_plus_pymxs, m) {
 	// This makes the base SkinData class available to the module:
 #include <skin_plus_plus_py.h>
 
-	m.def("get_skin_data", [&](wchar_t* name)
-		{
-			SkinManager skinData(name);
-			PySkinData* pySkinData = skinData.getData();
-			return pySkinData;
-		},
-		"Get Skin Data",
+    m.def("extract_skin_data", [&](wchar_t* name)
+        {
+            SkinManager skinData(name);
+            PySkinData* pySkinData = skinData.extractSkinData();
+            return pySkinData;
+        },
+        "Extract SkinData from the mesh with the given name",
 		py::arg("name")
 	);
-	m.def("get_vertex_positions", [&](wchar_t* name)
-		{
-			SkinManager skinData(name);
-			PySkinData* pySkinData = skinData.getData();
-			return pySkinData->positions;
-		},
-		"Get Skin Data",
-		py::arg("name")
-	);
-	m.def("set_skin_weights", [&](wchar_t* name, PySkinData& skinData)
-		{
-			SkinManager skinManager(name);
-			return skinManager.setSkinWeights(skinData);
-		},
-		"Set Skin Weights",
+    m.def("apply_skin_data", [&](wchar_t* name, PySkinData& skinData)
+        {
+            SkinManager skinManager(name);
+            return skinManager.applySkinData(skinData);
+        },
+        "Apply SkinData to the mesh with the given name",
 		py::arg("name"),
 		py::arg("skin_data")
 	);
-
-	/*py::class_<MAXNode>(m, "MaxNode")
-		.def(py::init<INode*>(), py::arg("node"))
-		.def("get_name", &MAXNode::SvGetName);*/
+    m.def("get_vertex_positions", [&](wchar_t* name)
+        {
+            SkinManager skinData(name);
+            PySkinData* pySkinData = skinData.extractSkinData();
+            return pySkinData->positions;
+        },
+        "Get Skin Data",
+        py::arg("name")
+    );
 }
