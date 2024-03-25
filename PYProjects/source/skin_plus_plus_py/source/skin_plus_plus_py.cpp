@@ -8,10 +8,10 @@ PYBIND11_MODULE(skin_plus_plus_py, m) {
 		.def(py::init<int, int>())
 		.def(py::init<BoneNamesVector, BoneIDsMatrix, WeightsMatrix, PositionMatrix>())
 		.def(py::init<py::tuple>())
-		.def_readonly("bone_names", &PySkinData::boneNames)
-		.def_readonly("bone_ids", &PySkinData::boneIDs)
-		.def_readonly("weights", &PySkinData::weights)
-		.def_readonly("positions", &PySkinData::positions)
+		.def_readwrite("bone_names", &PySkinData::boneNames)
+		.def_readwrite("bone_ids", &PySkinData::boneIDs)
+		.def_readwrite("weights", &PySkinData::weights)
+		.def_readwrite("positions", &PySkinData::positions)
 		.def(
 			py::pickle(
 				[](const PySkinData& pySkinData) { // __getstate__
