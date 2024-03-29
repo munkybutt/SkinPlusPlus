@@ -86,13 +86,11 @@ const inline auto getMeshType(INode* node)
 }
 
 
-bool SkinManager::initialise(const wchar_t* name)
+bool SkinManager::initialiseSkin()
 {
-    //this->node = getChildByName(name, NULL);
-    this->node = GetCOREInterface()->GetINodeByName(name);
     if (!this->node)
     {
-        throw py::type_error("SkinData init failed. No node with name: " + convertWCharToChar(name));
+        throw py::type_error("SkinData init failed. No node initialised!");
     }
     Object* object = this->node->GetObjectRef();
     if (!object || (object->SuperClassID() != GEN_DERIVOB_CLASS_ID))
@@ -123,7 +121,36 @@ bool SkinManager::initialise(const wchar_t* name)
         this->isValid = true;
         return this->isValid;
     }
-    throw std::exception("SkinData init failed on node: " + convertWCharToChar(name));
+}
+
+
+bool SkinManager::initialise(const wchar_t* name)
+{
+    this->node = GetCOREInterface()->GetINodeByName(name);
+    if (!this->node)
+    {
+        throw py::type_error("SkinData init failed. No node with name: " + convertWCharToChar(name));
+    }
+    if (this->initialiseSkin())
+    {
+        return true;
+    }
+    throw std::runtime_error("SkinData init failed on node: " + convertWCharToChar(name));
+}
+
+
+bool SkinManager::initialise(ULONG handle)
+{
+    this->node = GetCOREInterface()->GetINodeByHandle(handle);
+    if (!this->node)
+    {
+        throw py::type_error(fmt::format("SkinData init failed. No node with handle: {}", handle));
+    }
+    if (this->initialiseSkin())
+    {
+        return true;
+    }
+    throw std::runtime_error(fmt::format("SkinData init failed on node with handle: {}", handle));
 }
 
 
@@ -404,8 +431,17 @@ PYBIND11_MODULE(skin_plus_plus_pymxs, m) {
             return pySkinData;
         },
         "Extract SkinData from the mesh with the given name",
-		py::arg("name")
-	);
+        py::arg("name")
+    );
+    m.def("extract_skin_data", [&](ULONG handle)
+        {
+            SkinManager skinData(handle);
+            PySkinData* pySkinData = skinData.extractSkinData();
+            return pySkinData;
+        },
+        "Extract SkinData from the mesh with the given handle",
+        py::arg("handle")
+    );
     m.def("apply_skin_data", [&](wchar_t* name, PySkinData& skinData)
         {
             SkinManager skinManager(name);
@@ -415,6 +451,15 @@ PYBIND11_MODULE(skin_plus_plus_pymxs, m) {
 		py::arg("name"),
 		py::arg("skin_data")
 	);
+    m.def("apply_skin_data", [&](ULONG handle, PySkinData& skinData)
+        {
+            SkinManager skinManager(handle);
+            return skinManager.applySkinData(skinData);
+        },
+        "Apply SkinData to the mesh with the given name",
+        py::arg("name"),
+        py::arg("skin_data")
+    );
     m.def("get_vertex_positions", [&](wchar_t* name)
         {
             SkinManager skinData(name);

@@ -30,6 +30,8 @@ import unittest
 
 import skin_plus_plus
 
+print(skin_plus_plus.current_host)
+
 # skin_plus_plus.set_debug(False)
 
 if __name__ == "__main__":
@@ -713,53 +715,8 @@ def add_bones():
 
 if __name__ == "__main__":
     pass
-    skin_plus_plus.io.max_to_maya(file_type=skin_plus_plus.FileType.json)
-    # skin_plus_plus.io.save(file_type=skin_plus_plus.FileType.json)
 
-    # path = pathlib.Path("C:/Users/Sheaky/Downloads/_Data/BaseBody_GEO.skpp-json")
-    # with open(path, "r") as file:
-    #     data = json.load(file)
-
-    # print(len(data["bone_names"]))
-    # print(len(set(data["bone_names"])))
-    # skin_plus_plus.io.max_to_maya(file_type=skin_plus_plus.FileType.json)
-    # skin_plus_plus
-    # bones = ["one", "two"]
-    # ids = np.array([[0, 1], [1, 0]], dtype=np.float64)
-    # weights = np.array([[0.25, 0.75], [0.25, 0.75]], dtype=np.float64)
-    # pos = np.array([[0.1, 0.75, 2.0], [0.25, 0.75, 30]], dtype=np.float64)
-    # sd = skin_plus_plus.skin_plus_plus_py.SkinData(bones, ids, weights, pos)
-    # print(sd)
-
-    # print(sd.bone_ids)
-    # skin_plus_plus.io.save(file_type=skin_plus_plus.FileType.json)
-    # skin_plus_plus.io.load(file_type=skin_plus_plus.FileType.json)
-    # import json
-    # import pickle
-
-    # path = r"C:\Users\Sheaky\Documents\3ds Max 2023\scenes\_Data\Sphere001_GEO.skpp-json"
-
-    # with open(path, "r") as file:
-    #     data = json.load(file)
-    #     skin_data = skin_plus_plus.SkinData(
-    #         tuple(data["bone_names"]),
-    #         tuple(data["bone_ids"]),
-    #         tuple(data["weights"]),
-    #         tuple(data["positions"])
-    #     )
-    # with open(path, "rb") as file:
-    #     skin_data = pickle.load(file)
-
-    # # print(skin_data)
-    # # # for ids in skin_data.bone_ids:
-    # # #     print(ids)
-    # skin_plus_plus.set_skin_weights("Sphere001", skin_data)
-    # sd = skin_plus_plus.get_skin_data("Sphere001")
-    # print(sd.weights)
-    # for index, weights in enumerate(sd.weights):
-    #     print(f"{index}: {weights}")
-    # # skin_data = skin_plus_plus.get_skin_data("Weapon_Shield_1H_001_Model_Main_01_:Shield_GEO")
-    # # print(skin_data)
-    # # skin_plus_plus.set_skin_weights("SM_EliteEnemy_Axe_GEO", skin_data)
-    # # print(skin_data.weights[2])
-    # # print(skin_data.bone_ids[0])
+    node = skin_plus_plus.current_host.get_selection()[0]
+    # skin_data = skin_plus_plus.extract_skin_data(node)
+    # print(skin_data)
+    skin_plus_plus.apply_skin_data(node, skin_data)

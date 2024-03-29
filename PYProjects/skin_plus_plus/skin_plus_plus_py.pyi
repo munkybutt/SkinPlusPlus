@@ -2,7 +2,6 @@ import numpy as np
 import numpy.typing as np_typing
 import typing
 
-
 class SkinData:
     """
     Class containing data for a given skin object.
@@ -25,9 +24,18 @@ class SkinData:
     """
 
     bone_names: list[str]
+    """The names of the bones in the SkinData"""
     bone_ids: np_typing.NDArray[np.int64]
+    """The bone ids for each influence on each vertex"""
     weights: np_typing.NDArray[np.float32]
+    """The weights for each influence on each vertex"""
     positions: np_typing.NDArray[np.float32]
+    """The position of each vertex in the SkinData's mesh"""
+    vertex_ids: np_typing.NDArray[np.int64] | None = None
+    """
+    The specific vertex ids that make up the SkinData.
+    If `None` then all vertices are used to make up the SkinData.
+    """
 
     @typing.overload
     def __init__(self):

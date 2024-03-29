@@ -57,9 +57,16 @@ private:
 	// Add missing bones to the skin modifier based on the given vector of missing bone names
 	void addMissingBones(std::vector<std::string> missingBoneNames);
 
+	// Initialise skinModifier, iSkin, iSkinContextData, iSkinImportData
+	bool initialiseSkin();
+
 public:
 	SkinManager(const wchar_t* name) { this->initialise(name); }
+	SkinManager(ULONG handle) { this->initialise(handle); }
 	~SkinManager(){}
+
+	// Initialise the skin manager with the given node handle
+	bool initialise(ULONG handle);
 
 	// Initialise the skin manager with the given node name
 	bool initialise(const wchar_t* name);

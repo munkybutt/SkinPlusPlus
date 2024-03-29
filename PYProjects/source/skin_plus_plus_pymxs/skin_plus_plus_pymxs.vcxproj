@@ -32,7 +32,7 @@
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{7bf5ea8d-2105-425a-967c-590ad47ec6cb}</ProjectGuid>
     <RootNamespace>skin_plus_plus_pymxs</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <!-- End Globals -->
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -142,7 +142,8 @@
     <TargetExt>.pyd</TargetExt>
     <IncludePath>$(THIRD_PARTY_EIGEN);$(THIRD_PARTY_FMT)\include;$(ProjectDir)\headers;$(ProjectDir)..\skin_plus_plus_py\headers;$(ADSK_3DSMAX_SDK_2024)\include;$(ADSK_3DSMAX_SDK_2024)\include\geom;$(PYTHON_310)\include;$(PYBIND11_310)\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(PYTHON_310)\libs;$(ADSK_3DSMAX_SDK_2024)\lib\x64\Release;$(LibraryPath)</LibraryPath>
-    <OutDir>$(SolutionDir)..\..\PYProjects\skin_plus_plus\dccs\max\$(ProjectName)_2024\</OutDir>
+    <OutDir>$(SolutionDir)..\..\PYProjects\skin_plus_plus\dccs\max\2024\</OutDir>
+    <TargetName>$(ProjectName)</TargetName>
   </PropertyGroup>
   <PropertyGroup Label="Vcpkg">
     <VcpkgEnableManifest>true</VcpkgEnableManifest>

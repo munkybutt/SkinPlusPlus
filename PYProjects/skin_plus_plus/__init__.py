@@ -6,6 +6,7 @@ import pathlib
 import sys
 
 current_dcc = None
+current_host_interface = None
 
 extract_skin_data = None
 apply_skin_data = None
@@ -22,7 +23,7 @@ except NameError:
 __py_version__ = f"{sys.version_info.major}{sys.version_info.minor}"
 
 
-def __get_skin_plus_plus_py(python_version: str, debug: bool = False):
+def _activate_skin_plus_plus_py_(python_version: str, debug: bool = False):
     global skin_plus_plus_py
     global SkinData
 
@@ -34,10 +35,9 @@ def __get_skin_plus_plus_py(python_version: str, debug: bool = False):
     sub_module_path = current_directory / f"py/{python_version}"
 
     if not sub_module_path.exists():
-        raise FileNotFoundError(f"Unsupported Python version!")
+        raise FileNotFoundError(f"Unsupported Python version: {python_version}")
 
     import_path = f"skin_plus_plus.py.{python_version}.skin_plus_plus_py"
-    print(f"import_path: {import_path}")
     if "skin_plus_plus_py" in sys.modules:
         del sys.modules["skin_plus_plus_py"]
 
@@ -50,31 +50,31 @@ def __get_skin_plus_plus_py(python_version: str, debug: bool = False):
     return skin_plus_plus_py
 
 
-def __get_dcc_backend(dcc: str, version: str, api: str):
-    current_directory = pathlib.Path(__file__).parent
-    sub_module_name = f"skin_plus_plus_{api}_{version}"
-    sub_module_path = current_directory / f"dccs/{dcc}" / sub_module_name
+def _activate_host_():
+    global current_host_interface
 
-    if not sub_module_path.exists():
-        raise FileNotFoundError("Unsupported DCC version!")
-
-    import_path = f"{__name__}.dccs.{dcc}.{sub_module_name}.skin_plus_plus_{api}"
-    backend = importlib.import_module(import_path)
-    if is_reloading:
-        importlib.reload(backend)
-
-    global extract_skin_data
     global apply_skin_data
-    # global get_vertex_positions
+    global extract_skin_data
 
-    extract_skin_data = backend.extract_skin_data
-    apply_skin_data = backend.apply_skin_data
-    # get_vertex_positions = skin_plus_plus_pymxs.get_vertex_positions
+    executable = sys.executable.lower()
+    if "3ds max" in executable:
+        from .dccs.max import IHost
 
-    return backend
+        current_host_interface = IHost()
+
+    elif "maya" in executable:
+        from .dccs.maya import Host
+
+        current_host_interface = IHost()
+
+    else:
+        raise RuntimeError(f"Unsupported executable: {executable}")
+
+    extract_skin_data = current_host_interface.extract_skin_data
+    apply_skin_data = current_host_interface.apply_skin_data
 
 
-def set_debug(value: bool):
+def set_debug(value: bool) -> None:
     """
     Toggle debug mode on or off.
 
@@ -90,33 +90,11 @@ def set_debug(value: bool):
     --------
     - `None`
     """
-    __get_skin_plus_plus_py(__py_version__, debug=value)
+    _activate_skin_plus_plus_py_(__py_version__, debug=value)
 
 
-# DO NOT REMOVE - Required for access to SkinData class:
-__get_skin_plus_plus_py(__py_version__)
-
-
-
-executable = sys.executable.lower()
-if "3ds max" in executable:
-    from pymxs import runtime as mxRt
-
-    version_info = mxRt.MaxVersion()
-    version_number = version_info[7]
-    __get_dcc_backend("max", version_number, "pymxs")
-    current_dcc = "max"
-
-
-elif "maya" in executable:
-    from pymel import versions
-
-    version = str(versions.current())[:4]
-    __get_dcc_backend("maya", version, "pymaya")
-    current_dcc = "maya"
-
-else:
-    raise RuntimeError(f"Unsupported executable: {executable}")
+_activate_skin_plus_plus_py_(__py_version__)
+_activate_host_()
 
 
 _typing = False
@@ -164,6 +142,8 @@ def __getattr__(name: str) -> Any:
 
 
 __all__ = (
+    "SkinData",
+
     "dccs",
     "py",
 
@@ -172,20 +152,23 @@ __all__ = (
     "mesh",
 
     "current_dcc",
+    "current_host_interface",
 
     "extract_skin_data",
     "apply_skin_data",
-    "set_debug",
 
     "export_skin_data",
     "import_skin_data",
     "FileType",
-
     "save",
     "load",
+
     "max_to_maya",
-    "maya_to_max"
+    "maya_to_max",
+
+    "set_debug",
 )
+
 
 def __dir__():
     return __all__
