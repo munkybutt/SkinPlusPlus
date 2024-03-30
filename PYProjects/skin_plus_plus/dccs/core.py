@@ -10,12 +10,13 @@ if _typing:
 
     from .. import _types
     from .. import SkinData
+    from typing import Sequence
 
 del _typing
 
 
 class IHost(metaclass=abc.ABCMeta):
-    _extract_skin_data: _types.T_CExSD
+    _extract_skin_data: _types.T_EXSD
     _apply_skin_data: _types.T_CApSD
     _get_vertex_positions: _types.Callable
 
@@ -50,7 +51,7 @@ class IHost(metaclass=abc.ABCMeta):
         # if is_reloading:
         #     importlib.reload(backend)
 
-        self._extract_skin_data: _types.T_CExSD = backend.extract_skin_data
+        self._extract_skin_data: _types.T_EXSD = backend.extract_skin_data
         self._apply_skin_data: _types.T_CApSD = backend.apply_skin_data
         self._get_vertex_positions: _types.Callable = backend.get_vertex_positions
 
@@ -87,9 +88,9 @@ class IHost(metaclass=abc.ABCMeta):
         """
 
 
-    def extract_skin_data(self, node: _types.T_Node) -> SkinData:
+    def extract_skin_data(self, node: _types.T_Node, vertex_ids: Sequence[int] | None = None) -> SkinData:
         handle = self.get_node_handle(node)
-        return self._extract_skin_data(handle)
+        return self._extract_skin_data(handle, vertex_ids=vertex_ids)
 
     def apply_skin_data(self, node: _types.T_Node, skin_data: SkinData):
         handle = self.get_node_handle(node)

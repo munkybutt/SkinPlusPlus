@@ -23,6 +23,7 @@ typedef std::vector<std::string> BoneNamesVector;
 typedef eg::MatrixXi BoneIDsMatrix;
 typedef eg::MatrixXd WeightsMatrix;
 typedef eg::MatrixXd PositionMatrix;
+typedef eg::Matrix<int, 1, -1> VertexIDsMatrix;
 typedef unsigned int UINT;
 
 
@@ -83,6 +84,8 @@ struct SortedBoneNameData
 {
     std::vector<UINT> sortedBoneIDs;
     std::vector<std::string> unfoundBoneNames;
+    UINT highestBoneID;
+    UINT lowestBoneID;
     SortedBoneNameData(UINT boneCount)
     {
         sortedBoneIDs = std::vector<UINT>(boneCount);
@@ -99,22 +102,32 @@ public:
     BoneIDsMatrix boneIDs;
     WeightsMatrix weights;
     PositionMatrix positions;
+    std::optional<VertexIDsMatrix> vertexIDs = std::nullopt;
 
     PySkinData() {}
 
-    PySkinData(UINT vertexCount, UINT maxInfluenceCount)
+    PySkinData(VertexIDsMatrix vertexIDs, UINT maxInfluenceCount) {
+        const eg::Index vertexCount = vertexIDs.size();
+        this->boneIDs = BoneIDsMatrix::Constant(vertexCount, maxInfluenceCount, -1);
+        this->weights = WeightsMatrix::Zero(vertexCount, maxInfluenceCount);
+        this->positions = PositionMatrix(vertexCount, 3);
+        this->vertexIDs = vertexIDs;
+    }
+
+    PySkinData(UINT vertexCount, UINT maxInfluenceCount, std::optional<VertexIDsMatrix> vertexIDs = std::nullopt)
     {
         this->boneIDs = BoneIDsMatrix::Constant(vertexCount, maxInfluenceCount, -1);
         this->weights = WeightsMatrix::Zero(vertexCount, maxInfluenceCount);
         this->positions = PositionMatrix(vertexCount, 3);
+        if (vertexIDs.has_value())
+        {
+            this->vertexIDs = vertexIDs.value();
+        }
     }
 
-    PySkinData(BoneNamesVector boneNames, BoneIDsMatrix boneIDs, WeightsMatrix weights, PositionMatrix positions)
+    PySkinData(BoneNamesVector boneNames, BoneIDsMatrix boneIDs, WeightsMatrix weights, PositionMatrix positions, std::optional<VertexIDsMatrix> vertexIDs = std::nullopt)
     {
-        this->boneNames = boneNames;
-        this->boneIDs = boneIDs;
-        this->weights = weights;
-        this->positions = positions;
+        this->setInternalState(boneNames, boneIDs, weights, positions, vertexIDs);
     }
 
     PySkinData(py::tuple data)
@@ -122,19 +135,75 @@ public:
         this->setInternalState(data);
     }
 
+    PySkinData(const PySkinData& skinData)
+    {
+        if (skinData.vertexIDs.has_value())
+        {
+            this->setInternalState(
+                skinData.boneNames,
+                BoneIDsMatrix(skinData.boneIDs),
+                WeightsMatrix(skinData.weights),
+                PositionMatrix(skinData.positions),
+                VertexIDsMatrix(skinData.vertexIDs.value())
+            );
+        }
+        else
+        {
+            this->setInternalState(
+                skinData.boneNames,
+                BoneIDsMatrix(skinData.boneIDs),
+                WeightsMatrix(skinData.weights),
+                PositionMatrix(skinData.positions)
+            );
+        }
+    }
+
     ~PySkinData() {}
 
+
     // Set the internal state of the object, replacing all data.
-    // The tuple structure is: (boneNames, boneIDs, weights, positions).
+    void setInternalState(BoneNamesVector boneNames, BoneIDsMatrix boneIDs, WeightsMatrix weights, PositionMatrix positions, std::optional<VertexIDsMatrix> vertexIDs = std::nullopt)
+    {
+        this->boneNames = boneNames;
+        this->boneIDs = boneIDs;
+        this->weights = weights;
+        this->positions = positions;
+        if (vertexIDs.has_value())
+        {
+            this->vertexIDs = vertexIDs.value();
+        }
+    }
+
+    // Set the internal state of the object, replacing all data.
+    // The tuple structure is: (boneNames, boneIDs, weights, positions, vertexIDs).
     void setInternalState(py::tuple data)
     {
-        if (data.size() != 4)
-            throw std::runtime_error("Invalid state - The tuple structure is: (bone_names, bone_ids, weights, positions)");
-
-        this->boneNames = py::cast<BoneNamesVector>(data[0]);
-        this->boneIDs = py::cast<BoneIDsMatrix>(data[1]);
-        this->weights = py::cast<WeightsMatrix>(data[2]);
-        this->positions = py::cast<PositionMatrix>(data[3]);
+        auto dataSize = data.size();
+        if (dataSize == 5 && !py::isinstance<py::none>(data[4]))
+        {
+            this->setInternalState(
+                py::cast<BoneNamesVector>(data[0]),
+                py::cast<BoneIDsMatrix>(data[1]),
+                py::cast<WeightsMatrix>(data[2]),
+                py::cast<PositionMatrix>(data[3]),
+                py::cast<VertexIDsMatrix>(data[4])
+            );
+        }
+        else if (dataSize >= 4)
+        {
+            this->setInternalState(
+                py::cast<BoneNamesVector>(data[0]),
+                py::cast<BoneIDsMatrix>(data[1]),
+                py::cast<WeightsMatrix>(data[2]),
+                py::cast<PositionMatrix>(data[3])
+            );
+        }
+        else
+        {
+            throw std::runtime_error(
+                "Invalid state - The tuple structure is: (bone_names, bone_ids, weights, positions, vertexIDs = (optional)"
+            );
+        }
     }
 
     // Set a new maximum influence count

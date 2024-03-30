@@ -13,7 +13,7 @@ if __name__ == "__main__":
         if str(current_file) == "<maya console>":
             # maya is a piece of shit:
             current_file = pathlib.Path(
-                r"D:\Code\Git\SkinPlusPlus\PYProjects\skin_plus_plus_test\skin_plus_plus_test.py"
+                r"C:\Users\Shea.Richardson\Desktop\Git\SkinPlusPlus-Main\PYProjects\skin_plus_plus_test\skin_plus_plus_test.py"
             )
         current_directory = current_file.parent
         site.addsitedir(str(current_directory.parent))
@@ -29,8 +29,6 @@ import unittest
 
 
 import skin_plus_plus
-
-print(skin_plus_plus.current_host)
 
 # skin_plus_plus.set_debug(False)
 
@@ -716,7 +714,9 @@ def add_bones():
 if __name__ == "__main__":
     pass
 
-    node = skin_plus_plus.current_host.get_selection()[0]
-    # skin_data = skin_plus_plus.extract_skin_data(node)
+    node = skin_plus_plus.current_host_interface.get_selection()[0]
+    # skin_data = skin_plus_plus.extract_skin_data(node, vertex_ids=[0, 1, 2])
     # print(skin_data)
+    # print(skin_data.bone_ids)
+    # print(skin_data.weights)
     skin_plus_plus.apply_skin_data(node, skin_data)
