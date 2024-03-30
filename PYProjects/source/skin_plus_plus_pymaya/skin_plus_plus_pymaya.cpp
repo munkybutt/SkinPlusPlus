@@ -543,6 +543,7 @@ PYBIND11_MODULE(skin_plus_plus_pymaya, m) {
 
 		},
 		"Get Vertex Positions",
-		py::arg("name")
+		py::arg("name"),
+        py::arg("safeMode") = true
 	);
 }

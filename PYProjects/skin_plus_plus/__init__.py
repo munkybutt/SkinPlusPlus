@@ -63,7 +63,7 @@ def _activate_host_():
         current_host_interface = IHost()
 
     elif "maya" in executable:
-        from .dccs.maya import Host
+        from .dccs.maya import IHost
 
         current_host_interface = IHost()
 
