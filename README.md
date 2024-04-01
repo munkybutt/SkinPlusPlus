@@ -59,24 +59,38 @@ This software (SkinPlusPlus) is provided "as is", without any warranty. The auth
     - 2022 - Python37
 
 ## Usage
-There are three types of data that are of interest when working with skin data:
-- vertex bone weights (float)
+`PySkinData` is a c++ struct exposed to Python as the class `SkinData`.
+This struct contains five separate data attributes:
+- bone names (str)
+- vertex bone weights (float64)
 - vertex bone ids (int)
-- vertex positions (float)
+- vertex positions (float64)
+- vertex indices (int)
 
-PySkinData is a c++ struct containing the above data, exposed to python as the SkinData class.  
-This struct allows the data to be typed correctly rather than all typed as floats.  
-On the c++ side, the data is stored in Eigen matrices.  
-On the Python side, the data is exposed via Pybind11 as numpy arrays.
+This struct allows the data to be typed correctly.
+The c++ backend uses Eigen matrices and exposes them to Python via Pybind11 as numpy arrays.
 
 Due to the relationship between Eigen and Pybind11, there is no performance hit when passing arrays to and from c++.
 
-🔥 It is fast 🔥
+This results in a reduction in the number of iterable structures the data needs to be stored in to convert back and forth btween numpy and the c++ SDK get and set weight functions.
 
-It also provides a simple interface to the raw data in the form of the following properties:
-- SkinData.weights
-- SkinData.bone_ids
-- SkinData.positions
+🔥 This means it is fast 🔥
+
+Take 3DsMax as an example, to get from a numpy ndarray to 3DsMax SDK Tab it requires the following steps:
+- ndarray -(copy)-> py list -(copy)-> mxs Array -(copy)-> Tab -> set weights.
+
+Compared to the SkinPlusPlus approach:
+- ndarray -(reference)-> Eigen Matrix -(copy)-> Tab -> set weights.
+
+The native approach runs multiple copy operations in python before passing the data to c++.
+SkinPlusPlus has no copy operations in Python.
+
+`SkinData` provides attribute access to the raw data with the following properties:
+- `SkinData.bone_names`
+- `SkinData.weights`
+- `SkinData.bone_ids`
+- `SkinData.positions`
+- `SkinData.vertex_ids`
 
 ## Performance
 Performance benchmarks are done on a mesh with 507,906 vertices, each with 6 influences.
