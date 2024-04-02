@@ -715,8 +715,10 @@ if __name__ == "__main__":
     pass
 
     node = skin_plus_plus.current_host_interface.get_selection()[0]
-    # skin_data = skin_plus_plus.extract_skin_data(node, vertex_ids=[0, 1, 2])
-    # print(skin_data)
-    # print(skin_data.bone_ids)
-    # print(skin_data.weights)
-    skin_plus_plus.apply_skin_data(node, skin_data)
+    skin_data = skin_plus_plus.extract_skin_data(node, vertex_ids=[1])
+    # skin_data = skin_plus_plus.extract_skin_data(node)
+    print(skin_data)
+    print(skin_data.bone_names)
+    print(skin_data.bone_ids)
+    print(skin_data.weights)
+    # skin_plus_plus.apply_skin_data(node, skin_data)

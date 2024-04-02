@@ -2,8 +2,19 @@
 #include <skin_plus_plus_pymxs.h>
 
 
+#define GET_POLY_DATA(node)                                                                     \
+Matrix3 nodeTransform = node->GetObjectTM(0);                                                  \
+bool deleteIt;                                                                                  \
+PolyObject* polyObject = getPolyObjectFromNode(node, GetCOREInterface()->GetTime(), deleteIt);  \
+MNMesh& mnMesh = polyObject->GetMesh();
 
-static TriObject* getTriObjectFromNode(INode* node, TimeValue time)
+#define GET_MESH_DATA(node)                                                         \
+Matrix3 nodeTransform = node->GetObjectTM(0);                                       \
+TriObject* triObject = getTriObjectFromNode(node, GetCOREInterface()->GetTime());   \
+Mesh& mesh = triObject->GetMesh();
+
+
+static inline TriObject* getTriObjectFromNode(INode* node, TimeValue time)
 {
     Object* object = node->EvalWorldState(time).obj;
     auto classID = Class_ID(TRIOBJ_CLASS_ID, 0);
@@ -19,12 +30,13 @@ static TriObject* getTriObjectFromNode(INode* node, TimeValue time)
 }
 
 
-static PolyObject* getPolyObjectFromNode(INode* inNode, TimeValue inTime, bool& deleteIt)
+static inline PolyObject* getPolyObjectFromNode(INode* inNode, TimeValue inTime, bool& deleteIt)
 {
     Object* object = inNode->GetObjectRef();
     auto classID = Class_ID(POLYOBJ_CLASS_ID, 0);
     if (object->CanConvertToType(classID))
     {
+        //auto po = static_cast<PolyObject*>(object->ConvertToType(inTime, classID));
         PolyObject* polyObject = (PolyObject*)object->ConvertToType(inTime, classID);
         // Note that the polyObject should only be deleted
         // if the pointer to it is not equal to the object
@@ -40,17 +52,25 @@ static PolyObject* getPolyObjectFromNode(INode* inNode, TimeValue inTime, bool& 
 }
 
 
-const inline static auto getMeshType(INode* node)
+enum MeshType
+{
+    mesh,
+    poly,
+    none
+};
+
+
+static inline MeshType getMeshType(INode* node)
 {
     ObjectState objectState = node->EvalWorldState(0);
 
     if (objectState.obj)
     {
         Object* object = objectState.obj->FindBaseObject();
-        if (object->CanConvertToType(Class_ID(POLYOBJ_CLASS_ID, 0))) return 0;
-        else if (object->CanConvertToType(Class_ID(TRIOBJ_CLASS_ID, 0))) return 1;
+        if (object->CanConvertToType(Class_ID(POLYOBJ_CLASS_ID, 0))) return MeshType::mesh;
+        if (object->CanConvertToType(Class_ID(TRIOBJ_CLASS_ID, 0))) return MeshType::poly;
     }
-    return -1;
+    return MeshType::none;
 }
 
 
@@ -122,25 +142,6 @@ bool SkinManager::initialise(ULONG handle)
 }
 
 
-void SkinManager::extractWeightsAndBoneIDs(UINT vertexIndex, std::optional<UINT> arrayIndex)
-{
-    UINT arrayIndex_ = arrayIndex.value_or(vertexIndex);
-    UINT influenceCount = this->iSkinContextData->GetNumAssignedBones(vertexIndex);
-    if (influenceCount > this->maximumVertexWeightCount)
-    {
-        this->pySkinData->setMaximumVertexWeightCount(influenceCount);
-        this->maximumVertexWeightCount = influenceCount;
-    }
-    for (UINT influenceIndex = 0; influenceIndex < influenceCount; influenceIndex++)
-    {
-        double infuenceWeight = this->iSkinContextData->GetBoneWeight(vertexIndex, influenceIndex);
-        int influenceBoneID = this->iSkinContextData->GetAssignedBone(vertexIndex, influenceIndex);
-        this->pySkinData->weights(arrayIndex_, influenceIndex) = infuenceWeight;
-        this->pySkinData->boneIDs(arrayIndex_, influenceIndex) = influenceBoneID;
-    }
-}
-
-
 PySkinData* SkinManager::extractSkinData(std::optional<VertexIDsMatrix> vertexIDs)
 {
     if (!isValid)
@@ -148,22 +149,32 @@ PySkinData* SkinManager::extractSkinData(std::optional<VertexIDsMatrix> vertexID
         throw std::runtime_error("SkinData object is invalid. Cannot get skin weights.");
     }
 
-    unsigned int vertexCount = 0;
+    this->maximumVertexWeightCount = iSkinContextData->GetNumAssignedBones(0);
+    UINT vertexCount = 0;
     if (vertexIDs.has_value())
     {
-        vertexCount = vertexIDs.value().cols();
+        const VertexIDsMatrix vertexIDs_ = vertexIDs.value();
+        vertexCount = vertexIDs_.cols();
+        for (UINT arrayIndex = 0; arrayIndex < vertexIDs_.size(); arrayIndex++)
+        {
+            const int vertexIndex = vertexIDs_[arrayIndex];
+            const int influenceCount = iSkinContextData->GetNumAssignedBones(vertexIndex);
+            if (influenceCount > this->maximumVertexWeightCount)
+            {
+                this->maximumVertexWeightCount = influenceCount;
+            }
+        }
     }
     else
     {
         vertexCount = iSkinContextData->GetNumPoints();
-    }
-    this->maximumVertexWeightCount = iSkinContextData->GetNumAssignedBones(0);
-    for (UINT i = 0; i < vertexCount; i++)
-    {
-        auto influenceCount = iSkinContextData->GetNumAssignedBones(i);
-        if (influenceCount > this->maximumVertexWeightCount)
+        for (UINT i = 0; i < vertexCount; i++)
         {
-            this->maximumVertexWeightCount = influenceCount;
+            const int influenceCount = iSkinContextData->GetNumAssignedBones(i);
+            if (influenceCount > this->maximumVertexWeightCount)
+            {
+                this->maximumVertexWeightCount = influenceCount;
+            }
         }
     }
     if (vertexIDs.has_value())
@@ -195,14 +206,28 @@ PySkinData* SkinManager::extractSkinData(std::optional<VertexIDsMatrix> vertexID
         this->pySkinData->boneNames[boneIndex] = convertWCharToString(boneName);
     }
     auto meshType = getMeshType(node);
-    if (meshType == 0)
+    if (meshType == MeshType::mesh)
     {
-        this->extractDataMesh(vertexCount, vertexIDs);
+        if (vertexIDs.has_value())
+        {
+            this->extractDataMesh(vertexCount, vertexIDs.value());
+        }
+        else
+        {
+            this->extractDataMesh(vertexCount);
+        }
         return this->pySkinData;
     }
-    else if (meshType == 1)
+    else if (meshType == MeshType::poly)
     {
-        this->extractDataPoly(vertexCount, vertexIDs);
+        if (vertexIDs.has_value())
+        {
+            this->extractDataPoly(vertexCount, vertexIDs.value());
+        }
+        else
+        {
+            this->extractDataPoly(vertexCount);
+        }
         return this->pySkinData;
     }
 
@@ -210,68 +235,85 @@ PySkinData* SkinManager::extractSkinData(std::optional<VertexIDsMatrix> vertexID
 }
 
 
-void SkinManager::extractDataPoly(UINT vertexCount, std::optional<VertexIDsMatrix> vertexIDs)
+inline void SkinManager::extractWeightsAndBoneIDs(const UINT vertexIndex, const UINT arrayIndex)
 {
-    Matrix3 nodeTransform = node->GetObjectTM(0);
-    bool deleteIt;
-    PolyObject* polyObject = getPolyObjectFromNode(node, GetCOREInterface()->GetTime(), deleteIt);
-    MNMesh& mnMesh = polyObject->GetMesh();
-    if (vertexIDs.has_value())
+    UINT influenceCount = this->iSkinContextData->GetNumAssignedBones(vertexIndex);
+    if (influenceCount > this->maximumVertexWeightCount)
     {
-        VertexIDsMatrix vertexIDs_ = vertexIDs.value();
-        for (UINT arrayIndex = 0; arrayIndex < vertexCount; arrayIndex++)
-        {
-            UINT vertexID = vertexIDs_(arrayIndex, 0);
-            Point3 worldPosition = nodeTransform.PointTransform(mnMesh.V(vertexID)->p);
-            this->pySkinData->positions(arrayIndex, 0) = worldPosition.x;
-            this->pySkinData->positions(arrayIndex, 1) = worldPosition.y;
-            this->pySkinData->positions(arrayIndex, 2) = worldPosition.z;
-            extractWeightsAndBoneIDs(vertexID, arrayIndex);
-        };
+        this->pySkinData->setMaximumVertexWeightCount(influenceCount);
+        this->maximumVertexWeightCount = influenceCount;
     }
-    else
+    for (UINT influenceIndex = 0; influenceIndex < influenceCount; influenceIndex++)
     {
-        for (UINT vertexID = 0; vertexID < vertexCount; vertexID++)
-        {
-            Point3 worldPosition = nodeTransform.PointTransform(mnMesh.V(vertexID)->p);
-            this->pySkinData->positions(vertexID, 0) = worldPosition.x;
-            this->pySkinData->positions(vertexID, 1) = worldPosition.y;
-            this->pySkinData->positions(vertexID, 2) = worldPosition.z;
-            extractWeightsAndBoneIDs(vertexID);
-        };
+        double infuenceWeight = this->iSkinContextData->GetBoneWeight(vertexIndex, influenceIndex);
+        int influenceBoneID = this->iSkinContextData->GetAssignedBone(vertexIndex, influenceIndex);
+        this->pySkinData->weights(arrayIndex, influenceIndex) = infuenceWeight;
+        this->pySkinData->boneIDs(arrayIndex, influenceIndex) = influenceBoneID;
     }
 }
 
 
-void SkinManager::extractDataMesh(UINT vertexCount, std::optional<VertexIDsMatrix> vertexIDs)
+inline void SkinManager::extractWeightsAndBoneIDs(const UINT vertexIndex)
 {
-    Matrix3 nodeTransform = node->GetObjectTM(0);
-    TriObject* triObject = getTriObjectFromNode(node, GetCOREInterface()->GetTime());
-    Mesh& mesh = triObject->GetMesh();
-    if (vertexIDs.has_value())
+    extractWeightsAndBoneIDs(vertexIndex, vertexIndex);
+}
+
+
+inline void SkinManager::extractDataPoly(const UINT vertexCount, VertexIDsMatrix vertexIDs)
+{
+    GET_POLY_DATA(this->node);
+    for (UINT arrayIndex = 0; arrayIndex < vertexCount; arrayIndex++)
     {
-        VertexIDsMatrix vertexIDs_ = vertexIDs.value();
-        for (UINT vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
-        {
-            UINT vertexID = vertexIDs_(vertexIndex, 0);
-            Point3 worldPosition = nodeTransform.PointTransform(mesh.getVert(vertexID));
-            this->pySkinData->positions(vertexID, 0) = worldPosition.x;
-            this->pySkinData->positions(vertexID, 1) = worldPosition.y;
-            this->pySkinData->positions(vertexID, 2) = worldPosition.z;
-            extractWeightsAndBoneIDs(vertexID, vertexIndex);
-        };
-    }
-    else
+        UINT vertexID = vertexIDs(arrayIndex, 0);
+        Point3 worldPosition = nodeTransform.PointTransform(mnMesh.V(vertexID)->p);
+        this->pySkinData->positions(arrayIndex, 0) = worldPosition.x;
+        this->pySkinData->positions(arrayIndex, 1) = worldPosition.y;
+        this->pySkinData->positions(arrayIndex, 2) = worldPosition.z;
+        extractWeightsAndBoneIDs(vertexID, arrayIndex);
+    };
+}
+
+
+inline void SkinManager::extractDataPoly(const UINT vertexCount)
+{
+    GET_POLY_DATA(this->node);
+    for (UINT vertexID = 0; vertexID < vertexCount; vertexID++)
     {
-        for (UINT vertexID = 0; vertexID < vertexCount; vertexID++)
-        {
-            Point3 worldPosition = nodeTransform.PointTransform(mesh.getVert(vertexID));
-            this->pySkinData->positions(vertexID, 0) = worldPosition.x;
-            this->pySkinData->positions(vertexID, 1) = worldPosition.y;
-            this->pySkinData->positions(vertexID, 2) = worldPosition.z;
-            extractWeightsAndBoneIDs(vertexID);
-        };
-    }
+        Point3 worldPosition = nodeTransform.PointTransform(mnMesh.V(vertexID)->p);
+        this->pySkinData->positions(vertexID, 0) = worldPosition.x;
+        this->pySkinData->positions(vertexID, 1) = worldPosition.y;
+        this->pySkinData->positions(vertexID, 2) = worldPosition.z;
+        extractWeightsAndBoneIDs(vertexID);
+    };
+}
+
+
+inline void SkinManager::extractDataMesh(const UINT vertexCount, VertexIDsMatrix vertexIDs)
+{
+    GET_MESH_DATA(this->node)
+    for (UINT vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
+    {
+        UINT vertexID = vertexIDs(vertexIndex, 0);
+        Point3 worldPosition = nodeTransform.PointTransform(mesh.getVert(vertexID));
+        this->pySkinData->positions(vertexID, 0) = worldPosition.x;
+        this->pySkinData->positions(vertexID, 1) = worldPosition.y;
+        this->pySkinData->positions(vertexID, 2) = worldPosition.z;
+        extractWeightsAndBoneIDs(vertexID, vertexIndex);
+    };
+}
+
+
+inline void SkinManager::extractDataMesh(const UINT vertexCount)
+{
+    GET_MESH_DATA(this->node)
+    for (UINT vertexID = 0; vertexID < vertexCount; vertexID++)
+    {
+        Point3 worldPosition = nodeTransform.PointTransform(mesh.getVert(vertexID));
+        this->pySkinData->positions(vertexID, 0) = worldPosition.x;
+        this->pySkinData->positions(vertexID, 1) = worldPosition.y;
+        this->pySkinData->positions(vertexID, 2) = worldPosition.z;
+        extractWeightsAndBoneIDs(vertexID);
+    };
 }
 
 
@@ -310,7 +352,7 @@ struct BoneData
 {
 	std::vector<std::string> names;
 	Tab<INode*> nodes;
-	BoneData(int boneCount)
+	BoneData(const int boneCount)
 	{
 		names = std::vector<std::string>(boneCount);
 		nodes = Tab<INode*>();
@@ -320,15 +362,16 @@ struct BoneData
 };
 
 
-BoneData getBoneData(ISkin* iSkin, int skinBoneCount)
+//inline static std::shared_ptr<BoneData> getBoneData(ISkin* iSkin, const int skinBoneCount)
+inline static BoneData getBoneData(ISkin* iSkin, const int skinBoneCount)
 {
-	BoneData boneData(skinBoneCount);
+    BoneData boneData = BoneData(skinBoneCount);
 	for (auto boneIndex = 0; boneIndex < skinBoneCount; boneIndex++)
 	{
 		INode* bone = iSkin->GetBone(boneIndex);
 		auto wcharBoneName = bone->GetName();
-		auto stringBoneName = convertWCharToString(wcharBoneName);
-		boneData.nodes.Append(1, &bone);
+		std::string stringBoneName = convertWCharToString(wcharBoneName);
+        boneData.nodes.Append(1, &bone);
 		boneData.names[boneIndex] = stringBoneName;
 	}
 	return boneData;
@@ -357,13 +400,10 @@ bool SkinManager::applySkinData(PySkinData& skinData)
 		this->addMissingBones(skinData.boneNames);
 		skinBoneCount = this->iSkin->GetNumBones();
 	}
-
-	BoneData boneData = getBoneData(this->iSkin, skinBoneCount);
+    BoneData boneData = getBoneData(this->iSkin, skinBoneCount);
 	SortedBoneNameData sortedBoneIDs = skinData.getSortedBoneIDs(boneData.names);
 	Tab<INode*> skinBones = boneData.nodes;
     size_t sortedBoneIDCount = sortedBoneIDs.sortedBoneIDs.size();
-    //const auto highestBoneID = std::max_element(sortedBoneIDs.sortedBoneIDs.begin(), sortedBoneIDs.sortedBoneIDs.end());
-    //const auto lowestBoneID = std::min_element(sortedBoneIDs.sortedBoneIDs.begin(), sortedBoneIDs.sortedBoneIDs.end());
 	if (sortedBoneIDs.unfoundBoneNames.size() > 0)
 	{
 		this->addMissingBones(sortedBoneIDs.unfoundBoneNames);

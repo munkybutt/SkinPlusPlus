@@ -45,11 +45,11 @@
 //}
 
 
-bool SkinManagerMaya::initialise(const wchar_t* name)
+bool SkinManagerMaya::initialise(const wchar_t* name, std::optional<VertexIDsMatrix> vertexIDs)
 {
 	MStatus status;
 	this->name = MString(name);
-	if (getDagPathAndComponent(name, this->dagPath, this->component) == false)
+	if (getDagPathAndComponent(name, this->dagPath, this->component, vertexIDs=vertexIDs) == false)
 	{
 		return false;
 	}
@@ -62,14 +62,25 @@ bool SkinManagerMaya::initialise(const wchar_t* name)
 		this->isValid = false;
 		return false;
 	}
-	py::print("Initialised successfully!");
+    if (vertexIDs.has_value())
+    {
+        this->vertexCount = vertexIDs.value().size();
+    }
+    else
+    {
+        this->vertexCount = this->fnMesh.numVertices();
+    }
+    if (this->vertexCount == 0)
+    {
+        throw py::attribute_error("Mesh has no vertices!");
+    }
 
 	this->isValid = true;
 	return true;
 };
 
 
-void removeBonesFromBindPose(
+static void removeBonesFromBindPose(
     MPlug bindPoseMatrixArrayPlug,
     MPlug bindPoseMemberArrayPlug,
     MPlugArray connectedPlugs,
@@ -135,7 +146,7 @@ std::unordered_set<std::string> getBoneNamesSet(MDagPathArray skinnedBones)
 //    }
 //}
 
-bool isNodeValid(MObject* node)
+static bool isNodeValid(MObject* node)
 {
     if (node->hasFn(MFn::kJoint)) return true;
     if (node->hasFn(MFn::kTransform)) return true;
@@ -143,7 +154,7 @@ bool isNodeValid(MObject* node)
 }
 
 
-UINT getFirstFreeIndex(MPlug* arrayPlug)
+static UINT getFirstFreeIndex(MPlug* arrayPlug)
 {
     UINT freeIndex = arrayPlug->numElements();
     static MPlug elementIndex = arrayPlug->elementByLogicalIndex(freeIndex);
@@ -269,11 +280,6 @@ PySkinData SkinManagerMaya::extractSkinData(const bool safeMode)
     {
         throw std::runtime_error("SkinData node is invalid. Cannot get skin weights.");
     }
-    const UINT vertexCount = this->fnMesh.numVertices();
-    if (vertexCount == 0)
-    {
-        throw std::runtime_error("Mesh has no vertices!");
-    }
     MDoubleArray weights;
     UINT boneCount;
     this->fnSkinCluster.getWeights(this->dagPath, this->component, weights, boneCount);
@@ -332,7 +338,7 @@ PySkinData SkinManagerMaya::extractSkinData(const bool safeMode)
 }
 
 
-void sortBoneIDs(BoneIDsMatrix& boneIDs, std::vector<UINT> newIDOrder, const eg::Index vertexCount, const eg::Index influenceCount)
+static void sortBoneIDs(BoneIDsMatrix& boneIDs, std::vector<UINT> newIDOrder, const eg::Index vertexCount, const eg::Index influenceCount)
 {
     BoneIDsMatrix sortedBoneIDs = BoneIDsMatrix(boneIDs);
     for (eg::Index vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
@@ -366,7 +372,7 @@ void sortBoneIDs(BoneIDsMatrix& boneIDs, std::vector<UINT> newIDOrder, const eg:
 /// <param name="vertexCount"></param>
 /// <param name="influenceCount"></param>
 /// <returns></returns>
-MDoubleArray getWeightsAsMDoubleArray(BoneIDsMatrix& boneIDs, WeightsMatrix& weights, const eg::Index& vertexCount, const eg::Index& influenceCount, const eg::Index& maxInfluenceCount)
+static MDoubleArray getWeightsAsMDoubleArray(BoneIDsMatrix& boneIDs, WeightsMatrix& weights, const eg::Index& vertexCount, const eg::Index& influenceCount, const eg::Index& maxInfluenceCount)
 {
     const UINT arraySize = vertexCount * maxInfluenceCount;
     MDoubleArray mWeights(arraySize, 0.0);
@@ -412,7 +418,7 @@ MDoubleArray getWeightsAsMDoubleArray(BoneIDsMatrix& boneIDs, WeightsMatrix& wei
 }
 
 
-void getBoneNames(std::vector<std::string>& currentBoneNames, const MDagPathArray& skinnedBones, const UINT& skinnedBoneCount)
+static void getBoneNames(std::vector<std::string>& currentBoneNames, const MDagPathArray& skinnedBones, const UINT& skinnedBoneCount)
 {
     currentBoneNames.clear();
     currentBoneNames.resize(skinnedBoneCount);
@@ -515,16 +521,17 @@ PYBIND11_MODULE(skin_plus_plus_pymaya, m) {
 	// This makes the base SkinData class available to the module:
 	#include <skin_plus_plus_py.h>
 
-	m.def("extract_skin_data", [&](wchar_t* name, bool* safeMode)
+	m.def("extract_skin_data", [&](wchar_t* name, std::optional<VertexIDsMatrix> vertexIDs = std::nullopt, bool safeMode=false)
 		{
-			SkinManagerMaya skinManager(name);
+			SkinManagerMaya skinManager(name, vertexIDs=vertexIDs);
             PySkinData pySkinData = skinManager.extractSkinData(safeMode=safeMode);
 			return pySkinData;
 
 		},
 		"Extract SkinData from the mesh with the given name",
         py::arg("name"),
-        py::arg("safeMode") = true
+        py::arg("vertex_ids") = py::none(),
+        py::arg("safe_mode") = true
 	);
     m.def("apply_skin_data", [&](wchar_t* name, PySkinData& skinData)
         {
@@ -544,6 +551,6 @@ PYBIND11_MODULE(skin_plus_plus_pymaya, m) {
 		},
 		"Get Vertex Positions",
 		py::arg("name"),
-        py::arg("safeMode") = true
+        py::arg("safe_mode") = true
 	);
 }

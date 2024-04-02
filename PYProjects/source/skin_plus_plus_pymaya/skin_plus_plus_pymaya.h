@@ -23,8 +23,9 @@
 #include <maya/MFnMatrixAttribute.h>
 
 
-bool getDagPathAndComponent(MString name, MDagPath& dagPath, MObject& component)
+bool getDagPathAndComponent(MString name, MDagPath& dagPath, MObject& component, std::optional<VertexIDsMatrix> vertexIDs=std::nullopt)
 {
+	MStatus status;
 	MObject node;
 	MSelectionList selectionList;
 	selectionList.clear();
@@ -35,21 +36,31 @@ bool getDagPathAndComponent(MString name, MDagPath& dagPath, MObject& component)
 	}
 	for (UINT i = 0; i < selectionList.length(); i++)
     {
-        MStatus status = selectionList.getDependNode(i, node);
-        if (status == MS::kSuccess) // && node.hasFn(MFn::kSkinClusterFilter))
+        status = selectionList.getDependNode(i, node);
+		if (status != MS::kSuccess) // && node.hasFn(MFn::kSkinClusterFilter))
+		{
+			continue;
+		}
+        selectionList.getDagPath(i, dagPath);
+        if (component.isNull())
         {
-            selectionList.getDagPath(i, dagPath, component);
-            if (component.isNull())
-            {
-                //Try to get the skin from the sel:
-                MStatus status;
-                dagPath.extendToShape();
+            dagPath.extendToShape();
 
-                MFnSingleIndexedComponent singleIndexComponent;
-                singleIndexComponent.setComplete(true);
-                component = singleIndexComponent.create(MFn::kMeshVertComponent, &status);
-                if (status != MS::kSuccess || component.isNull()) py::print("Component not defined!");
-            }
+            MFnSingleIndexedComponent singleIndexComponent;
+			if (vertexIDs.has_value())
+			{
+				const VertexIDsMatrix vertexIDs_ = vertexIDs.value();
+				MIntArray vertexArray;
+				vertexArray.setLength(vertexIDs_.size());
+				for (UINT i = 0; i < vertexIDs_.size(); i++)
+				{
+					vertexArray[i] = vertexIDs_[i];
+				}
+				singleIndexComponent.addElements(vertexArray);
+			}
+            singleIndexComponent.setComplete(true);
+            component = singleIndexComponent.create(MFn::kMeshVertComponent, &status);
+            if (status != MS::kSuccess || component.isNull()) py::print("Component not defined!");
         }
 
 
@@ -60,20 +71,10 @@ bool getDagPathAndComponent(MString name, MDagPath& dagPath, MObject& component)
 }
 
 
-bool getDagPathsAndComponents(MStringArray names, MDagPathArray& dagPaths, MObjectArray& components)
+bool getDagPathAndComponent(const wchar_t* name, MDagPath& dagPath, MObject& component)
 {
-    auto nameLength = names.length();
-    dagPaths.setLength(nameLength);
-    components.setLength(nameLength);
-    for (UINT i = 0; i < nameLength; i++)
-	{
-		auto dagPath = MDagPath();
-		auto component = MObject();
-		getDagPathAndComponent(names[i], dagPath, component);
-		dagPaths[i] = dagPath;
-		components[i] = component;
-	}
-	return true;
+	MString mName(name);
+	return getDagPathAndComponent(mName, dagPath, component);
 }
 
 
@@ -117,13 +118,6 @@ MDagPathArray getNodesFromNames(MStringArray names)
 		}
 	}
 	return dagPaths;
-}
-
-
-bool getDagPathAndComponent(const wchar_t* name, MDagPath& dagPath, MObject& component)
-{
-	MString mName(name);
-	return getDagPathAndComponent(mName, dagPath, component);
 }
 
 
@@ -217,7 +211,8 @@ private:
 	// Get the vertex weights and bone ids and add them to the given PySkinData
 	void collectWeightsAndBoneIDs(PySkinData* pySkinData, MDoubleArray weights, unsigned influenceCount, unsigned vertexIndex);
 
-	//MFnMesh* fnMesh;
+	UINT vertexCount;
+
 	MFnMesh fnMesh;
 
 	MFnSkinCluster fnSkinCluster;
@@ -229,14 +224,14 @@ private:
 	MString name;
 
 public:
-	SkinManagerMaya(const wchar_t* name) {
-		this->initialise(name);
+	SkinManagerMaya(const wchar_t* name, std::optional<VertexIDsMatrix> vertexIDs = std::nullopt) {
+		this->initialise(name, vertexIDs=vertexIDs);
 	}
 	//~SkinManagerMaya() { delete this->fnMesh; }
 	~SkinManagerMaya() {}
 
-	// Initialise the skin manager with the given node name
-	bool initialise(const wchar_t* name);
+	// Initialise the skin manager with the given node name and optional list of vertices to query.
+	bool initialise(const wchar_t* name, std::optional<VertexIDsMatrix> vertexIDs = std::nullopt);
 
 	// Get the skin weights from the given node's skin modifier
 	//std::vector<std::vector<std::vector <float>>> getSkinWeights();

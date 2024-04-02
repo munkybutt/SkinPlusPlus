@@ -440,10 +440,6 @@ MigrationBackup/
 
 
 PyProjects/3rdParty/
-PYProjects/skin_plus_plus_test/dcc_test_files/skin_data/mesh_low.skin
-PyProjects/source/vcpkg_installed/
-PyProjects/venv37/
-PyProjects/venv39/
 PyProjects/.venvs/
 build/
 pypi/

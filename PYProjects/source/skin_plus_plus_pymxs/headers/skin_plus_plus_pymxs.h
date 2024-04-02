@@ -46,13 +46,16 @@ private:
 	PySkinData* pySkinData;
 
 	// Get the vertex weights and bone ids and add them to the given PySkinData
-	void extractWeightsAndBoneIDs(UINT vertexIndex, std::optional<UINT> dataIndex = std::nullopt);
+	void extractWeightsAndBoneIDs(const UINT vertexIndex, const UINT arrayIndex);
+	void extractWeightsAndBoneIDs(const UINT vertexIndex);
 
 	// Get the vertex weights, bone ids and positions - on an editable mesh:
-	void extractDataMesh(UINT vertexCount, std::optional<VertexIDsMatrix> vertexIDs = std::nullopt);
+	void extractDataMesh(const UINT vertexCount, VertexIDsMatrix vertexIDs);
+	void extractDataMesh(const UINT vertexCount);
 
 	// Get the vertex weights, bone ids and positions - on an editable poly:
-	void extractDataPoly(UINT vertexCount, std::optional<VertexIDsMatrix> vertexIDs = std::nullopt);
+	void extractDataPoly(const UINT vertexCount, VertexIDsMatrix vertexIDs);
+	void extractDataPoly(const UINT vertexCount);
 	
 	// Add missing bones to the skin modifier based on the given vector of missing bone names
 	void addMissingBones(std::vector<std::string> missingBoneNames);
