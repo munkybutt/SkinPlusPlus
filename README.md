@@ -45,7 +45,7 @@ This software (SkinPlusPlus) is provided "as is", without any warranty. The auth
   - Logic is written in c++ but exposed with python bindings
 
 * Work directly with numpy ndarrays
-  - Pybind11 is used to generate the python bindings, so the API uses numpy ndarrays for optimal performance
+  - Use of Pybind11 means there is minimal copying of data to pass the data from Python to the respective c++ SDK.
 
 * Currently supported DCCs:
   - 3DsMax:
@@ -76,13 +76,13 @@ This results in a reduction in the number of iterable structures the data needs 
 
 🔥 This means it is fast 🔥
 
-Take 3DsMax as an example, to get from a numpy ndarray to 3DsMax SDK Tab it requires the following steps:
+Take 3DsMax as an example, to get from a numpy `ndarray` to 3DsMax SDK `Tab` it requires the following steps:
 - ndarray -(copy)-> py list -(copy)-> mxs Array -(copy)-> Tab -> set weights.
 
 Compared to the SkinPlusPlus approach:
 - ndarray -(reference)-> Eigen Matrix -(copy)-> Tab -> set weights.
 
-The native approach runs multiple copy operations in python before passing the data to c++.
+The native approach runs multiple copy operations in Python to get the data into a MaxScript `Array` so it can be passed to c++.
 SkinPlusPlus has no copy operations in Python.
 
 `SkinData` provides attribute access to the raw data with the following properties:
