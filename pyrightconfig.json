@@ -1,6 +1,6 @@
 {
     "pythonPlatform": "Windows",
-    "pythonVersion": "3.7",
+    "pythonVersion": "3.9",
     "ignore": ["./*.pyi"],
     "executionEnvironments": [
         {

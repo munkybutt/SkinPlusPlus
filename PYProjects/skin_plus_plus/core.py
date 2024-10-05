@@ -1,52 +1,62 @@
 from __future__ import annotations
 
-from . import get_skin_data
-
-# from . import get_vertex_positions
-from . import set_skin_weights
-
-import enum
 import json
 import numpy
 import pathlib
 import pickle
 import skin_plus_plus
 
-# import scipy.sparse
+from .enums import FileType
+from .enums import ApplicationMode
 
 _typing = False
 if _typing:
-    pass
+    from . import _types
 del _typing
 
 
-class ImportType(enum.Enum):
-    order = 0
-    nearest = 1
-    nearest_n = 2
-    barycentric = 3
+def load_from_pickle_file(path: pathlib.Path) -> skin_plus_plus.SkinData:
+    if path.suffix != ".skpp":
+        path = path.with_suffix(".skpp")
+
+    if not path.exists():
+        raise IOError(f"File path does not exist: {path}")
+
+    with open(path, "rb") as file:
+        skin_data = pickle.load(file)
+
+    assert isinstance(
+        skin_data, skin_plus_plus.SkinData
+    ), f"Incorrect data type loaded from pickle: {type(skin_data)}"
+    return skin_data
 
 
-class FileType(enum.Enum):
-    """
-    Enum to specify the type of file to save skin data as.
+def load_from_json_file(path: pathlib.Path):
+    if path.suffix != ".skpp-json":
+        path = path.with_suffix(".skpp-json")
 
-    Arguments:
-    ----------
+    if not path.exists():
+        raise IOError(f"File path does not exist: {path}")
 
-    - `json`
-    - `pickle`
-    """
-    json = 0
-    pickle = 1
+    with open(path, "r") as file:
+        data = json.load(file)
+        return skin_plus_plus.SkinData(
+            tuple(data["bone_names"]),
+            tuple(data["bone_ids"]),
+            tuple(data["weights"]),
+            tuple(data["positions"]),
+        )
 
 
-def export_skin_data(mesh_name: str, path: pathlib.Path, file_type: FileType = FileType.pickle):
+def export_skin_data(
+    node: _types.T_Node, path: pathlib.Path, file_type: FileType = FileType.pickle
+):
     """
     Get skin data from the given mesh and save it to disk.
     """
 
-    skin_data = get_skin_data(mesh_name)
+    node_name = skin_plus_plus.current_host_interface.get_node_name(node)
+    skin_data = skin_plus_plus.extract_skin_data(node)
     if not path.parent.exists():
         path.parent.mkdir(parents=True)
 
@@ -69,55 +79,54 @@ def export_skin_data(mesh_name: str, path: pathlib.Path, file_type: FileType = F
                 "bone_ids": skin_data.bone_ids.tolist(),
                 "weights": weights.tolist(),
                 "positions": skin_data.positions.tolist(),
+                "vertex_ids": skin_data.vertex_ids.tolist()
+                if hasattr(skin_data, "vertex_ids") and skin_data.vertex_ids
+                else None,
             }
             json.dump(_skin_data, file, indent=4)
 
-    print(f"Exported '{mesh_name}' skin data to: {path}")
+    print(f"Exported '{node_name}' skin data to: {path}")
 
 
 def import_skin_data(
-    mesh_name: str,
+    node: _types.T_Node,
     path: pathlib.Path,
     file_type: FileType = FileType.pickle,
-    import_type: ImportType = ImportType.order,
+    import_type: ApplicationMode = ApplicationMode.order,
 ):
     """
     Load skin data from disk and apply it to the given mesh.
     """
-
+    node_name = skin_plus_plus.current_host_interface.get_node_name(node)
     if file_type == FileType.pickle:
-        if path.suffix != ".skpp":
-            path = path.with_suffix(".skpp")
+        try:
+            skin_data = load_from_pickle_file(path)
+        except IOError as error:
+            if f"File path does not exist: {path}" in str(error):
+                raise IOError(
+                    f"File path does not exist: {path} - check mesh is named correctly: {node_name}"
+                )
 
-        if not path.exists():
-            raise IOError(
-                f"File path does not exist: {path} - check mesh is named correctly: {mesh_name}"
-            )
-
-        with open(path, "rb") as file:
-            skin_data = pickle.load(file)
+            raise
 
     elif file_type == FileType.json:
-        if path.suffix != ".skpp-json":
-            path = path.with_suffix(".skpp-json")
+        try:
+            skin_data = load_from_json_file(path)
+        except IOError as error:
+            if f"File path does not exist: {path}" in str(error):
+                raise IOError(
+                    f"File path does not exist: {path} - check mesh is named correctly: {node_name}"
+                )
 
-        if not path.exists():
-            raise IOError(
-                f"File path does not exist: {path} - check mesh is named correctly: {mesh_name}"
-            )
+            raise
 
-        with open(path, "r") as file:
-            data = json.load(file)
-            skin_data = skin_plus_plus.skin_plus_plus_py.SkinData(
-                tuple(data["bone_names"]),
-                tuple(data["bone_ids"]),
-                tuple(data["weights"]),
-                tuple(data["positions"])
-            )
-
-    return set_skin_weights(mesh_name, skin_data)
+    return skin_plus_plus.apply_skin_data(node, skin_data, import_type=import_type)
 
     # if import_type == ImportType.nearest:
-    #   vertex_positions = get_vertex_positions(mesh_name)
+    #   vertex_positions = get_vertex_positions(node)
     #   kd_tree = scipy.sparse.ckdtree(skin_data.positions)
     #   matching_indices = kd_tree.query(vertex_positions)
+
+
+if __name__ == "__main__":
+    export_skin_data("test", pathlib.Path())

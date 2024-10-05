@@ -2,12 +2,29 @@
 	"folders":
 	[
 		{
-			"path": "C:\\p4ws\\sharkmob\\Tools\\tech_art\\base\\_standalone\\c++\\SkinPlusPlus",
-		},
-		{
-			"path": "C:\\p4ws\\sharkmob\\Tools\\tech_art\\base\\_standalone\\python\\_third_party"
-		},
+			"path": "../../",
+		}
 	],
+	"settings": {
+		"LSP": {
+			"LSP-basedpyright": {
+				"settings": {
+					"basedpyright.analysis.extraPaths": [
+						"D:/Code/Git/SkinPlusPlus-latest/PYProjects/.venvs/py310/.venv/Lib/site-packages"
+					],
+					"basedpyright.analysis.typeCheckingMode": "standard"
+				}
+			},
+			"LSP-pyright": {
+				"settings": {
+					"python.analysis.extraPaths": [
+						"D:/Code/Git/SkinPlusPlus-latest/PYProjects/.venvs/py310/.venv/Lib/site-packages"
+					],
+					"python.analysis.typeCheckingMode": "standard",
+				}
+			}
+		}
+	},
 	"debugger_configurations":
 	[
 	],

@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-
 import inspect
-import json
 import pathlib
 import site
 
@@ -12,11 +10,12 @@ if __name__ == "__main__":
         current_file = pathlib.Path(inspect.getfile(lambda: None))
         if str(current_file) == "<maya console>":
             # maya is a piece of shit:
-            current_file = pathlib.Path(
-                r"C:\Users\Shea.Richardson\Desktop\Git\SkinPlusPlus-Main\PYProjects\skin_plus_plus_test\skin_plus_plus_test.py"
-            )
+            current_file = pathlib.Path(r"D:/Code/Git/SkinPlusPlus-latest/PYProjects")
         current_directory = current_file.parent
-        site.addsitedir(str(current_directory.parent))
+        lib_dir = current_directory.parent / ".venvs/py310/.venv/Lib/site-packages"
+        assert lib_dir.exists()
+        site.addsitedir(current_directory.parent.as_posix())
+        site.addsitedir(lib_dir.as_posix())
 
     __setup__()
 
@@ -26,7 +25,6 @@ import random
 import sys
 import time
 import unittest
-
 
 import skin_plus_plus
 
@@ -88,7 +86,7 @@ class SkinPlusPlusTestBase(unittest.TestCase):
         try:
             file = __file__
         except NameError:
-            file = r"D:\Code\Git\SkinPlusPlus\PYProjects\skin_plus_plus_test\skin_plus_plus_test.py"
+            file = r"D:/Code/Git/SkinPlusPlus-latest/PYProjects/tests/skin_plus_plus_test.py"
         cls._current_directory = pathlib.Path(file).parent
         cls._dcc_test_files_directory = cls._current_directory / "dcc_test_files"
         cls._skin_data_file = cls._dcc_test_files_directory / "test_skin_data.sknd"
@@ -715,10 +713,12 @@ if __name__ == "__main__":
     pass
 
     node = skin_plus_plus.current_host_interface.get_selection()[0]
-    skin_data = skin_plus_plus.extract_skin_data(node, vertex_ids=[1])
-    # skin_data = skin_plus_plus.extract_skin_data(node)
+    # skin_data = skin_plus_plus.extract_skin_data(node, vertex_ids=[1])
+    skin_data = skin_plus_plus.extract_skin_data(node)
     print(skin_data)
     print(skin_data.bone_names)
     print(skin_data.bone_ids)
     print(skin_data.weights)
-    # skin_plus_plus.apply_skin_data(node, skin_data)
+    skin_plus_plus.apply_skin_data(
+        node, skin_data, application_mode=skin_plus_plus.ApplicationMode.nearest
+    )

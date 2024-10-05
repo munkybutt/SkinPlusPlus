@@ -2,15 +2,15 @@
 #include <skin_plus_plus_pymxs.h>
 
 
-#define GET_POLY_DATA(node)                                                                     \
+#define GET_POLY_DATA(node)                                                                    \
 Matrix3 nodeTransform = node->GetObjectTM(0);                                                  \
-bool deleteIt;                                                                                  \
-PolyObject* polyObject = getPolyObjectFromNode(node, GetCOREInterface()->GetTime(), deleteIt);  \
+bool deleteIt;                                                                                 \
+PolyObject* polyObject = getPolyObjectFromNode(node, GetCOREInterface()->GetTime(), deleteIt); \
 MNMesh& mnMesh = polyObject->GetMesh();
 
-#define GET_MESH_DATA(node)                                                         \
-Matrix3 nodeTransform = node->GetObjectTM(0);                                       \
-TriObject* triObject = getTriObjectFromNode(node, GetCOREInterface()->GetTime());   \
+#define GET_MESH_DATA(node)                                                       \
+Matrix3 nodeTransform = node->GetObjectTM(0);                                     \
+TriObject* triObject = getTriObjectFromNode(node, GetCOREInterface()->GetTime()); \
 Mesh& mesh = triObject->GetMesh();
 
 
@@ -362,7 +362,6 @@ struct BoneData
 };
 
 
-//inline static std::shared_ptr<BoneData> getBoneData(ISkin* iSkin, const int skinBoneCount)
 inline static BoneData getBoneData(ISkin* iSkin, const int skinBoneCount)
 {
     BoneData boneData = BoneData(skinBoneCount);

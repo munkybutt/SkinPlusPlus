@@ -1,26 +1,36 @@
 from __future__ import annotations
 
-_typing = False
-if _typing:
-    from pymel.core import nodetypes as pm_ntypes
+import numpy as np
+import typing
+
+from . import SkinData
+from typing import Callable
+from typing import Sequence
+from typing import Union
+
+try:
+    import maya.cmds as _  # noqa: F401
+
+except (ImportError, ModuleNotFoundError):
     from pymxs import runtime as mxrt
-    from typing import Callable
-    from typing import Sequence
-    from typing import TypeVar
-    from typing import Union
-    from typing import Protocol
 
-    from . import SkinData
+T_Node = Union[mxrt.Node, str]
+"""Generic node type"""
 
-    T_Node = TypeVar("T_Node", mxrt.Node, pm_ntypes.DagNode)
-    T_Handle = Union[int, str]
-    T_CApSD = Callable[[T_Handle, SkinData], None]
+T_Handle = Union[int, str]
+"""Unique handle for identifying a node in a dcc scene"""
 
+T_Float64Array = np.ndarray[typing.Any, np.dtype[np.float64]]
+"""Array for holding skin weights"""
 
-    class T_EXSD(Protocol):
-        """
-        Signature for extrac skin data function
-        """
-        def __call__(self, handle: T_Handle, vertex_ids: Sequence[int] | None = None) -> SkinData: ...
+T_Int32Array = np.ndarray[typing.Any, np.dtype[np.int32]]
+"""Array for holding bone IDs"""
 
-del _typing
+C_ApplySkinData = Callable[[T_Handle, SkinData], bool]
+"""Callable signature for `apply_skin_data`"""
+
+C_ExtractSkinData = Callable[[T_Handle, Union[Sequence[int], None]], SkinData]
+"""Callable signature for `extract_skin_data`"""
+
+C_GetVertexPositons = Callable[[T_Handle], T_Float64Array]
+"""Callable signature for `get_vertex_weights`"""

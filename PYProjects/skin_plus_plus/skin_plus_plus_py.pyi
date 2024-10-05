@@ -1,6 +1,9 @@
-import numpy as np
-import numpy.typing as np_typing
+from __future__ import annotations
+
 import typing
+
+from . import _types
+
 
 class SkinData:
     """
@@ -10,7 +13,7 @@ class SkinData:
 
     This class is a wrapped c++ struct exposed to Python with Pybind11.
 
-    # Note: It cannot be extended!
+    # It cannot be extended!
 
     ---
 
@@ -21,17 +24,30 @@ class SkinData:
         These are used to map to the bone names.
     - `weights`: The weights of each influence assigned to each vertext.
     - `positions`: The positions of each vertex.
+    - `vertex_ids`: The specific vertex ids that make up the SkinData.
+        If `None` then all vertices are used to make up the SkinData.
+
+    ---
+
+    ```python
+    SkinData()
+    SkinData(vertex_ids: numpy.ndarray[numpy.int32[1, n]], max_influence_count: int)
+    SkinData(vertex_count: int, max_influence_count: int)
+    SkinData(skin_data: skin_plus_plus.py.310.skin_plus_plus_py.SkinData)
+    SkinData(skin_bone_names: List[str], vertex_bone_ids: numpy.ndarray[numpy.int32[m, n]], vertex_weights: numpy.ndarray[numpy.float64[m, n]], vertex_positions: numpy.ndarray[numpy.float64[m, n]], vertex_ids: Optional[numpy.ndarray[numpy.int32[1, n]]] = None)
+    SkinData(skin_tuple: tuple)
+    ```
     """
 
     bone_names: list[str]
     """The names of the bones in the SkinData"""
-    bone_ids: np_typing.NDArray[np.int64]
+    bone_ids: _types.T_Int32Array
     """The bone ids for each influence on each vertex"""
-    weights: np_typing.NDArray[np.float32]
+    weights: _types.T_Float64Array
     """The weights for each influence on each vertex"""
-    positions: np_typing.NDArray[np.float32]
+    positions: _types.T_Float64Array
     """The position of each vertex in the SkinData's mesh"""
-    vertex_ids: np_typing.NDArray[np.int64] | None = None
+    vertex_ids: _types.T_Int32Array | None = None
     """
     The specific vertex ids that make up the SkinData.
     If `None` then all vertices are used to make up the SkinData.
@@ -48,5 +64,16 @@ class SkinData:
         bone_ids: tuple[tuple[int, ...], ...],
         weights: tuple[tuple[float, ...], ...],
         positions: tuple[tuple[float, float, float], ...],
+    ):
+        ...
+
+    @typing.overload
+    def __init__(
+        self,
+        skin_bone_names: list[str],
+        vertex_bone_ids: _types.T_Int32Array,
+        vertex_weights: _types.T_Float64Array,
+        vertex_positions: _types.T_Float64Array,
+        vertex_ids: _types.T_Int32Array | None = None,
     ):
         ...

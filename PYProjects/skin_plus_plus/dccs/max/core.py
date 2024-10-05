@@ -2,13 +2,16 @@ from __future__ import annotations
 
 import pathlib
 
+from .. import core
 from pymxs import runtime as mxrt
 
-from .. import core
+_typing = False
+if _typing:
+    from .. import _types
+del _typing
 
 
-class IHost(core.IHost):
-
+class IHost(core.IHost[mxrt.Node]):
     @property
     def name(self) -> str:
         return "max"
@@ -32,8 +35,11 @@ class IHost(core.IHost):
     def get_selection(self) -> tuple[mxrt.Node, ...]:
         return tuple(mxrt.Selection)
 
-    def get_node_name(self, node: mxrt.Node) -> str:
+    def get_node_name(self, node) -> str:
         return node.Name
 
-    def get_node_handle(self, node: mxrt.Node) -> int:
+    def get_vertex_positions(self, node) -> _types.T_Float64Array:
+        return self._get_vertex_positions(node.Name)
+
+    def get_node_handle(self, node) -> int:
         return node.Handle

@@ -2,23 +2,30 @@ from __future__ import annotations
 
 import abc
 import importlib
+import numpy as np
 import pathlib
+import scipy.spatial as spatial
+import skin_plus_plus
+import typeguard
+import typing
 
+from .. import _types
+from .. import core
 
 _typing = False
 if _typing:
-
-    from .. import _types
     from .. import SkinData
+    from .. import _types
     from typing import Sequence
 
-del _typing
+T_HostNode = typing.TypeVar("T_HostNode")
 
 
-class IHost(metaclass=abc.ABCMeta):
-    _extract_skin_data: _types.T_EXSD
-    _apply_skin_data: _types.T_CApSD
-    _get_vertex_positions: _types.Callable
+class IHost(typing.Generic[T_HostNode], metaclass=abc.ABCMeta):
+    if _typing:
+        _extract_skin_data: _types.C_ExtractSkinData
+        _apply_skin_data: _types.C_ApplySkinData
+        _get_vertex_positions: _types.C_GetVertexPositons
 
     def __init__(self) -> None:
         self._get_dcc_backend()
@@ -48,12 +55,10 @@ class IHost(metaclass=abc.ABCMeta):
 
         import_path = f"{__name__.rstrip('core')}{self.name}.{version}.skin_plus_plus_{self.api_name}"
         backend = importlib.import_module(import_path)
-        # if is_reloading:
-        #     importlib.reload(backend)
 
-        self._extract_skin_data: _types.T_EXSD = backend.extract_skin_data
-        self._apply_skin_data: _types.T_CApSD = backend.apply_skin_data
-        self._get_vertex_positions: _types.Callable = backend.get_vertex_positions
+        self._extract_skin_data = backend.extract_skin_data
+        self._apply_skin_data = backend.apply_skin_data
+        self._get_vertex_positions = backend.get_vertex_positions
 
         return backend
 
@@ -70,28 +75,66 @@ class IHost(metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def get_selection(self) -> tuple[_types.T_Node, ...]:
+    def get_selection(self) -> tuple[T_HostNode, ...]:
         """
         Get the selection of the current host scene
         """
 
     @abc.abstractmethod
-    def get_node_name(self, node: _types.T_Node) -> str:
+    def get_node_name(self, node: T_HostNode) -> str:
         """
         Get the name of the given node
         """
 
     @abc.abstractmethod
-    def get_node_handle(self, node: _types.T_Node) -> _types.T_Handle:
+    def get_vertex_positions(self, node: T_HostNode) -> _types.T_Float64Array:
+        """
+        Get the vertex postions of the given node
+        """
+
+    @abc.abstractmethod
+    def get_node_handle(self, node: T_HostNode) -> _types.T_Handle:
         """
         Get the unique handle of the given node
         """
 
-
-    def extract_skin_data(self, node: _types.T_Node, vertex_ids: Sequence[int] | None = None) -> SkinData:
+    def extract_skin_data(
+        self, node: T_HostNode, vertex_ids: Sequence[int] | None = None
+    ) -> SkinData:
         handle = self.get_node_handle(node)
         return self._extract_skin_data(handle, vertex_ids=vertex_ids)
 
-    def apply_skin_data(self, node: _types.T_Node, skin_data: SkinData):
+    def apply_skin_data(
+        self,
+        node: T_HostNode,
+        skin_data: SkinData,
+        application_mode: core.ApplicationMode = core.ApplicationMode.order,
+    ):
         handle = self.get_node_handle(node)
+
+        if application_mode == core.ApplicationMode.nearest:
+            current_positions = self.get_vertex_positions(node)
+            kd_tree = spatial.KDTree(skin_data.positions)
+            _, new_indexes = kd_tree.query(current_positions)
+            index_map = {
+                old_index: new_index for old_index, new_index in enumerate(new_indexes)
+            }
+            index_map = typeguard.check_type(
+                {
+                    old_index: new_index
+                    for old_index, new_index in enumerate(new_indexes)
+                },
+                "dict[int, np.int64]",
+            )
+            new_weights = np.array(
+                tuple(skin_data.weights[index_map[index]] for index in index_map)
+            )
+            new_bone_ids = np.array(
+                tuple(skin_data.bone_ids[index_map[index]] for index in index_map)
+            )
+            new_skin_data = skin_plus_plus.SkinData(
+                skin_data.bone_names, new_bone_ids, new_weights, skin_data.positions
+            )
+            skin_data = new_skin_data
+
         return self._apply_skin_data(handle, skin_data)
