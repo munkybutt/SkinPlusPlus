@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "py39"
+version = "0.1.0"
+description = ""
+authors = ["munkybutt <shearichardson@btinternet.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+pybind11 = "^2.13.6"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+package-mode = false

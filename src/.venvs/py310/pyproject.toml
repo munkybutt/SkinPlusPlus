@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "py310"
+version = "0.1.0"
+description = ""
+authors = ["munkybutt <shearichardson@btinternet.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pybind11 = "^2.13.6"
+numpy = "^2.1.1"
+typeguard = "^4.3.0"
+beartype = "^0.19.0"
+scipy = "^1.14.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
