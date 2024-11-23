@@ -106,23 +106,23 @@ _activate_host_()
 
 _typing = False
 if _typing:
-    from . import dccs
-    from . import py
+    from typing import Any
+
     from . import core
+    from . import dccs
     from . import enums
     from . import io
+    from . import py
     from .core import export_skin_data
     from .core import import_skin_data
     from .core import load_from_json_file
     from .core import load_from_pickle_file
-    from .enums import FileType
     from .enums import ApplicationMode
+    from .enums import FileType
     from .io import load
     from .io import max_to_maya
     from .io import maya_to_max
     from .io import save
-    from typing import Any
-del _typing
 
 
 def __getattr__(name: str) -> Any:

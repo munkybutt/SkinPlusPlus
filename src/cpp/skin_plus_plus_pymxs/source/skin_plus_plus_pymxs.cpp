@@ -74,15 +74,34 @@ static inline MeshType getMeshType(INode* node)
 }
 
 
+static const inline int getVertexCount(INode* node)
+{
+    const MeshType meshType = getMeshType(node);
+    if (meshType == MeshType::mesh)
+    {
+        GET_MESH_DATA(node);
+            return mesh.getNumVerts();
+    }
+    else if (meshType == MeshType::poly)
+    {
+        GET_POLY_DATA(node)
+            return mnMesh.VNum();
+    }
+    throw py::type_error("Incorrect mesh type!");
+}
+
+
 bool SkinManager::initialiseSkin()
 {
     if (!this->node)
     {
         throw py::type_error("SkinData init failed. No node initialised!");
     }
+    py::print(fmt::format(L"Node name: {}", node->GetName()));
     Object* object = this->node->GetObjectRef();
     if (!object || (object->SuperClassID() != GEN_DERIVOB_CLASS_ID))
     {
+        /*fmt::format(L"SkinData init failed. Node is incorrect type: ", this->node->GetName())*/
         throw py::type_error("SkinData init failed. Node is incorrect type " + convertWCharToChar(this->node->GetName()));
     }
     IDerivedObject* iDerivedObject = (IDerivedObject*)(object);
@@ -109,6 +128,7 @@ bool SkinManager::initialiseSkin()
         this->isValid = true;
         return this->isValid;
     }
+    return this->isValid;
 }
 
 
@@ -379,17 +399,17 @@ inline static BoneData getBoneData(ISkin* iSkin, const int skinBoneCount)
 
 bool SkinManager::applySkinData(PySkinData& skinData)
 {
-	auto boneIDsRows = skinData.boneIDs.rows();
-	auto vertexWeightsRows = skinData.weights.rows();
-	auto boneIDsCols = skinData.boneIDs.cols();
-	auto vertexWeightsCols = skinData.weights.cols();
+    const eg::Index boneIDsRows = skinData.boneIDs.rows();
+    const eg::Index vertexWeightsRows = skinData.weights.rows();
+    const eg::Index boneIDsCols = skinData.boneIDs.cols();
+    const eg::Index vertexWeightsCols = skinData.weights.cols();
 	if (boneIDsRows != vertexWeightsRows) throw std::length_error(
 		"skin bone ids count does not match skin weights count: " + convertWCharToChar(this->node->GetName())
 	);
 	if (boneIDsCols != vertexWeightsCols) throw std::length_error(
 		"skin bone ids count does not match skin weights count: " + convertWCharToChar(this->node->GetName())
 	);
-	auto vertexCount = this->iSkinContextData->GetNumPoints();
+	const int vertexCount = getVertexCount(node);
 	if (boneIDsRows != vertexCount && !skinData.vertexIDs.has_value()) throw std::length_error(
         fmt::format("skin vertex count does not match provided data count: {}", convertWCharToChar(this->node->GetName()))
 	);
@@ -402,7 +422,7 @@ bool SkinManager::applySkinData(PySkinData& skinData)
     BoneData boneData = getBoneData(this->iSkin, skinBoneCount);
 	SortedBoneNameData sortedBoneIDs = skinData.getSortedBoneIDs(boneData.names);
 	Tab<INode*> skinBones = boneData.nodes;
-    size_t sortedBoneIDCount = sortedBoneIDs.sortedBoneIDs.size();
+    const size_t sortedBoneIDCount = sortedBoneIDs.sortedBoneIDs.size();
 	if (sortedBoneIDs.unfoundBoneNames.size() > 0)
 	{
 		this->addMissingBones(sortedBoneIDs.unfoundBoneNames);

@@ -1,13 +1,17 @@
 from __future__ import annotations
 
 import json
-import numpy
 import pathlib
 import pickle
+
+import numpy
+import typeguard
+
 import skin_plus_plus
 
-from .enums import FileType
+from . import _types
 from .enums import ApplicationMode
+from .enums import FileType
 
 _typing = False
 if _typing:
@@ -23,11 +27,8 @@ def load_from_pickle_file(path: pathlib.Path) -> skin_plus_plus.SkinData:
         raise IOError(f"File path does not exist: {path}")
 
     with open(path, "rb") as file:
-        skin_data = pickle.load(file)
+        skin_data = typeguard.check_type(pickle.load(file), skin_plus_plus.SkinData)
 
-    assert isinstance(
-        skin_data, skin_plus_plus.SkinData
-    ), f"Incorrect data type loaded from pickle: {type(skin_data)}"
     return skin_data
 
 
@@ -39,7 +40,7 @@ def load_from_json_file(path: pathlib.Path):
         raise IOError(f"File path does not exist: {path}")
 
     with open(path, "r") as file:
-        data = json.load(file)
+        data = typeguard.check_type(json.load(file), _types.T_JsonSkinData)
         return skin_plus_plus.SkinData(
             tuple(data["bone_names"]),
             tuple(data["bone_ids"]),
@@ -92,7 +93,7 @@ def import_skin_data(
     node: _types.T_Node,
     path: pathlib.Path,
     file_type: FileType = FileType.pickle,
-    import_type: ApplicationMode = ApplicationMode.order,
+    application_mode: ApplicationMode = ApplicationMode.order,
 ):
     """
     Load skin data from disk and apply it to the given mesh.
@@ -120,7 +121,7 @@ def import_skin_data(
 
             raise
 
-    return skin_plus_plus.apply_skin_data(node, skin_data, import_type=import_type)
+    return skin_plus_plus.apply_skin_data(node, skin_data, application_mode=application_mode)
 
     # if import_type == ImportType.nearest:
     #   vertex_positions = get_vertex_positions(node)

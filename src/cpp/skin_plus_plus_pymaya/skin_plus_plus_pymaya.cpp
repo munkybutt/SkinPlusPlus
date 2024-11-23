@@ -4,7 +4,6 @@
 #include <maya/MObject.h>
 
 
-
 //bool getMeshPositions(const MDagPath& dagPath, Array<Vector3>* pointArray)
 //{
 //	nvDebugCheck(pointArray != NULL);
@@ -30,18 +29,6 @@
 //	}
 //
 //	return true;
-//}
-
-
-//MStatus getNodesByName(const MStringArray& nodeNames, MObject& node)
-//{
-//	MSelectionList selectionList;
-//	MStatus status = MGlobal::getSelectionListByName(nodeNames, selectionList);
-//	if (status == MS::kSuccess)
-//	{
-//		status = selectionList.getDependNode(0, node);
-//	}
-//	return status;
 //}
 
 
@@ -306,6 +293,10 @@ PySkinData SkinManagerMaya::extractSkinData(const bool safeMode)
         {
             UINT weightIndex = weightIndexBase + boneIndex;
             double influenceWeight = weights[weightIndex];
+            if (influenceWeight == 0)
+            {
+                continue;
+            }
             pySkinData.weights(vertexIndex, influenceIndex) = influenceWeight;
             pySkinData.boneIDs(vertexIndex, influenceIndex) = boneIndex;
             influenceIndex += 1;

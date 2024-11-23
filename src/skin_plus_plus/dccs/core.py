@@ -2,21 +2,23 @@ from __future__ import annotations
 
 import abc
 import importlib
-import numpy as np
 import pathlib
-import scipy.spatial as spatial
-import skin_plus_plus
-import typeguard
 import typing
 
-from .. import _types
-from .. import core
+import numpy as np
+import scipy.spatial as spatial
+import typeguard
+
+import skin_plus_plus
+
+from .. import enums
 
 _typing = False
 if _typing:
+    from typing import Sequence
+
     from .. import SkinData
     from .. import _types
-    from typing import Sequence
 
 T_HostNode = typing.TypeVar("T_HostNode")
 
@@ -108,11 +110,11 @@ class IHost(typing.Generic[T_HostNode], metaclass=abc.ABCMeta):
         self,
         node: T_HostNode,
         skin_data: SkinData,
-        application_mode: core.ApplicationMode = core.ApplicationMode.order,
+        application_mode: enums.ApplicationMode = enums.ApplicationMode.order,
     ):
         handle = self.get_node_handle(node)
 
-        if application_mode == core.ApplicationMode.nearest:
+        if application_mode == enums.ApplicationMode.nearest:
             current_positions = self.get_vertex_positions(node)
             kd_tree = spatial.KDTree(skin_data.positions)
             _, new_indexes = kd_tree.query(current_positions)
@@ -124,7 +126,7 @@ class IHost(typing.Generic[T_HostNode], metaclass=abc.ABCMeta):
                     old_index: new_index
                     for old_index, new_index in enumerate(new_indexes)
                 },
-                "dict[int, np.int64]",
+                dict[int, np.int64],
             )
             new_weights = np.array(
                 tuple(skin_data.weights[index_map[index]] for index in index_map)
@@ -136,5 +138,5 @@ class IHost(typing.Generic[T_HostNode], metaclass=abc.ABCMeta):
                 skin_data.bone_names, new_bone_ids, new_weights, skin_data.positions
             )
             skin_data = new_skin_data
-
+        print(handle)
         return self._apply_skin_data(handle, skin_data)

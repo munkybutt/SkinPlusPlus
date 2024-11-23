@@ -1,28 +1,18 @@
 {
-    "include": [
-        "./skin_plus_plus",
-        "./skin_plus_plus_test"
-    ],
+    "pythonVersion": "3.10",
+    "pythonPlatform": "Windows",
     "extraPaths": [
-        "C:/Program Files/Autodesk/Maya2022/devkit/devkitBase/devkit/other/Python27/pymel/extras/completion/pyi",
-        "C:/Program Files/Autodesk/Maya2023/Python39/Lib/site-packages"
+        "C:/Users/Shea.Richardson/Desktop/Git/SkinPlusPlus/.dev/venv/310/.venv/Lib/site-packages"
     ],
-    "venvPath": "./venvs",
-    "venv": "37",
-    "stubPath": "./.stubs",
-    "reportMissingImports": true,
-    "reportMissingTypeStubs": false,
-    "pythonVersion": "3.7",
-    "pythonPlatform": "Windows"
-    // "executionEnvironments": [
-    //     {
-    //       "root": ".",
-    //       "pythonVersion": "3.8",
-    //       "pythonPlatform": "Windows",
-    //       "extraPaths": [
-    //         "C:/Program Files/Sublime Text/Lib/python38",
-    //         "./sublack/vendor/lib",
-    //       ]
-    //     }
-    // ]
+    "reportDuplicateImport": "warning",
+    "reportImplicitStringConcatenation": "warning",
+    "reportUnboundVariable": "none",
+    "reportUnusedCallResult": "none",
+    "reportAny": "warning",
+    "reportUnknownMemberType": "warning",
+    "reportUnknownArgumentType": "warning",
+    "reportUnusedClass": "information",
+    "reportUnusedFunction": "information",
+    "reportUnusedImport": "information",
+    "reportUnusedVariable": "information",
 }

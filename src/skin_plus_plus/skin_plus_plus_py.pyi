@@ -4,7 +4,6 @@ import typing
 
 from . import _types
 
-
 class SkinData:
     """
     Class containing data for a given skin object.
@@ -54,7 +53,7 @@ class SkinData:
     """
 
     @typing.overload
-    def __init__(self):
+    def __init__(self) -> None:
         ...
 
     @typing.overload
@@ -64,7 +63,17 @@ class SkinData:
         bone_ids: tuple[tuple[int, ...], ...],
         weights: tuple[tuple[float, ...], ...],
         positions: tuple[tuple[float, float, float], ...],
-    ):
+    ) -> None:
+        ...
+
+    @typing.overload
+    def __init__(
+        self,
+        names: tuple[str, ...],
+        bone_ids: tuple[list[int], ...],
+        weights: tuple[list[float], ...],
+        positions: tuple[list[float], ...],
+    ) -> None:
         ...
 
     @typing.overload
@@ -75,5 +84,5 @@ class SkinData:
         vertex_weights: _types.T_Float64Array,
         vertex_positions: _types.T_Float64Array,
         vertex_ids: _types.T_Int32Array | None = None,
-    ):
+    ) -> None:
         ...

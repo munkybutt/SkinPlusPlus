@@ -5,10 +5,11 @@ from __future__ import annotations
 
 _typing = False
 if _typing:
+    from types import ModuleType
+
     from . import core
     from . import max
     from . import maya
-    from types import ModuleType
 del _typing
 
 

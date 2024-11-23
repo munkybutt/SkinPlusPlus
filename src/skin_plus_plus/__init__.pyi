@@ -1,18 +1,18 @@
 from __future__ import annotations
 
+from typing import Sequence
+
 from . import _types
 from . import skin_plus_plus_py
-from .core import FileType as FileType
-from .core import ApplicationMode as ApplicationMode
 from .core import export_skin_data as export_skin_data
 from .core import import_skin_data as import_skin_data
 from .dccs import core as _dccs_core
+from .enums import ApplicationMode as ApplicationMode
+from .enums import FileType as FileType
 from .io import load as load
 from .io import max_to_maya as max_to_maya
 from .io import maya_to_max as maya_to_max
 from .io import save as save
-from typing import Sequence
-
 
 current_dcc: str = ...
 """

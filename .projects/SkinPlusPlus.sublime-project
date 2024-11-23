@@ -1,0 +1,17 @@
+{
+	"folders":
+	[
+		{
+			"path": "../src",
+		}
+	],
+	"settings": {
+		"lsp_code_actions_on_save": {
+		  "source.fixAll": false,
+		  "source.organizeImports": true,
+		},
+	},
+	"debugger_configurations":
+	[
+	],
+}

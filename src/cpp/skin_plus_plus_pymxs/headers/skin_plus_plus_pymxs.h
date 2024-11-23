@@ -1,6 +1,8 @@
 #pragma once
 #include <skin_plus_plus_py.h>
 
+#include <fmt/xchar.h>
+
 #include <algorithm>
 #include <cwchar>
 #include <locale>

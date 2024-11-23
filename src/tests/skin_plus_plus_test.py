@@ -10,7 +10,7 @@ if __name__ == "__main__":
         current_file = pathlib.Path(inspect.getfile(lambda: None))
         if str(current_file) == "<maya console>":
             # maya is a piece of shit:
-            current_file = pathlib.Path(r"D:/Code/Git/SkinPlusPlus-latest/PYProjects")
+            current_file = pathlib.Path("C:/Users/Shea.Richardson/Desktop/Git/SkinPlusPlus/src/tests/skin_plus_plus_test.py")
         current_directory = current_file.parent
         lib_dir = current_directory.parent / ".venvs/py310/.venv/Lib/site-packages"
         assert lib_dir.exists()
@@ -20,18 +20,19 @@ if __name__ == "__main__":
     __setup__()
 
 import functools
-import numpy as np
 import random
 import sys
 import time
 import unittest
+
+import numpy as np
 
 import skin_plus_plus
 
 # skin_plus_plus.set_debug(False)
 
 if __name__ == "__main__":
-    from importlib import reload
+    pass
 
     # reload(skin_plus_plus.core)
     # reload(skin_plus_plus.io)
@@ -57,8 +58,8 @@ def get_loops() -> int:
     return _loops
 
 
-def timer(data_dict: dict[str, tuple[float, Any, str]]) -> Callable:
-    def wrapper(function: Callable) -> Callable:
+def timer(data_dict: dict[str, tuple[float, Any, str]]) -> Callable[..., Any]:
+    def wrapper(function: Callable[..., Any]) -> Callable[..., Any]:
         @functools.wraps(function)
         def wrapper_timer(*args, **kwargs) -> Any:
             start_time = time.perf_counter()
@@ -102,7 +103,7 @@ class SkinPlusPlusTestBase(unittest.TestCase):
         raise NotImplementedError()
 
     @staticmethod
-    def run_functions(function_list, _obj, *args, loop_count: int = 1):
+    def run_functions(function_list: list[Callable[..., Any]], _obj, *args, loop_count: int = 1):
         set_loops(loop_count)
         for function in function_list:
             result = function(_obj, *args)
@@ -400,7 +401,6 @@ class SkinPlusPlusTestMaya(SkinPlusPlusTestBase):
 
         from maya import cmds
         from maya import mel
-
         import maya.api.OpenMaya as om
         import maya.api.OpenMayaAnim as oman
         import pymel.core as pm
@@ -420,7 +420,7 @@ class SkinPlusPlusTestMaya(SkinPlusPlusTestBase):
         #     return
 
         # if not max_file_path.exists():
-        #     raise FileNotFoundError(f"No test file for current max version:\n - {max_file_path}")
+        #     raise FileNotFoundError(f"No test file for current max version:/n - {max_file_path}")
 
         # cls.cmds.LoadMaxFile(str(max_file_path))
 
@@ -695,13 +695,9 @@ def get_sorted_indicies(
 
 
 def add_bones():
-    from maya import cmds
-    from maya import mel
 
     import maya.OpenMaya as om
     import maya.OpenMayaAnim as oman
-    import pymel.core as pm
-
     selection_list = om.MSelectionList()
     # status = om.MStatus()
     mobject = om.MObject()

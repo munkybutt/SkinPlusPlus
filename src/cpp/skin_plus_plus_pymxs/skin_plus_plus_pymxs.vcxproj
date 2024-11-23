@@ -142,7 +142,7 @@
     <TargetExt>.pyd</TargetExt>
     <IncludePath>$(THIRD_PARTY_EIGEN);$(THIRD_PARTY_FMT)\include;$(ProjectDir)\headers;$(ProjectDir)..\skin_plus_plus_py\headers;$(ADSK_3DSMAX_SDK_2024)\include;$(ADSK_3DSMAX_SDK_2024)\include\geom;$(PYTHON_310)\include;$(PYBIND11_310)\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(PYTHON_310)\libs;$(ADSK_3DSMAX_SDK_2024)\lib\x64\Release;$(LibraryPath)</LibraryPath>
-    <OutDir>$(SolutionDir)..\..\PYProjects\skin_plus_plus\dccs\max\2024\</OutDir>
+    <OutDir>$(SolutionDir)..\skin_plus_plus\dccs\max\2024\</OutDir>
     <TargetName>$(ProjectName)</TargetName>
   </PropertyGroup>
   <PropertyGroup Label="Vcpkg">
@@ -295,6 +295,7 @@
     <ClCompile>
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='2024-Release|x64'">stdcpp17</LanguageStandard>
       <FavorSizeOrSpeed Condition="'$(Configuration)|$(Platform)'=='2024-Release|x64'">Speed</FavorSizeOrSpeed>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='2024-Release|x64'">/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
 </Project>
