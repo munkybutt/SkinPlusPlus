@@ -438,10 +438,13 @@ MigrationBackup/
 
 # End of https://www.toptal.com/developers/gitignore/api/c++,visualstudio,visualstudiocode,sublimetext
 
-.dev/
+**/.3rdParty/**
+**/.venvs/**
 build/
 pypi/
 temp.cpp
 *.exp
 *.max
+*.ma
 *.mb
+*.pyd
