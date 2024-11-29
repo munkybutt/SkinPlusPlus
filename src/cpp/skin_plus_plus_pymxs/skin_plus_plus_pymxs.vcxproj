@@ -135,12 +135,12 @@
     <TargetExt>.pyd</TargetExt>
     <IncludePath>$(THIRD_PARTY_EIGEN);$(THIRD_PARTY_FMT)\include;$(ProjectDir)\headers;$(ProjectDir)..\skin_plus_plus_py\headers;$(ADSK_3DSMAX_SDK_2023)\include;$(ADSK_3DSMAX_SDK_2023)\include\geom;$(PYTHON_39)\include;$(PYBIND11_39)\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(PYTHON_39)\libs;$(ADSK_3DSMAX_SDK_2023)\lib\x64\Release;$(LibraryPath)</LibraryPath>
-    <OutDir>$(SolutionDir)..\..\PYProjects\skin_plus_plus\dccs\max\$(ProjectName)_2023</OutDir>
+    <OutDir>$(SolutionDir)..\skin_plus_plus\dccs\max\$(ProjectName)_2023</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='2024-Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <TargetExt>.pyd</TargetExt>
-    <IncludePath>$(THIRD_PARTY_EIGEN);$(THIRD_PARTY_FMT)\include;$(ProjectDir)\headers;$(ProjectDir)..\skin_plus_plus_py\headers;$(ADSK_3DSMAX_SDK_2024)\include;$(ADSK_3DSMAX_SDK_2024)\include\geom;$(PYTHON_310)\include;$(PYBIND11_310)\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(THIRD_PARTY_EIGEN);$(THIRD_PARTY_FMT)\include;$(ProjectDir)\headers;$(ProjectDir)..\skin_plus_plus_py\headers;$(ADSK_3DSMAX_SDK_2024)\include;$(ADSK_3DSMAX_SDK_2024)\include\geom;$(PYTHON_310)\include;$(PYBIND11_310)\include;$(ADSK_3DSMAX_SDK_2024)\samples;$(IncludePath)</IncludePath>
     <LibraryPath>$(PYTHON_310)\libs;$(ADSK_3DSMAX_SDK_2024)\lib\x64\Release;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)..\skin_plus_plus\dccs\max\2024\</OutDir>
     <TargetName>$(ProjectName)</TargetName>
@@ -296,6 +296,11 @@
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='2024-Release|x64'">stdcpp17</LanguageStandard>
       <FavorSizeOrSpeed Condition="'$(Configuration)|$(Platform)'=='2024-Release|x64'">Speed</FavorSizeOrSpeed>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='2024-Release|x64'">/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <Optimization Condition="'$(Configuration)|$(Platform)'=='2024-Release|x64'">Disabled</Optimization>
+    </ClCompile>
+    <ClCompile>
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='2023-Release|x64'">stdcpp17</LanguageStandard>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='2023-Release|x64'">/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
   </ItemDefinitionGroup>
 </Project>

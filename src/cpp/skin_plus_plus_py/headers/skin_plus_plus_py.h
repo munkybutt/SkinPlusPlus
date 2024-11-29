@@ -13,13 +13,13 @@
 #define FMT_HEADER_ONLY
 #define FMT_DEPRECATED_INCLUDE_XCHAR
 #include <fmt/format.h>
-//#include <fmt/xchar.h>
+#include <fmt/xchar.h>
 
 namespace py = pybind11;
 namespace eg = Eigen;
 
 
-typedef std::vector<std::string> BoneNamesVector;
+typedef std::vector<std::wstring> BoneNamesVector;
 typedef eg::MatrixXi BoneIDsMatrix;
 typedef eg::MatrixXd WeightsMatrix;
 typedef eg::MatrixXd PositionMatrix;
@@ -83,13 +83,13 @@ const char* convertStringToChar(std::string text)
 struct SortedBoneNameData
 {
     std::vector<UINT> sortedBoneIDs;
-    std::vector<std::string> unfoundBoneNames;
+    std::vector<std::wstring> unfoundBoneNames;
     UINT highestBoneID;
     UINT lowestBoneID;
     SortedBoneNameData(UINT boneCount)
     {
         sortedBoneIDs = std::vector<UINT>(boneCount);
-        unfoundBoneNames = std::vector<std::string>();
+        unfoundBoneNames = std::vector<std::wstring>();
     };
     ~SortedBoneNameData() {}
 };
@@ -219,7 +219,7 @@ public:
 	{
         const size_t cachedBoneCount = this->boneNames.size();
 		auto sortedBoneNameData = SortedBoneNameData(cachedBoneCount);
-        std::unordered_map<std::string, size_t> nameMap;
+        std::unordered_map<std::wstring, size_t> nameMap;
         for (size_t index = 0; index < currentBoneNames.size(); index++)
         {
             nameMap[currentBoneNames[index]] = index;
@@ -227,7 +227,7 @@ public:
 
 		for (size_t boneIndex = 0; boneIndex < cachedBoneCount; boneIndex++)
 		{
-			const std::string nameToFind = this->boneNames[boneIndex];
+			const std::wstring nameToFind = this->boneNames[boneIndex];
             const auto lookup = nameMap.find(nameToFind);
             if (lookup != nameMap.end())
             {
@@ -240,10 +240,10 @@ public:
 		}
         if (!sortedBoneNameData.unfoundBoneNames.empty())
         {
-            std::string message = "The following bones are not in the skin definition:";
-            for (const std::string& name : sortedBoneNameData.unfoundBoneNames)
+            std::wstring message = L"The following bones are not in the skin definition:";
+            for (const std::wstring& name : sortedBoneNameData.unfoundBoneNames)
             {
-                message += fmt::format("\n- {}", name);
+                message = fmt::format(L"{}\n- {}", message, name);
             }
             py::print(message);
 

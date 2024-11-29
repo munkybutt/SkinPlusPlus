@@ -156,9 +156,9 @@ static UINT getFirstFreeIndex(MPlug* arrayPlug)
 
 MObject SkinManagerMaya::addMissingBones(BoneNamesVector& missingBoneNames, const UINT& skinnedBoneCount)
 {
-    for (std::string& name : missingBoneNames)
+    for (std::wstring& name : missingBoneNames)
     {
-        auto command = fmt::format("skinCluster -e -ai {} {}", name, this->fnSkinCluster.name().asChar());
+        std::wstring command = fmt::format(L"skinCluster -e -ai {} {}", name, fmt::ptr(this->fnSkinCluster.name().asChar()));
         MGlobal::executeCommand(MString(command.c_str()));
     }
 }
@@ -278,10 +278,10 @@ PySkinData SkinManagerMaya::extractSkinData(const bool safeMode)
     {
         throw std::runtime_error("Failed to find influence objects!");
     }
-    pySkinData.boneNames = std::vector<std::string>(skinnedBones.length());
+    pySkinData.boneNames = std::vector<std::wstring>(skinnedBones.length());
     for (UINT boneIndex = 0; boneIndex < skinnedBones.length(); boneIndex++)
     {
-        pySkinData.boneNames[boneIndex] = fmt::format("{}", skinnedBones[boneIndex].partialPathName().asChar());
+        pySkinData.boneNames[boneIndex] = fmt::format(L"{}", fmt::ptr(skinnedBones[boneIndex].partialPathName().asChar()));
     }
     MPoint mPoint;
     pySkinData.setMaximumVertexWeightCount(boneCount);
@@ -409,13 +409,13 @@ static MDoubleArray getWeightsAsMDoubleArray(BoneIDsMatrix& boneIDs, WeightsMatr
 }
 
 
-static void getBoneNames(std::vector<std::string>& currentBoneNames, const MDagPathArray& skinnedBones, const UINT& skinnedBoneCount)
+static void getBoneNames(std::vector<std::wstring>& currentBoneNames, const MDagPathArray& skinnedBones, const UINT& skinnedBoneCount)
 {
     currentBoneNames.clear();
     currentBoneNames.resize(skinnedBoneCount);
     for (UINT boneIndex = 0; boneIndex < skinnedBoneCount; boneIndex++)
     {
-        currentBoneNames[boneIndex] = fmt::format("{}", skinnedBones[boneIndex].partialPathName().asChar());
+        currentBoneNames[boneIndex] = fmt::format(L"{}", fmt::ptr(skinnedBones[boneIndex].partialPathName().asChar()));
     }
 }
 
@@ -456,7 +456,7 @@ bool SkinManagerMaya::applySkinData(PySkinData& skinData)
         throw std::runtime_error("Error querying bones!");
     }
     auto skinnedBoneCount = skinnedBones.length();
-    auto currentBoneNames = std::vector<std::string>(skinnedBoneCount);
+    auto currentBoneNames = std::vector<std::wstring>(skinnedBoneCount);
     getBoneNames(currentBoneNames, skinnedBones, skinnedBoneCount);
     bool bonesAdded = false;
     if (skinnedBoneCount == 0)

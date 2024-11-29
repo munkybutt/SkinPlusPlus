@@ -1,7 +1,7 @@
 # Set dependency variables here:
 $devFolder = Resolve-Path -Path "$PSScriptRoot\..\..\.dev"
 Write-Host $devFolder
-Set-Location "$devFolder\3rdparty"
+Set-Location "$devFolder\ThirdParty"
 $Env:THIRD_PARTY_EIGEN = (Resolve-Path -Path "./eigen")
 $Env:THIRD_PARTY_FMT = (Resolve-Path -Path "./fmt")
 
@@ -17,7 +17,7 @@ foreach ($version in $installedVersions) {
     $pythonRootPath = (Get-Item $pythonPath).Directory.FullName
     $majorMinor = $version -replace '(\d+\.\d+).*', '$1' -replace '\.', ''
     Set-Item "Env:PYTHON_$majorMinor" $pythonRootPath
-    $pybindPath = Resolve-Path -Path "$devFolder\venv\$majorMinor\.venv\Lib\site-packages\pybind11"
+    $pybindPath = Resolve-Path -Path "$devFolder\venvs\py$majorMinor\.venv\Lib\site-packages\pybind11" -ErrorAction SilentlyContinue
     if ($pybindPath) {
         Write-Host "Setting PyBind11 path: $pybindPath"
         Set-Item "Env:PYBIND11_$majorMinor" $pybindPath

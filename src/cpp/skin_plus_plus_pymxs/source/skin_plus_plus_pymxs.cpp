@@ -1,7 +1,6 @@
 #pragma once
 #include <skin_plus_plus_pymxs.h>
 
-
 #define GET_POLY_DATA(node)                                                                    \
 Matrix3 nodeTransform = node->GetObjectTM(0);                                                  \
 bool deleteIt;                                                                                 \
@@ -97,7 +96,6 @@ bool SkinManager::initialiseSkin()
     {
         throw py::type_error("SkinData init failed. No node initialised!");
     }
-    py::print(fmt::format(L"Node name: {}", node->GetName()));
     Object* object = this->node->GetObjectRef();
     if (!object || (object->SuperClassID() != GEN_DERIVOB_CLASS_ID))
     {
@@ -118,6 +116,7 @@ bool SkinManager::initialiseSkin()
 
         this->iSkin = (ISkin*)this->skinModifier->GetInterface(I_SKIN);
         if (!this->iSkin) continue;
+
 
         this->iSkinContextData = this->iSkin->GetContextInterface(this->node);
         if (!this->iSkinContextData) continue;
@@ -206,7 +205,7 @@ PySkinData* SkinManager::extractSkinData(std::optional<VertexIDsMatrix> vertexID
         this->pySkinData = new PySkinData(vertexCount, this->maximumVertexWeightCount);
     }
     const int skinBoneCount = iSkin->GetNumBones();
-    this->pySkinData->boneNames = std::vector<std::string>(skinBoneCount);
+    this->pySkinData->boneNames = std::vector<std::wstring>(skinBoneCount);
     for (auto boneIndex = 0; boneIndex < skinBoneCount; boneIndex++)
     {
         // we don't use GetBoneName as that can return nulls depending on how the skin modifier has been setup
@@ -215,15 +214,27 @@ PySkinData* SkinManager::extractSkinData(std::optional<VertexIDsMatrix> vertexID
         {
             bone->GetActualINode();
         }
-        auto boneName = bone->GetName();
-        if (!boneName)
+        auto fullBoneName = bone->GetName();
+        if (!fullBoneName)
         {
             auto handle = bone->GetHandle();
-            throw std::runtime_error(
+            throw py::value_error(
                 fmt::format("Name is NULL on skinned bone at index: {} with handle: {}", boneIndex + 1, handle)
             );
         }
-        this->pySkinData->boneNames[boneIndex] = convertWCharToString(boneName);
+
+        auto fullBoneNameStr = fmt::format(L"{}", fullBoneName);
+        const size_t namespaceIndex = fullBoneNameStr.find_last_of(L":");
+        std::wstring boneName;
+        if (namespaceIndex == std::string::npos)
+        {
+            boneName = fullBoneNameStr;
+        }
+        else
+        {
+            boneName = fullBoneNameStr.substr(namespaceIndex + 1, fullBoneNameStr.size());
+        }
+        this->pySkinData->boneNames[boneIndex] = boneName;
     }
     auto meshType = getMeshType(node);
     if (meshType == MeshType::mesh)
@@ -337,12 +348,12 @@ inline void SkinManager::extractDataMesh(const UINT vertexCount)
 }
 
 
-void SkinManager::addMissingBones(std::vector<std::string> missingBoneNames)
+void SkinManager::addMissingBones(std::vector<std::wstring> missingBoneNames)
 {
     std::vector<INode*> missingBones(missingBoneNames.size());
     for (UINT index = 0; index < missingBoneNames.size(); index++)
 	{
-		auto missingBoneName = convertStringToWString(missingBoneNames[index]);
+		std::wstring missingBoneName = missingBoneNames[index];
 		auto missingBone = GetCOREInterface()->GetINodeByName(missingBoneName.c_str());
 		if (!missingBone)
 		{
@@ -370,11 +381,11 @@ void SkinManager::addMissingBones(std::vector<std::string> missingBoneNames)
 
 struct BoneData
 {
-	std::vector<std::string> names;
+	std::vector<std::wstring> names;
 	Tab<INode*> nodes;
 	BoneData(const int boneCount)
 	{
-		names = std::vector<std::string>(boneCount);
+		names = std::vector<std::wstring>(boneCount);
 		nodes = Tab<INode*>();
 		nodes.Resize(boneCount);
 	};
@@ -388,8 +399,7 @@ inline static BoneData getBoneData(ISkin* iSkin, const int skinBoneCount)
 	for (auto boneIndex = 0; boneIndex < skinBoneCount; boneIndex++)
 	{
 		INode* bone = iSkin->GetBone(boneIndex);
-		auto wcharBoneName = bone->GetName();
-		std::string stringBoneName = convertWCharToString(wcharBoneName);
+		std::wstring stringBoneName = fmt::format(L"{}", bone->GetName());
         boneData.nodes.Append(1, &bone);
 		boneData.names[boneIndex] = stringBoneName;
 	}
@@ -474,6 +484,93 @@ bool SkinManager::applySkinData(PySkinData& skinData)
 	GetCOREInterface()->RedrawViews(GetCOREInterface()->GetTime());
 	return true;
 }
+
+
+//#include <max.h>
+//
+//void SelectEdgeLoopVertices(ISkin* iSkin, INode* node)
+//{
+//
+//    BonesDefMod* bonesDefMod = dynamic_cast<BonesDefMod*>(iSkin);
+//    if (!bonesDefMod)
+//    {
+//        return;
+//    }
+//    // Get selected vertices
+//
+//    BitArray sel;
+//    bonesDefMod->GetVertexSelection(node, sel);
+//    int selCount = sel.GetSize();
+//    if (selCount != 2) {
+//        MessageBox(NULL, L"Please select exactly two vertices.", L"Error", MB_OK);
+//        return;
+//    }
+//    int v1 = NULL;
+//    int v2 = NULL;
+//    
+//    for (size_t i = 0; i < selCount; i++)
+//    {
+//        if (sel[i])
+//        {
+//            if (!v1)
+//            {
+//                v1 = i;
+//            }
+//            else
+//            {
+//                v2 = i;
+//                break;
+//            }
+//        }
+//    }
+//    GET_POLY_DATA(node);
+//    //int edgeInt = mnMesh.FindEdgeFromVertToVert(v1, v2);
+//    mnMesh.SelectEdgeLoop
+//
+//    // Find edge loop
+//    int e1 = epoly->FindEdge(v1, v2);
+//    if (e1 == -1) {
+//        MessageBox(NULL, "No edge between selected vertices.", "Error", MB_OK);
+//        return;
+//    }
+//
+//    // Traverse edge loop
+//    std::set<int> visitedVertices;
+//    int currentVertex = v1;
+//    int currentEdge = e1;
+//
+//    while (true) {
+//        visitedVertices.insert(currentVertex);
+//
+//        // Get next edge in loop
+//        int nextEdge = epoly->GetNextEdgeInLoop(currentEdge);
+//        if (nextEdge == -1) {
+//            MessageBox(NULL, "Failed to find next edge in loop.", "Error", MB_OK);
+//            return;
+//        }
+//
+//        // Get vertex opposite current edge
+//        int oppositeVertex = epoly->GetOppositeVertex(nextEdge, currentVertex);
+//        if (oppositeVertex == -1) {
+//            MessageBox(NULL, "Failed to get opposite vertex.", "Error", MB_OK);
+//            return;
+//        }
+//
+//        // Check if we've reached the starting vertex again
+//        if (oppositeVertex == v1) {
+//            break;
+//        }
+//
+//        currentVertex = oppositeVertex;
+//        currentEdge = nextEdge;
+//    }
+//
+//    // Select all vertices in the loop
+//    for (auto& vertex : visitedVertices) {
+//        epoly->SelectVertex(vertex, TRUE);
+//    }
+//}
+
 
 
 PYBIND11_MODULE(skin_plus_plus_pymxs, m) {

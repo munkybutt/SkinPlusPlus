@@ -17,6 +17,7 @@
 #include <Max.h>
 #include <matrix3.h>
 #include <maxscript/maxwrapper/mxsobjects.h>
+//#include <modifiers/bonesdef/bonesdef.h>
 
 
 class SkinManager
@@ -60,7 +61,7 @@ private:
 	void extractDataPoly(const UINT vertexCount);
 	
 	// Add missing bones to the skin modifier based on the given vector of missing bone names
-	void addMissingBones(std::vector<std::string> missingBoneNames);
+	void addMissingBones(std::vector<std::wstring> missingBoneNames);
 
 	// Initialise skinModifier, iSkin, iSkinContextData, iSkinImportData
 	bool initialiseSkin();
