@@ -2,7 +2,7 @@
     "pythonVersion": "3.10",
     "pythonPlatform": "Windows",
     "extraPaths": [
-        "C:/Users/Shea.Richardson/Desktop/Git/SkinPlusPlus/.dev/venv/310/.venv/Lib/site-packages"
+        "D:/Code/Git/SkinPlusPlus-latest/.dev/venvs/py310/.venv/Lib/site-packages"
     ],
     "reportDuplicateImport": "warning",
     "reportImplicitStringConcatenation": "warning",
@@ -15,4 +15,14 @@
     "reportUnusedFunction": "information",
     "reportUnusedImport": "information",
     "reportUnusedVariable": "information",
+    "reportMissingModuleSource": "none",
+    "executionEnvironments": [
+        {
+            "root": "D:/Code/Git/SkinPlusPlus-latest/src/skin_plus_plus/dccs/blender",
+            "extraPaths": [
+                "C:/Program Files/Blender Foundation/Blender 4.2/4.2/scripts/modules",
+                "D:/Code/Git/SkinPlusPlus-latest/.dev/venvs/py311/.venv/Lib/site-packages"
+            ]
+        }
+    ]
 }
