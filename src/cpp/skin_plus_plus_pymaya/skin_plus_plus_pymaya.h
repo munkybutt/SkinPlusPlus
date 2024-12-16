@@ -15,6 +15,7 @@
 #include <maya/MFnSkinCluster.h>
 #include <maya/MItDependencyGraph.h>
 #include <maya/MMatrixArray.h>
+#include <maya/MNamespace.h>
 #include <maya/MPlug.h>
 #include <maya/MQuaternion.h>
 #include <maya/MSelectionList.h>
@@ -235,7 +236,7 @@ public:
 
 	// Get the skin weights from the given node's skin modifier
 	//std::vector<std::vector<std::vector <float>>> getSkinWeights();
-	MObject addMissingBones(std::vector<std::wstring>& missingBoneNames, const UINT& skinnedBoneCount);
+	const bool addMissingBones(std::vector<std::wstring>& missingBoneNames, const UINT& skinnedBoneCount);
 
 	// Get the vertex weights, bone ids and positions from the given node
 	PySkinData extractSkinData(const bool safeMode = true);

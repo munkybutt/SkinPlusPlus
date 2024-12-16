@@ -96,14 +96,14 @@ static void removeBonesFromBindPose(
 }
 
 
-std::unordered_set<std::string> getBoneNamesSet(MDagPathArray skinnedBones)
+std::unordered_set<std::wstring> getBoneNamesSet(MDagPathArray skinnedBones)
 {
-	std::vector<std::string> skinnedBoneNames(skinnedBones.length());
+	std::vector<std::wstring> skinnedBoneNames(skinnedBones.length());
 	for (UINT i = 0; i < skinnedBones.length(); i++)
 	{
-		skinnedBoneNames[i] = skinnedBones[i].partialPathName().asChar();
+		skinnedBoneNames[i] = skinnedBones[i].partialPathName().asWChar();
 	}
-	std::unordered_set<std::string> skinnedBoneNamesSet(skinnedBoneNames.begin(), skinnedBoneNames.end());
+	std::unordered_set<std::wstring> skinnedBoneNamesSet(skinnedBoneNames.begin(), skinnedBoneNames.end());
 	return skinnedBoneNamesSet;
 }
 
@@ -154,13 +154,20 @@ static UINT getFirstFreeIndex(MPlug* arrayPlug)
 }
 
 
-MObject SkinManagerMaya::addMissingBones(BoneNamesVector& missingBoneNames, const UINT& skinnedBoneCount)
+const bool SkinManagerMaya::addMissingBones(BoneNamesVector& missingBoneNames, const UINT& skinnedBoneCount)
 {
+    std::wstring command = L"skinCluster -e";
     for (std::wstring& name : missingBoneNames)
     {
-        std::wstring command = fmt::format(L"skinCluster -e -ai {} {}", name, fmt::ptr(this->fnSkinCluster.name().asChar()));
-        MGlobal::executeCommand(MString(command.c_str()));
+        command = fmt::format(L"{} -ai \"{}\"", command, name);
     }
+    command = fmt::format(L"{} {}", command, this->fnSkinCluster.name().asWChar());
+    auto status = MGlobal::executeCommand(MString(command.c_str()));
+    if (status == MS::kSuccess)
+    {
+        return true;
+    }
+    return false;
 }
 
 
@@ -270,7 +277,6 @@ PySkinData SkinManagerMaya::extractSkinData(const bool safeMode)
     MDoubleArray weights;
     UINT boneCount;
     this->fnSkinCluster.getWeights(this->dagPath, this->component, weights, boneCount);
-    PySkinData pySkinData = PySkinData(vertexCount, this->maximumVertexWeightCount);
     MDagPathArray skinnedBones;
     MStatus status;
     this->fnSkinCluster.influenceObjects(skinnedBones, &status);
@@ -278,13 +284,8 @@ PySkinData SkinManagerMaya::extractSkinData(const bool safeMode)
     {
         throw std::runtime_error("Failed to find influence objects!");
     }
-    pySkinData.boneNames = std::vector<std::wstring>(skinnedBones.length());
-    for (UINT boneIndex = 0; boneIndex < skinnedBones.length(); boneIndex++)
-    {
-        pySkinData.boneNames[boneIndex] = fmt::format(L"{}", fmt::ptr(skinnedBones[boneIndex].partialPathName().asChar()));
-    }
     MPoint mPoint;
-    pySkinData.setMaximumVertexWeightCount(boneCount);
+    PySkinData pySkinData = PySkinData(vertexCount, boneCount);
     for (UINT vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
     {
         UINT influenceIndex = 0;
@@ -301,10 +302,17 @@ PySkinData SkinManagerMaya::extractSkinData(const bool safeMode)
             pySkinData.boneIDs(vertexIndex, influenceIndex) = boneIndex;
             influenceIndex += 1;
         }
+        this->maximumVertexWeightCount = influenceIndex > this->maximumVertexWeightCount ? influenceIndex : this->maximumVertexWeightCount;
         fnMesh.getPoint(vertexIndex, mPoint, MSpace::kObject);
         pySkinData.positions(vertexIndex, 0) = mPoint.x;
         pySkinData.positions(vertexIndex, 1) = mPoint.y;
         pySkinData.positions(vertexIndex, 2) = mPoint.z;
+    }
+    pySkinData.setMaximumVertexWeightCount(this->maximumVertexWeightCount);
+    pySkinData.boneNames = std::vector<std::wstring>(skinnedBones.length());
+    for (UINT boneIndex = 0; boneIndex < skinnedBones.length(); boneIndex++)
+    {
+        pySkinData.boneNames[boneIndex] = fmt::format(L"{}", MNamespace::stripNamespaceFromName(skinnedBones[boneIndex].partialPathName()).asWChar());
     }
     if (safeMode)
     {
@@ -415,7 +423,7 @@ static void getBoneNames(std::vector<std::wstring>& currentBoneNames, const MDag
     currentBoneNames.resize(skinnedBoneCount);
     for (UINT boneIndex = 0; boneIndex < skinnedBoneCount; boneIndex++)
     {
-        currentBoneNames[boneIndex] = fmt::format(L"{}", fmt::ptr(skinnedBones[boneIndex].partialPathName().asChar()));
+        currentBoneNames[boneIndex] = fmt::format(L"{}", skinnedBones[boneIndex].partialPathName().asWChar());
     }
 }
 

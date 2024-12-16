@@ -420,8 +420,9 @@ bool SkinManager::applySkinData(PySkinData& skinData)
 		"skin bone ids count does not match skin weights count: " + convertWCharToChar(this->node->GetName())
 	);
 	const int vertexCount = getVertexCount(node);
-	if (boneIDsRows != vertexCount && !skinData.vertexIDs.has_value()) throw std::length_error(
-        fmt::format("skin vertex count does not match provided data count: {}", convertWCharToChar(this->node->GetName()))
+    
+    if (boneIDsRows != vertexCount && !skinData.vertexIDs.has_value()) throw py::value_error(
+        "skin vertex count does not match provided data count: " + convertWCharToChar(this->node->GetName())
 	);
 	auto skinBoneCount = this->iSkin->GetNumBones();
 	if (skinBoneCount == 0)
