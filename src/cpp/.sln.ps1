@@ -17,6 +17,7 @@ foreach ($version in $installedVersions) {
     $pythonRootPath = (Get-Item $pythonPath).Directory.FullName
     $majorMinor = $version -replace '(\d+\.\d+).*', '$1' -replace '\.', ''
     Set-Item "Env:PYTHON_$majorMinor" $pythonRootPath
+    Write-Host $majorMinor
     $pybindPath = Resolve-Path -Path "$devFolder\venvs\py$majorMinor\.venv\Lib\site-packages\pybind11" -ErrorAction SilentlyContinue
     if ($pybindPath) {
         Write-Host "Setting PyBind11 path: $pybindPath"
