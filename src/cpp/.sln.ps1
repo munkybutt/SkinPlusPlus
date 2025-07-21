@@ -8,6 +8,8 @@ $Env:THIRD_PARTY_FMT = (Resolve-Path -Path "./fmt")
 $Env:ADSK_MAYA_SDK_2022 = "C:\Program Files\Autodesk\Maya2022\devkit\devkitBase"
 $Env:ADSK_MAYA_SDK_2023 = "C:\Program Files\Autodesk\Maya2023\devkit\devkitBase"
 $Env:ADSK_MAYA_SDK_2024 = "C:\Program Files\Autodesk\Maya2024\devkit\devkitBase"
+$Env:ADSK_MAYA_SDK_2025 = "C:\Program Files\Autodesk\Maya2025\devkit\devkitBase"
+$Env:ADSK_MAYA_SDK_2026 = "C:\Program Files\Autodesk\Maya2026\devkit\devkitBase"
 
 $installedVersions = pyenv versions --bare
 foreach ($version in $installedVersions) {
