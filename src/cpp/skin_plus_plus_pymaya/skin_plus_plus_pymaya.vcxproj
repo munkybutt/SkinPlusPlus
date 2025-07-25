@@ -161,8 +161,8 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='2026-Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <TargetExt>.pyd</TargetExt>
-    <IncludePath>$(THIRD_PARTY_EIGEN);$(THIRD_PARTY_FMT)\include;$(ProjectDir);$(ProjectDir)..\skin_plus_plus_py\headers;$(ADSK_MAYA_SDK_2024)\include;$(PYTHON_310)\include;$(PYBIND11_310)\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ADSK_MAYA_SDK_2024)\lib;$(PYTHON_310)\libs;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(THIRD_PARTY_EIGEN);$(THIRD_PARTY_FMT)\include;$(ProjectDir);$(ProjectDir)..\skin_plus_plus_py\headers;$(ADSK_MAYA_SDK_2026)\include;$(PYTHON_311)\include;$(PYBIND11_311)\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ADSK_MAYA_SDK_2026)\lib;$(PYTHON_311)\libs;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)..\skin_plus_plus\dccs\maya\2024\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='2023-Debug|x64'">

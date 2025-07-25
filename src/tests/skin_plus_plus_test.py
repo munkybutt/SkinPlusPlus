@@ -10,10 +10,13 @@ if __name__ == "__main__":
         current_file = pathlib.Path(inspect.getfile(lambda: None))
         if str(current_file) == "<maya console>":
             # maya is a piece of shit:
-            current_file = pathlib.Path("C:/Users/Shea.Richardson/Desktop/Git/SkinPlusPlus/src/tests/skin_plus_plus_test.py")
+            current_file = pathlib.Path(r"D:\Code\Git\SkinPlusPlus-latest\src\tests\skin_plus_plus_test.py")
+        print(f"current_file: {current_file}")
         current_directory = current_file.parent
-        lib_dir = current_directory.parent / ".venvs/py310/.venv/Lib/site-packages"
-        assert lib_dir.exists()
+        print(f"current_directory: {current_directory}")
+        lib_dir = current_directory.parent.parent / ".dev/venvs/py311/.venv/Lib/site-packages"
+        print(f"lib_dir: {lib_dir}")
+        assert lib_dir.exists(), f"path doesn't exist: {lib_dir}"
         site.addsitedir(current_directory.parent.as_posix())
         site.addsitedir(lib_dir.as_posix())
 
@@ -28,6 +31,8 @@ import unittest
 import numpy as np
 
 import skin_plus_plus
+
+print(f"skin_plus_plus: {skin_plus_plus}")
 
 # skin_plus_plus.set_debug(False)
 
@@ -719,4 +724,4 @@ if __name__ == "__main__":
         node, skin_data, application_mode=skin_plus_plus.ApplicationMode.nearest
     )
 
-    skin_plus_plus.save
+    # skin_plus_plus.save

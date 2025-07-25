@@ -163,8 +163,8 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='2026-Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <TargetExt>.pyd</TargetExt>
-    <IncludePath>$(THIRD_PARTY_EIGEN);$(THIRD_PARTY_FMT)\include;$(ProjectDir)\headers;$(ProjectDir)..\skin_plus_plus_py\headers;$(ADSK_3DSMAX_SDK_2024)\include;$(ADSK_3DSMAX_SDK_2024)\include\geom;$(PYTHON_310)\include;$(PYBIND11_310)\include;$(ADSK_3DSMAX_SDK_2024)\samples;$(IncludePath)</IncludePath>
-    <LibraryPath>$(PYTHON_310)\libs;$(ADSK_3DSMAX_SDK_2024)\lib\x64\Release;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(THIRD_PARTY_EIGEN);$(THIRD_PARTY_FMT)\include;$(ProjectDir)\headers;$(ProjectDir)..\skin_plus_plus_py\headers;$(ADSK_3DSMAX_SDK_2026)\include;$(ADSK_3DSMAX_SDK_2026)\include\geom;$(PYTHON_311)\include;$(PYBIND11_311)\include;$(ADSK_3DSMAX_SDK_2026)\samples;$(IncludePath)</IncludePath>
+    <LibraryPath>$(PYTHON_311)\libs;$(ADSK_3DSMAX_SDK_2026)\lib\x64\Release;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)..\skin_plus_plus\dccs\max\2026\</OutDir>
     <TargetName>$(ProjectName)</TargetName>
   </PropertyGroup>
@@ -345,8 +345,8 @@
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='2026-Release|x64'">/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <Optimization Condition="'$(Configuration)|$(Platform)'=='2024-Release|x64'">MaxSpeed</Optimization>
       <Optimization Condition="'$(Configuration)|$(Platform)'=='2026-Release|x64'">MaxSpeed</Optimization>
-      <LanguageStandard_C Condition="'$(Configuration)|$(Platform)'=='2026-Release|x64'">stdc17</LanguageStandard_C>
-      <InlineFunctionExpansion Condition="'$(Configuration)|$(Platform)'=='2026-Release|x64'">AnySuitable</InlineFunctionExpansion>
+      <LanguageStandard_C Condition="'$(Configuration)|$(Platform)'=='2026-Release|x64'">Default</LanguageStandard_C>
+      <InlineFunctionExpansion Condition="'$(Configuration)|$(Platform)'=='2026-Release|x64'">Default</InlineFunctionExpansion>
     </ClCompile>
     <ClCompile>
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='2023-Release|x64'">stdcpp17</LanguageStandard>
