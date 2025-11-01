@@ -56,6 +56,7 @@ class IHost(typing.Generic[T_HostNode], metaclass=abc.ABCMeta):
             raise FileNotFoundError(f"Unsupported DCC version: {version}")
 
         import_path = f"{__name__.rstrip('core')}{self.name}.{version}.skin_plus_plus_{self.api_name}"
+        print(f"dcc import_path: {import_path}")
         backend = importlib.import_module(import_path)
 
         self._extract_skin_data = backend.extract_skin_data

@@ -34,6 +34,8 @@ def _activate_skin_plus_plus_py_(python_version: str, debug: bool = False):
     global skin_plus_plus_py
     global SkinData
 
+    print(f"python_version: {python_version}")
+
     debug = bool(os.environ.get("SKIN_PLUS_PLUS_DEBUG", False)) or debug
     if debug:
         python_version = f"debug_{python_version}"
@@ -48,6 +50,7 @@ def _activate_skin_plus_plus_py_(python_version: str, debug: bool = False):
     if "skin_plus_plus_py" in sys.modules:
         del sys.modules["skin_plus_plus_py"]
 
+    print(f"import_path: {import_path}")
     skin_plus_plus_py = importlib.import_module(import_path)
     if is_reloading:
         _ = importlib.reload(skin_plus_plus_py)
@@ -76,6 +79,7 @@ def _activate_host_():
     if current_host_interface is None:
         raise RuntimeError(f"Unsupported executable: {executable}")
 
+    print(f"Activating host: {current_host_interface}")
     extract_skin_data = current_host_interface.extract_skin_data
     apply_skin_data = current_host_interface.apply_skin_data
     get_vertex_positions = current_host_interface.get_vertex_positions

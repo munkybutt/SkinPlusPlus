@@ -13,6 +13,7 @@ $Env:ADSK_MAYA_SDK_2026 = "C:\Program Files\Autodesk\Maya2026\devkit\devkitBase"
 
 $installedVersions = pyenv versions --bare
 foreach ($version in $installedVersions) {
+    $version = $version.Split("-")[1]
     Write-Host $version
     pyenv local $version
     $pythonPath = pyenv which python

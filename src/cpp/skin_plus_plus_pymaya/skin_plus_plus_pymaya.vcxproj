@@ -163,7 +163,7 @@
     <TargetExt>.pyd</TargetExt>
     <IncludePath>$(THIRD_PARTY_EIGEN);$(THIRD_PARTY_FMT)\include;$(ProjectDir);$(ProjectDir)..\skin_plus_plus_py\headers;$(ADSK_MAYA_SDK_2026)\include;$(PYTHON_311)\include;$(PYBIND11_311)\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(ADSK_MAYA_SDK_2026)\lib;$(PYTHON_311)\libs;$(LibraryPath)</LibraryPath>
-    <OutDir>$(SolutionDir)..\skin_plus_plus\dccs\maya\2024\</OutDir>
+    <OutDir>$(SolutionDir)..\skin_plus_plus\dccs\maya\2026\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='2023-Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
