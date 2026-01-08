@@ -49,11 +49,15 @@ This software (SkinPlusPlus) is provided "as is", without any warranty. The auth
 
 * Currently supported DCCs:
   - 3DsMax:
+    - 2026 - Python311
+    - 2025 - Python311
     - 2024 - Python310
     - 2023 - Python39
     - 2022 - Python37
   	- 2021 - Python37
   - Maya:
+    - 2026 - Python311
+    - 2025 - Python311
     - 2024 - Python310
     - 2023 - Python39
     - 2022 - Python37
